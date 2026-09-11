@@ -47,8 +47,10 @@ export function MarketplacePage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const toggleGame = (gameName: string) => {
+    // Sidebar is single-select like the pills: selecting one clears the others,
+    // clicking the active one clears back to all.
     setSelectedGames((prev) =>
-      prev.includes(gameName) ? prev.filter((g) => g !== gameName) : [...prev, gameName],
+      prev.length === 1 && prev[0] === gameName ? [] : [gameName],
     );
   };
 

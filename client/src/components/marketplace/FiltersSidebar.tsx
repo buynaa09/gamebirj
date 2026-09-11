@@ -80,7 +80,8 @@ export function FiltersSidebar({
         <label key={game.name} className={styles.fltRow}>
           <span className={styles.left}>
             <input
-              type="checkbox"
+              type="radio"
+              name="game-filter"
               checked={selectedGames.includes(game.name)}
               onChange={() => onToggleGame(game.name)}
             />
