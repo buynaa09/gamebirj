@@ -4,6 +4,7 @@ import styles from './MediaStep.module.css';
 export interface PreviewImage {
   name: string;
   url: string;
+  file: File;
 }
 
 interface MediaStepProps {
@@ -19,7 +20,7 @@ export function MediaStep({ images, onChange }: MediaStepProps) {
     const next = [...images];
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
-      next.push({ name: file.name, url: URL.createObjectURL(file) });
+      next.push({ name: file.name, url: URL.createObjectURL(file), file });
       if (next.length >= 8) break;
     }
     onChange(next.slice(0, 8));

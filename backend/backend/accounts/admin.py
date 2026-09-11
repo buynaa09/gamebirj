@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Account, AccountListing
+from .models import Account, AccountImage, AccountListing
 
 
 @admin.register(Account)
@@ -14,4 +14,9 @@ class AccountListingAdmin(admin.ModelAdmin):
     list_display = ("account", "listing", "value")
     search_fields = ("account__title", "listing__title")
     list_filter = ("listing",)
-# Register your models here.
+
+
+@admin.register(AccountImage)
+class AccountImageAdmin(admin.ModelAdmin):
+    list_display = ("account", "image", "created_at")
+    search_fields = ("account__title",)

@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { resolveDetailFields, resolveRanks } from '../../data/gameDetails';
-import { listings } from '../../data/listings';
 import type { SellDraft } from '../../hooks/useSellDraft';
 import type { Game } from '../../types';
 import styles from './DetailsStep.module.css';
@@ -14,15 +13,6 @@ interface DetailsStepProps {
 const TITLE_LIMIT = 100;
 const DESCRIPTION_LIMIT = 2000;
 
-function parsePrice(raw: string): number | null {
-  const n = Number(raw.replace(/[^0-9.]/g, ''));
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-function formatPeso(n: number): string {
-  return `₮${n.toLocaleString('mn-MN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-}
-
 export function DetailsStep({ game, draft, onChange }: DetailsStepProps) {
   const gameName = game?.name ?? null;
   const gameImage = game?.image ?? null;
@@ -32,13 +22,6 @@ export function DetailsStep({ game, draft, onChange }: DetailsStepProps) {
 
   const fields = resolveDetailFields(game);
   const ranks = resolveRanks(game);
-
-  const marketPrices = listings
-    .filter((l) => gameName !== null && l.game === gameName)
-    .map((l) => parsePrice(l.price))
-    .filter((n): n is number => n !== null)
-    .sort((a, b) => a - b);
-  const marketMedian = marketPrices.length > 0 ? marketPrices[Math.floor(marketPrices.length / 2)] : null;
 
   const setDetail = (key: string, value: string) => {
     onChange({ detailValues: { ...draft.detailValues, [key]: value } });

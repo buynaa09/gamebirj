@@ -22,6 +22,29 @@ export interface SignupInput {
   password2: string;
 }
 
+export interface PublishDetail {
+  listing: number;
+  value: string;
+}
+
+export interface PublishListingInput {
+  gameId: number;
+  rank: string;
+  title: string;
+  price: string;
+  description: string;
+  acceptOffers: boolean;
+  details: PublishDetail[];
+  images: File[];
+}
+
+export interface CreatedAccount {
+  id: number;
+  title: string;
+  game: string | null;
+  game_rank: string | null;
+  price: number;
+}
 export interface GameListing {
   id: number;
   title: string;

@@ -1,5 +1,5 @@
 import type { SignupInput, User } from '../types';
-import { API_BASE } from './api';
+import { API_BASE, getCsrfToken } from './api';
 
 export class AuthError extends Error {
   status: number;
@@ -8,11 +8,6 @@ export class AuthError extends Error {
     super(message);
     this.status = status;
   }
-}
-
-function getCsrfToken(): string | undefined {
-  const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : undefined;
 }
 
 interface ErrorPayload {

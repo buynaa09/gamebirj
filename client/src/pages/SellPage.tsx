@@ -3,12 +3,14 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useGames } from '../hooks/useGames';
 import { useSellDraft } from '../hooks/useSellDraft';
+import { publishListing } from '../services/accounts';
 import { StepIndicator } from '../components/sell/StepIndicator';
 import { GameStep } from '../components/sell/GameStep';
 import { DetailsStep } from '../components/sell/DetailsStep';
 import { MediaStep } from '../components/sell/MediaStep';
 import type { PreviewImage } from '../components/sell/MediaStep';
 import { ReviewStep } from '../components/sell/ReviewStep';
+import type { CreatedAccount } from '../types';
 import styles from './SellPage.module.css';
 
 export function SellPage() {
@@ -19,7 +21,8 @@ export function SellPage() {
   const [step, setStep] = useState(0);
   const [images, setImages] = useState<PreviewImage[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [published, setPublished] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState<CreatedAccount | null>(null);
 
   if (!loading && !user) {
     return <Navigate to="/login" replace />;
@@ -58,9 +61,37 @@ export function SellPage() {
         return;
       }
     }
+    const game = games.find((g) => g.name === draft.gameName) ?? null;
+    if (!game || game.id < 0) {
+      setError('Сервертэй холбогдож чадсангүй. Сүлжээгээ шалгаад дахин оролдоно уу.');
+      return;
+    }
+    const details = Object.entries(draft.detailValues)
+      .filter(([, value]) => value.trim() !== '')
+      .map(([key, value]) => ({ listing: Number(key.replace('listing:', '')), value: value.trim() }))
+      .filter((d) => Number.isFinite(d.listing));
     setError(null);
-    setPublished(true);
-    reset();
+    setPublishing(true);
+    publishListing({
+      gameId: game.id,
+      rank: draft.rank.trim(),
+      title: draft.listingTitle.trim(),
+      price: draft.price.trim(),
+      description: draft.description,
+      acceptOffers: draft.acceptOffers,
+      details,
+      images: images.map((img) => img.file),
+    })
+      .then((account) => {
+        setPublished(account);
+        reset();
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Нийтлэх үед алдаа гарлаа.');
+      })
+      .finally(() => {
+        setPublishing(false);
+      });
   };
 
   const discardDraft = () => {
@@ -77,9 +108,9 @@ export function SellPage() {
           <div className={styles.successBadge}>✓</div>
           <h1 className={styles.title}>Зар нийтлэгдлээ</h1>
           <p className={styles.subtitle}>
-            Таны аккаунт зах зээл дээр байршлаа. Худалдан авагчийн төлбөр Солилцоо эскроу системд хадгалагдах бөгөөд шилжүүлэг баталгаажсаны дараа та мөнгөө авах болно.
+            «{published.title}» зах зээл дээр байршлаа. Худалдан авагчийн төлбөр Солилцоо эскроу
+            системд хадгалагдах бөгөөд шилжүүлэг баталгаажсаны дараа та мөнгөө авах болно.
           </p>
-          <p className={styles.demoNote}>Демо — одоогоор сервертэй холбогдоогүй байна.</p>
           <div className={styles.successActions}>
             <button className="btn btn-primary" onClick={() => navigate('/marketplace')}>
               Зах зээлийг үзэх
@@ -87,7 +118,7 @@ export function SellPage() {
             <button
               className="btn btn-outline"
               onClick={() => {
-                setPublished(false);
+                setPublished(null);
                 setStep(0);
                 setImages([]);
               }}
@@ -156,8 +187,8 @@ export function SellPage() {
               Үргэлжлүүлэх →
             </button>
           ) : (
-            <button type="button" className="btn btn-primary" onClick={publish}>
-              Зар нийтлэх
+            <button type="button" className="btn btn-primary" onClick={publish} disabled={publishing}>
+              {publishing ? 'Нийтэлж байна…' : 'Зар нийтлэх'}
             </button>
           )}
         </div>

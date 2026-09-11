@@ -1,0 +1,182 @@
+from __future__ import annotations
+
+import json
+from http import HTTPStatus
+from typing import TYPE_CHECKING
+
+import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
+
+from backend.accounts.models import Account
+from backend.games.models import Game
+from backend.games.models import Listing
+from backend.games.models import ListingChoice
+from backend.users.tests.factories import UserFactory
+
+if TYPE_CHECKING:
+    from django.test import Client
+
+pytestmark = pytest.mark.django_db
+
+GIF = (
+    b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00"
+    b"\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00"
+    b"\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b"
+)
+
+
+def _image(name="shot.gif"):
+    return SimpleUploadedFile(name, GIF, content_type="image/gif")
+
+
+def _mlbb():
+    return Game.objects.get(name="Mobile Legends")
+
+
+def test_create_account_requires_login(client: Client):
+    response = client.post(reverse("api:create_account"), data={})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+def test_create_account_happy_path(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    game = _mlbb()
+    server = Listing.objects.get(game=game, title="Server")
+
+    response = client.post(
+        reverse("api:create_account"),
+        data={
+            "game": str(game.pk),
+            "game_rank": "Mythic",
+            "title": "",
+            "price": "5500",
+            "description": "Stacked account",
+            "accept_offers": "true",
+            "details": json.dumps([{"listing": server.pk, "value": "Asia"}]),
+            "images": [_image()],
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.json()
+    payload = response.json()
+    # Blank title falls back to the rank.
+    assert payload["title"] == "Mythic"
+    assert payload["game"] == "Mobile Legends"
+    assert payload["game_rank"] == "Mythic"
+    assert payload["price"] == 5500.0  # noqa: PLR2004
+    assert payload["accept_offers"] is True
+    assert len(payload["images"]) == 1
+
+    account = Account.objects.get(pk=payload["id"])
+    assert account.user == user
+    assert account.listings.count() == 1
+    item = account.listings.get()
+    assert item.listing == server
+    assert item.value == "Asia"
+    assert account.images.count() == 1
+
+
+def test_create_account_rejects_bad_price(client: Client):
+    client.force_login(UserFactory.create())
+    game = _mlbb()
+
+    response = client.post(
+        reverse("api:create_account"),
+        data={"game": str(game.pk), "price": "0"},
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert Account.objects.count() == 0
+
+
+def test_create_account_rejects_foreign_rank(client: Client):
+    client.force_login(UserFactory.create())
+    game = _mlbb()
+
+    response = client.post(
+        reverse("api:create_account"),
+        data={"game": str(game.pk), "price": "100", "game_rank": "Radiant"},
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert Account.objects.count() == 0
+
+
+def test_create_account_rejects_foreign_listing(client: Client):
+    client.force_login(UserFactory.create())
+    game = _mlbb()
+    other = Game.objects.create(name="Other Game")
+    foreign = Listing.objects.create(game=other, title="Other Field")
+
+    response = client.post(
+        reverse("api:create_account"),
+        data={
+            "game": str(game.pk),
+            "price": "100",
+            "details": json.dumps([{"listing": foreign.pk, "value": "x"}]),
+        },
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert Account.objects.count() == 0
+
+
+def test_create_account_choice_listing(client: Client):
+    client.force_login(UserFactory.create())
+    game = _mlbb()
+    skin = Listing.objects.create(game=game, title="Skin", listing_type="choice")
+    ListingChoice.objects.create(listing=skin, choice_value="Epic")
+
+    ok = client.post(
+        reverse("api:create_account"),
+        data={
+            "game": str(game.pk),
+            "price": "100",
+            "details": json.dumps([{"listing": skin.pk, "value": "Epic"}]),
+        },
+    )
+    assert ok.status_code == HTTPStatus.OK, ok.json()
+    item = Account.objects.get().listings.get()
+    assert item.value == ""
+    assert [c.choice_value for c in item.choices.all()] == ["Epic"]
+
+    bad = client.post(
+        reverse("api:create_account"),
+        data={
+            "game": str(game.pk),
+            "price": "100",
+            "details": json.dumps([{"listing": skin.pk, "value": "Common"}]),
+        },
+    )
+    assert bad.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_create_account_rejects_non_image(client: Client):
+    client.force_login(UserFactory.create())
+    game = _mlbb()
+    text = SimpleUploadedFile("note.txt", b"hello", content_type="text/plain")
+
+    response = client.post(
+        reverse("api:create_account"),
+        data={"game": str(game.pk), "price": "100", "images": [text]},
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert Account.objects.count() == 0
+
+
+def test_list_my_accounts_only_own(client: Client):
+    me = UserFactory.create()
+    other_user = UserFactory.create()
+    game = _mlbb()
+    Account.objects.create(user=me, title="Mine", game=game, price=10)
+    Account.objects.create(user=other_user, title="Theirs", game=game, price=20)
+    client.force_login(me)
+
+    response = client.get(reverse("api:list_my_accounts"))
+
+    assert response.status_code == HTTPStatus.OK
+    assert [a["title"] for a in response.json()] == ["Mine"]

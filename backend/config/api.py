@@ -11,3 +11,4 @@ api = NinjaAPI(
 api.add_router("/users/", "backend.users.api.views.router")
 api.add_router("/users/auth/", "backend.users.api.auth.router")
 api.add_router("/games/", "backend.games.api.views.router")
+api.add_router("/accounts/", "backend.accounts.api.views.router")
