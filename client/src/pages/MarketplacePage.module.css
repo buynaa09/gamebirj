@@ -1,0 +1,18 @@
+.body {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 60px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 26px;
+}
+
+@media (min-width: 960px) {
+  .body {
+    grid-template-columns: 250px 1fr;
+  }
+}
+
+.main {
+  min-width: 0;
+}

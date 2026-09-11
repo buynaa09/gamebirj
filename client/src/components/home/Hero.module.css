@@ -1,0 +1,88 @@
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 60px 24px 70px;
+  background:
+    radial-gradient(650px 420px at 88% 8%, color-mix(in srgb, var(--red) 22%, transparent), transparent 60%),
+    var(--bg);
+}
+
+html[data-theme='light'] .hero {
+  background: radial-gradient(650px 420px at 88% 8%, color-mix(in srgb, var(--red) 10%, transparent), transparent 60%), var(--bg);
+}
+
+.heroInner {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 44px;
+  align-items: center;
+}
+
+@media (min-width: 980px) {
+  .heroInner {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 40px;
+  }
+}
+
+.hero h1 {
+  font-size: 44px;
+  line-height: 1.06;
+  font-weight: 800;
+  margin: 0 0 20px;
+  letter-spacing: -1px;
+}
+
+@media (min-width: 640px) {
+  .hero h1 {
+    font-size: 58px;
+  }
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--red);
+  position: relative;
+  display: inline-block;
+}
+
+.hero h1 em::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 70%;
+  height: 4px;
+  background: var(--red);
+  border-radius: 2px;
+}
+
+.lead {
+  max-width: 520px;
+  color: var(--text-dim);
+  font-size: 16px;
+  line-height: 1.65;
+  margin: 0 0 28px;
+}
+
+.heroCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.linkArrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.linkArrow:hover {
+  color: var(--text);
+}

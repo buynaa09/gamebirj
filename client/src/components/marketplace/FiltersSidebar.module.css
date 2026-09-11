@@ -1,0 +1,96 @@
+.filters {
+  display: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  background: var(--panel);
+  align-self: start;
+  position: sticky;
+  top: 76px;
+}
+
+@media (min-width: 960px) {
+  .filters {
+    display: block;
+  }
+}
+
+.filters h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.groupTitle {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  color: var(--text-faint);
+  font-weight: 800;
+  text-transform: uppercase;
+  margin: 18px 0 10px;
+}
+
+.groupTitle:first-of-type {
+  margin-top: 0;
+}
+
+.fltRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.fltRow .left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.fltRow input {
+  accent-color: var(--red);
+  width: 15px;
+  height: 15px;
+}
+
+.fltRow .count {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.seeAll {
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 6px;
+  display: inline-block;
+}
+
+.priceInputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.priceInputs input {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 9px;
+  font-size: 13px;
+}
+
+.range {
+  width: 100%;
+  margin-top: 12px;
+  accent-color: var(--red);
+}

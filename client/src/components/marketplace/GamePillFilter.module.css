@@ -1,0 +1,40 @@
+.pillRow {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 18px;
+  scrollbar-width: none;
+}
+
+.pillRow::-webkit-scrollbar {
+  display: none;
+}
+
+.pill {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--panel);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pill.active {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+
+.pill .n {
+  opacity: 0.75;
+  font-weight: 600;
+  margin-left: 2px;
+}

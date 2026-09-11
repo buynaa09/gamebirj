@@ -1,0 +1,143 @@
+.tradeCard {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.tradeCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text-faint);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.priceRow .cur {
+  font-size: 14px;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.priceRow .amt {
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.statusLine {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 0.3px;
+  margin-bottom: 18px;
+}
+
+.flowRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.flowBox {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 64px;
+  background: var(--panel-2);
+  position: relative;
+  overflow: hidden;
+}
+
+.flowBox.active {
+  border-color: var(--red);
+}
+
+.flowBox .label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--text-dim);
+}
+
+.flowBox .sub {
+  font-size: 9px;
+  color: var(--text-faint);
+  float: right;
+}
+
+.flowFill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 60%;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--red) 30%, transparent));
+}
+
+.flowChip {
+  margin-top: 22px;
+  background: var(--panel);
+  border: 1px solid var(--red);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flowChip .sq {
+  width: 8px;
+  height: 8px;
+  background: var(--red);
+  display: inline-block;
+  border-radius: 2px;
+}
+
+.timeline {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  font-size: 12px;
+}
+
+.timeline .row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  padding: 6px 0;
+  color: var(--text-dim);
+}
+
+.timeline .row .t {
+  color: var(--red);
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}

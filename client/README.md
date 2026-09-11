@@ -1,75 +1,85 @@
-# React + TypeScript + Vite
+# ASCEND — Gaming Account Marketplace
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript conversion of the ASCEND gaming marketplace UI, built with Vite and CSS Modules.
 
-Currently, two official plugins are available:
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Available Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `npm run dev` — Start the dev server
+- `npm run build` — Type-check and build for production
+- `npm run lint` — Run ESLint
+- `npm run preview` — Preview the production build
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Project Structure
 
 ```
+src/
+├── App.tsx                    # Root component with routing
+├── App.module.css             # Shared button styles
+├── index.css                  # Theme tokens (CSS variables) + global resets
+├── main.tsx                   # Entry point
+│
+├── types/
+│   └── index.ts               # Listing, GameFilter, Theme types
+│
+├── data/
+│   ├── listings.ts            # Mock listing data
+│   └── games.ts               # Pill + sidebar game filter data
+│
+├── context/
+│   ├── ThemeContext.tsx         # Theme context definition + useTheme hook
+│   └── ThemeProvider.tsx        # Theme provider with localStorage persistence
+│
+├── components/
+│   ├── icons/
+│   │   └── Icons.tsx           # All SVG icon components
+│   │
+│   ├── layout/
+│   │   ├── TopBar.tsx          # Sticky top nav + mobile menu
+│   │   ├── TopBar.module.css
+│   │   ├── BottomNav.tsx       # Mobile bottom nav (visible < 900px)
+│   │   └── ChatBubble.tsx      # Floating chat CTA
+│   │
+│   ├── home/
+│   │   ├── Hero.tsx            # Hero section with CTAs
+│   │   ├── Hero.module.css
+│   │   ├── TradeDemoCard.tsx   # Escrow demo card
+│   │   ├── TradeDemoCard.module.css
+│   │   ├── InfoStrip.tsx       # "How it works" strip
+│   │   └── InfoStrip.module.css
+│   │
+│   ├── marketplace/
+│   │   ├── MarketplaceHeader.tsx   # Breadcrumbs + title
+│   │   ├── MarketplaceHeader.module.css
+│   │   ├── FiltersSidebar.tsx      # Desktop sidebar filters
+│   │   ├── FiltersSidebar.module.css
+│   │   ├── SearchBar.tsx           # Search input + mobile filter btn
+│   │   ├── SearchBar.module.css
+│   │   ├── GamePillFilter.tsx      # Horizontal game pill filters
+│   │   ├── GamePillFilter.module.css
+│   │   ├── SortSelect.tsx          # Results count + sort dropdown
+│   │   ├── SortSelect.module.css
+│   │   ├── ListingGrid.tsx         # Card grid
+│   │   ├── ListingGrid.module.css
+│   │   ├── ListingCard.tsx         # Individual listing card
+│   │   └── ListingCard.module.css
+│
+└── pages/
+    ├── HomePage.tsx            # Home route (/)
+    ├── MarketplacePage.tsx     # Marketplace route (/marketplace)
+    └── MarketplacePage.module.css
+```
+
+## Key Design Decisions
+
+- **CSS Modules** for component-scoped styles, preserving the original CSS variables as a shared theme layer in `index.css`.
+- **React Router** replaces the original JS `goTo()` page switching with proper URL-based routing.
+- **Theme** stored in `localStorage` with `prefers-color-scheme` fallback on first load, managed via React Context.
+- **Listing filtering** is client-side: game pill filter + search input filter the typed listings array via `useState`/`useMemo`.
+- **All original breakpoints, animations, and responsive behavior** are preserved identically (mobile bottom nav < 900px, sidebar filters ≥ 960px, grid columns at 640px/1180px).

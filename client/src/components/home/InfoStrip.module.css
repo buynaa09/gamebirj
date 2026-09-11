@@ -1,0 +1,15 @@
+.strip {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px 60px;
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.strip span {
+  color: var(--text-dim);
+  font-weight: 600;
+}

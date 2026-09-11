@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCEND — Buy &amp; sell gaming accounts, safely.</title>
+<style>
+  :root{
+    --bg:#0b0b0d;
+    --bg-alt:#111114;
+    --panel:#141417;
+    --panel-2:#1b1b1f;
+    --border:#2a2a2f;
+    --text:#f4f4f6;
+    --text-dim:#9a9aa2;
+    --text-faint:#68686f;
+    --red:#e5344a;
+    --red-dim:#7a1b28;
+    --pink:#ff8fa3;
+    --shadow: 0 20px 60px rgba(0,0,0,.45);
+  }
+  html[data-theme="light"]{
+    --bg:#f6f5f2;
+    --bg-alt:#ffffff;
+    --panel:#ffffff;
+    --panel-2:#f0eeea;
+    --border:#e1ded7;
+    --text:#17171a;
+    --text-dim:#5c5b58;
+    --text-faint:#918f89;
+    --red:#d92c42;
+    --red-dim:#f6c9cf;
+    --pink:#c02342;
+    --shadow: 0 20px 50px rgba(30,20,20,.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI', Inter, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    transition:background .25s ease, color .25s ease;
+    padding-bottom:64px;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;}
+
+  /* ===== Top nav ===== */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 28px;
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.5px; font-size:17px;}
+  .brand svg{display:block;}
+  .brand .word{display:none;}
+  @media(min-width:560px){ .brand .word{display:inline;} }
+
+  .nav-links{display:none; align-items:center; gap:26px; font-size:14px; font-weight:600; color:var(--text-dim);}
+  .nav-links a{padding-bottom:4px; border-bottom:2px solid transparent; transition:color .15s;}
+  .nav-links a.active{color:var(--red); border-color:var(--red);}
+  .nav-links a:hover{color:var(--text);}
+  @media(min-width:900px){ .nav-links{display:flex;} }
+
+  .top-actions{display:flex; align-items:center; gap:14px;}
+  .icon-btn{
+    width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid transparent; color:var(--text-dim);
+    cursor:pointer; position:relative; transition:.15s;
+  }
+  .icon-btn:hover{background:var(--panel-2); color:var(--text);}
+  .dot-badge{position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:var(--red); border:2px solid var(--bg);}
+  .avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:var(--red-dim); color:var(--red);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:13px; border:1px solid var(--red);
+  }
+  html[data-theme="light"] .avatar{color:var(--red); background:#fbe4e8;}
+
+  .theme-toggle{
+    display:flex; align-items:center; gap:6px;
+    border:1px solid var(--border); border-radius:999px;
+    padding:4px; background:var(--panel-2); cursor:pointer;
+  }
+  .theme-toggle button{
+    border:none; background:transparent; color:var(--text-faint);
+    width:30px; height:26px; border-radius:999px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:.15s;
+  }
+  .theme-toggle button.on{background:var(--red); color:#fff;}
+
+  /* mobile hamburger */
+  .hamburger{display:flex; width:36px; height:36px; border-radius:8px; border:1px solid var(--border); align-items:center; justify-content:center; cursor:pointer; background:transparent; color:var(--text);}
+  @media(min-width:900px){ .hamburger{display:none;} }
+
+  .mobile-menu{
+    display:none; flex-direction:column; gap:2px;
+    padding:10px 20px 18px; border-bottom:1px solid var(--border);
+    background:var(--bg);
+  }
+  .mobile-menu.open{display:flex;}
+  .mobile-menu a{padding:12px 4px; font-weight:600; color:var(--text-dim); border-bottom:1px solid var(--border);}
+  .mobile-menu a.active{color:var(--red);}
+
+  /* ===== Page switcher ===== */
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* ===== HERO (Home) ===== */
+  .hero{
+    position:relative; overflow:hidden;
+    padding:60px 24px 70px;
+    background:
+      radial-gradient(650px 420px at 88% 8%, color-mix(in srgb, var(--red) 22%, transparent), transparent 60%),
+      var(--bg);
+  }
+  html[data-theme="light"] .hero{
+    background: radial-gradient(650px 420px at 88% 8%, color-mix(in srgb, var(--red) 10%, transparent), transparent 60%), var(--bg);
+  }
+  .hero-inner{
+    max-width:1180px; margin:0 auto;
+    display:grid; grid-template-columns:1fr; gap:44px; align-items:center;
+  }
+  @media(min-width:980px){ .hero-inner{grid-template-columns:1.05fr .95fr; gap:40px;} }
+
+  .hero h1{
+    font-size:44px; line-height:1.06; font-weight:800; margin:0 0 20px; letter-spacing:-1px;
+  }
+  @media(min-width:640px){ .hero h1{font-size:58px;} }
+  .hero h1 em{
+    font-style:italic; color:var(--red); position:relative; display:inline-block;
+  }
+  .hero h1 em::after{
+    content:""; position:absolute; left:0; bottom:-6px; width:70%; height:4px; background:var(--red); border-radius:2px;
+  }
+  .hero p.lead{
+    max-width:520px; color:var(--text-dim); font-size:16px; line-height:1.65; margin:0 0 28px;
+  }
+  .hero-ctas{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:14px 22px; border-radius:8px; font-weight:700; font-size:15px;
+    cursor:pointer; border:1px solid transparent; transition:.15s;
+  }
+  .btn-primary{background:var(--red); color:#fff;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-outline{background:transparent; border-color:var(--border); color:var(--text);}
+  .btn-outline:hover{background:var(--panel-2);}
+  .link-arrow{display:inline-flex; align-items:center; gap:6px; color:var(--text-dim); font-weight:600; font-size:14px;}
+  .link-arrow:hover{color:var(--text);}
+
+  /* demo trade card */
+  .trade-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:22px; box-shadow:var(--shadow);
+  }
+  .trade-card-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .trade-card-top .eyebrow{font-size:11px; letter-spacing:1px; color:var(--text-faint); font-weight:700; text-transform:uppercase;}
+  .badge{font-size:10px; padding:3px 9px; border-radius:999px; border:1px solid var(--border); color:var(--text-faint); font-weight:700;}
+  .price-row{display:flex; align-items:baseline; gap:8px; margin-bottom:4px;}
+  .price-row .cur{font-size:14px; color:var(--text-faint); font-weight:700;}
+  .price-row .amt{font-size:34px; font-weight:800;}
+  .status-line{font-size:12px; font-weight:700; color:var(--red); letter-spacing:.3px; margin-bottom:18px;}
+  .flow-row{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;}
+  .flow-box{
+    border:1px solid var(--border); border-radius:10px; padding:10px; min-height:64px;
+    background:var(--panel-2); position:relative; overflow:hidden;
+  }
+  .flow-box.active{border-color:var(--red);}
+  .flow-box .label{font-size:10px; font-weight:800; letter-spacing:.4px; color:var(--text-dim);}
+  .flow-box .sub{font-size:9px; color:var(--text-faint); float:right;}
+  .flow-fill{position:absolute; left:0; right:0; bottom:0; height:60%; background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--red) 30%, transparent)); }
+  .flow-chip{
+    margin-top:22px; background:var(--panel); border:1px solid var(--red); color:var(--text);
+    border-radius:6px; padding:8px 10px; font-weight:800; font-size:13px; display:flex; align-items:center; gap:6px;
+  }
+  .flow-chip .sq{width:8px; height:8px; background:var(--red); display:inline-block; border-radius:2px;}
+  .timeline{border-top:1px solid var(--border); padding-top:12px; font-size:12px;}
+  .timeline .row{display:grid; grid-template-columns:44px 1fr; gap:12px; padding:6px 0; color:var(--text-dim);}
+  .timeline .row .t{color:var(--red); font-weight:700; font-family:ui-monospace, monospace; font-size:11px;}
+
+  /* section: how it works strip */
+  .strip{
+    max-width:1180px; margin:0 auto; padding:0 24px 60px;
+    display:flex; gap:26px; flex-wrap:wrap; color:var(--text-faint); font-size:13px;
+  }
+  .strip span{color:var(--text-dim); font-weight:600;}
+
+  /* ===== Marketplace ===== */
+  .mkt-header{
+    max-width:1280px; margin:0 auto; padding:36px 24px 26px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .crumbs{font-size:13px; color:var(--text-faint);}
+  .crumbs .cur{color:var(--text);}
+  .mkt-title-row{display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:18px;}
+  .eyebrow-red{color:var(--red); font-weight:800; font-size:12px; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;}
+  .mkt-title-row h2{font-size:30px; margin:0 0 8px; max-width:640px; line-height:1.15; font-weight:800;}
+  .mkt-title-row p{color:var(--text-dim); margin:0; max-width:560px; font-size:14.5px; line-height:1.5;}
+  .mkt-header-actions{display:flex; gap:10px; flex-shrink:0;}
+
+  .mkt-body{max-width:1280px; margin:0 auto; padding:0 24px 60px; display:grid; grid-template-columns:1fr; gap:26px;}
+  @media(min-width:960px){ .mkt-body{grid-template-columns:250px 1fr;} }
+
+  .filters{display:none; border:1px solid var(--border); border-radius:12px; padding:18px; background:var(--panel); align-self:start; position:sticky; top:76px;}
+  @media(min-width:960px){ .filters{display:block;} }
+  .filters h4{display:flex; align-items:center; gap:8px; font-size:14px; margin:0 0 16px;}
+  .filters .group-title{font-size:11px; letter-spacing:.6px; color:var(--text-faint); font-weight:800; text-transform:uppercase; margin:18px 0 10px;}
+  .filters .group-title:first-of-type{margin-top:0;}
+  .flt-row{display:flex; align-items:center; justify-content:space-between; padding:6px 0; font-size:13.5px; color:var(--text-dim); cursor:pointer;}
+  .flt-row .left{display:flex; align-items:center; gap:9px;}
+  .flt-row input{accent-color:var(--red); width:15px; height:15px;}
+  .flt-row .count{color:var(--text-faint); font-size:12px;}
+  .see-all{color:var(--red); font-size:13px; font-weight:700; cursor:pointer; margin-top:6px; display:inline-block;}
+  .price-inputs{display:flex; align-items:center; gap:8px; margin-top:10px;}
+  .price-inputs input{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    border-radius:6px; padding:8px 9px; font-size:13px;
+  }
+  .range{width:100%; margin-top:12px; accent-color:var(--red);}
+
+  .mkt-main{min-width:0;}
+  .search-row{display:flex; gap:10px; margin-bottom:16px;}
+  .search-box{
+    flex:1; display:flex; align-items:center; gap:10px;
+    border:1px solid var(--border); background:var(--panel); border-radius:10px; padding:12px 14px;
+  }
+  .search-box input{flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:14px;}
+  .search-box input::placeholder{color:var(--text-faint);}
+  .filters-mobile-btn{
+    display:flex; align-items:center; gap:8px; border:1px solid var(--border); background:var(--panel);
+    border-radius:10px; padding:12px 16px; font-weight:700; font-size:13.5px; cursor:pointer; color:var(--text);
+  }
+  @media(min-width:960px){ .filters-mobile-btn{display:none;} }
+
+  .pill-row{display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; margin-bottom:18px; scrollbar-width:none;}
+  .pill-row::-webkit-scrollbar{display:none;}
+  .pill{
+    flex-shrink:0; display:flex; align-items:center; gap:7px;
+    border:1px solid var(--border); border-radius:999px; padding:9px 16px;
+    font-size:13px; font-weight:700; color:var(--text-dim); background:var(--panel); cursor:pointer; white-space:nowrap;
+  }
+  .pill.active{background:var(--red); color:#fff; border-color:var(--red);}
+  .pill .n{opacity:.75; font-weight:600; margin-left:2px;}
+
+  .results-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; font-size:13.5px; color:var(--text-dim);}
+  .results-row b{color:var(--text);}
+  .sort-select{
+    background:var(--panel); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:9px 12px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+
+  .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+  @media(min-width:640px){ .grid{grid-template-columns:repeat(3,1fr);} }
+  @media(min-width:1180px){ .grid{grid-template-columns:repeat(4,1fr);} }
+
+  .card{
+    border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel);
+    display:flex; flex-direction:column; transition:transform .15s, border-color .15s; cursor:pointer;
+  }
+  .card:hover{transform:translateY(-3px); border-color:color-mix(in srgb, var(--red) 40%, var(--border));}
+  .card-media{
+    position:relative; aspect-ratio:4/3; background:var(--panel-2);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .card-media img{width:100%; height:100%; object-fit:cover; display:block;}
+  .tag-manual{
+    position:absolute; top:8px; left:8px; background:rgba(15,15,18,.75); backdrop-filter:blur(4px);
+    color:#fff; font-size:10px; font-weight:800; padding:4px 8px; border-radius:6px; display:flex; align-items:center; gap:4px;
+  }
+  .fav-btn{
+    position:absolute; top:8px; right:8px; width:28px; height:28px; border-radius:50%;
+    background:rgba(15,15,18,.6); display:flex; align-items:center; justify-content:center; color:#fff; border:none; cursor:pointer;
+  }
+  .game-chip{
+    position:absolute; bottom:8px; left:8px; right:8px; display:flex; align-items:center; justify-content:space-between;
+    font-size:11px; color:#fff; font-weight:700;
+  }
+  .game-chip .rank{background:rgba(15,15,18,.7); padding:3px 8px; border-radius:999px; display:flex; align-items:center; gap:4px;}
+  .card-body{padding:12px 13px 14px;}
+  .card-title{font-size:13.5px; font-weight:700; line-height:1.35; margin:0 0 6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.6em;}
+  .card-meta{font-size:11px; color:var(--text-faint); margin-bottom:10px;}
+  .card-foot{display:flex; align-items:center; justify-content:space-between;}
+  .card-price{font-weight:800; font-size:15px;}
+  .seller-dot{width:22px; height:22px; border-radius:50%; background:var(--panel-2); border:1px solid var(--border); font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--text-dim);}
+
+  /* chat bubble */
+  .chat-bubble{
+    position:fixed; right:20px; bottom:78px; z-index:60;
+    display:flex; align-items:center; gap:8px;
+    background:var(--red); color:#fff; padding:12px 18px; border-radius:999px;
+    font-weight:700; font-size:13.5px; box-shadow:0 10px 28px rgba(0,0,0,.35); cursor:pointer;
+  }
+  @media(min-width:900px){ .chat-bubble{bottom:20px;} }
+
+  /* mobile bottom nav */
+  .bottom-nav{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:55;
+    background:var(--bg); border-top:1px solid var(--border);
+    padding:8px 4px 10px;
+  }
+  @media(min-width:900px){ .bottom-nav{display:none;} }
+  .bottom-nav a{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size:10.5px; font-weight:700; color:var(--text-faint);
+  }
+  .bottom-nav a.active{color:var(--red);}
+  body{padding-bottom:80px;}
+  @media(min-width:900px){ body{padding-bottom:0;} }
+</style>
+</head>
+<body>
+
+<!-- ===== Top bar ===== -->
+<header class="topbar">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <path d="M12 1L23 21H16L12 13L8 21H1L12 1Z" fill="currentColor"/>
+    </svg>
+    <span class="word">ASCEND</span>
+  </div>
+
+  <nav class="nav-links">
+    <a href="#" data-page="home" class="active">Home</a>
+    <a href="#" data-page="marketplace">Marketplace</a>
+    <a href="#">Community</a>
+    <a href="#">Sell</a>
+    <a href="#">Transactions</a>
+    <a href="#">More ▾</a>
+  </nav>
+
+  <div class="top-actions">
+    <div class="theme-toggle" role="group" aria-label="Theme toggle">
+      <button id="btn-dark" class="on" title="Dark mode" aria-label="Dark mode">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="btn-light" title="Light mode" aria-label="Light mode">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <button class="icon-btn" aria-label="Search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button class="icon-btn" aria-label="Notifications">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.7 21a2 2 0 01-3.4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span class="dot-badge"></span>
+    </button>
+    <div class="avatar">B</div>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#" data-page="home" class="active">Home</a>
+  <a href="#" data-page="marketplace">Marketplace</a>
+  <a href="#">Community</a>
+  <a href="#">Sell</a>
+  <a href="#">Transactions</a>
+  <a href="#">More</a>
+</div>
+
+<!-- ===== HOME PAGE ===== -->
+<main class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <h1>Buy &amp; sell gaming<br>accounts, <em>safely.</em></h1>
+        <p class="lead">ASCEND is a gaming account marketplace with escrow built in, we call it Midman. The buyer's money stays with ASCEND until the account is delivered and confirmed, then the seller gets paid. Free to list, 40+ games, and sellers can earn a KYC badge you can filter for.</p>
+        <div class="hero-ctas">
+          <button class="btn btn-primary" onclick="goTo('marketplace')">List My Account, it's free
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="btn btn-outline" onclick="goTo('marketplace')">Browse Marketplace</button>
+        </div>
+        <a class="link-arrow" href="#">How Midman works
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+
+      <div class="trade-card">
+        <div class="trade-card-top">
+          <span class="eyebrow">How a trade works</span>
+          <span class="badge">Demo · not a real trade</span>
+        </div>
+        <div class="price-row"><span class="cur">PHP</span><span class="amt">18,900</span></div>
+        <div class="status-line">BUYER PAID · CAPTURED</div>
+
+        <div class="flow-row">
+          <div class="flow-box active">
+            <div class="label">BUYER</div><div class="sub">QR PH / BANK</div>
+            <div class="flow-fill"></div>
+          </div>
+          <div class="flow-box">
+            <div class="label">ASCEND</div><div class="sub">MIDMAN VAULT</div>
+          </div>
+          <div class="flow-box">
+            <div class="label">SELLER</div><div class="sub">PAYOUT</div>
+          </div>
+        </div>
+        <div class="flow-chip"><span class="sq"></span> PHP 18,900</div>
+
+        <div class="timeline">
+          <div class="row"><span class="t">T+0s</span><span>Buyer paid. Money leaves the buyer, not into the seller's pocket.</span></div>
+          <div class="row"><span class="t">T+2s</span><span>Locked in the vault while the buyer logs in and checks the account.</span></div>
+          <div class="row"><span class="t">T+3m</span><span>Once confirmed, the vault releases payout to the seller.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <span>40+ games supported</span>
+    <span>Free to list an account</span>
+    <span>KYC-verified seller badge</span>
+    <span>Escrow held until delivery is confirmed</span>
+  </div>
+</main>
+
+<!-- ===== MARKETPLACE PAGE ===== -->
+<main class="page" id="page-marketplace">
+  <div class="mkt-header">
+    <div class="crumbs"><a href="#" onclick="goTo('home')">Home</a> &nbsp;›&nbsp; <span class="cur">Marketplace</span></div>
+    <div class="mkt-title-row">
+      <div>
+        <div class="eyebrow-red">Worldwide marketplace</div>
+        <h2>Gaming accounts for sale, every purchase escrow-protected</h2>
+        <p>18 live listings across 40+ games. Your payment is held by ASCEND, never sent straight to the seller.</p>
+      </div>
+      <div class="mkt-header-actions">
+        <button class="btn btn-outline">Buyer guide</button>
+        <button class="btn btn-primary">+ Sell account</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mkt-body">
+    <!-- Filters -->
+    <aside class="filters">
+      <h4>Filters</h4>
+
+      <div class="group-title">Game</div>
+      <label class="flt-row"><span class="left"><input type="checkbox"> Mobile Legends</span><span class="count">11</span></label>
+      <label class="flt-row"><span class="left"><input type="checkbox"> Roblox</span><span class="count">7</span></label>
+      <label class="flt-row"><span class="left"><input type="checkbox"> Free Fire</span><span class="count">5</span></label>
+      <label class="flt-row"><span class="left"><input type="checkbox"> Brawl Stars</span><span class="count">3</span></label>
+      <label class="flt-row"><span class="left"><input type="checkbox"> League of Legends: Wild Rift</span><span class="count">3</span></label>
+      <label class="flt-row"><span class="left"><input type="checkbox"> Clash of Clans</span><span class="count">2</span></label>
+      <label class="flt-row"><span class="left"><input type="checkbox"> COD Mobile</span><span class="count">2</span></label>
+      <label class="flt-row"><span class="left"><input type="checkbox"> PUBG Mobile</span><span class="count">2</span></label>
+      <span class="see-all">See all 43 games</span>
+
+      <div class="group-title">Price range</div>
+      <div class="price-inputs">
+        <input type="text" value="₱ 0">
+        <span style="color:var(--text-faint)">–</span>
+        <input type="text" value="₱ 50,000+">
+      </div>
+      <input class="range" type="range" min="0" max="100" value="55">
+
+      <div class="group-title">Delivery method</div>
+      <label class="flt-row"><span class="left"><input type="checkbox"> Manual handover</span></label>
+      <label class="flt-row"><span class="left"><input type="checkbox"> Instant delivery</span></label>
+    </aside>
+
+    <!-- Main listing area -->
+    <section class="mkt-main">
+      <div class="search-row">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" placeholder="Search by title, game, rank, or item…">
+        </div>
+        <button class="filters-mobile-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Filters
+        </button>
+      </div>
+
+      <div class="pill-row" id="pillRow">
+        <div class="pill active" data-filter="all">All games</div>
+        <div class="pill" data-filter="Fortnite">🎮 Fortnite <span class="n">1</span></div>
+        <div class="pill" data-filter="Clash of Clans">🏰 Clash of Clans <span class="n">2</span></div>
+        <div class="pill" data-filter="Dunk City Dynasty">🏀 Dunk City Dynasty <span class="n">1</span></div>
+        <div class="pill" data-filter="PUBG Mobile">🎯 PUBG Mobile <span class="n">2</span></div>
+        <div class="pill" data-filter="Valorant">🔫 Valorant <span class="n">1</span></div>
+        <div class="pill" data-filter="COD Mobile">💀 COD Mobile <span class="n">2</span></div>
+        <div class="pill" data-filter="Brawl Stars">⭐ Brawl Stars <span class="n">3</span></div>
+        <div class="pill" data-filter="LoL: Wild Rift">🗡️ LoL: Wild Rift <span class="n">3</span></div>
+      </div>
+
+      <div class="results-row">
+        <span>Showing <b>18+</b> of <b>18+</b> listings</span>
+        <select class="sort-select">
+          <option>Newest first</option>
+          <option>Price: low to high</option>
+          <option>Price: high to low</option>
+        </select>
+      </div>
+
+      <div class="grid" id="listingGrid"><!-- cards injected by JS --></div>
+    </section>
+  </div>
+</main>
+
+<div class="chat-bubble">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+  Chat with us
+</div>
+
+<!-- mobile bottom nav -->
+<nav class="bottom-nav">
+  <a href="#" data-page="home" class="active">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 11l9-8 9 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v10h14V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Home
+  </a>
+  <a href="#">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
+    Dashboard
+  </a>
+  <a href="#" data-page="marketplace">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 8l1-4h14l1 4M4 8v11a1 1 0 001 1h14a1 1 0 001-1V8M4 8h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Market
+  </a>
+  <a href="#">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    Sell
+  </a>
+  <a href="#">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 01-8.5 8.5 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8A8.5 8.5 0 0112.5 3 8.5 8.5 0 0121 11.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+    Messages
+  </a>
+  <a href="#">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8.5 12.5l2.3 2.3L15.5 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Trades
+  </a>
+</nav>
+
+<script>
+  /* ---------- Theme ---------- */
+  const root = document.documentElement;
+  const btnDark = document.getElementById('btn-dark');
+  const btnLight = document.getElementById('btn-light');
+  function setTheme(t){
+    root.setAttribute('data-theme', t);
+    btnDark.classList.toggle('on', t === 'dark');
+    btnLight.classList.toggle('on', t === 'light');
+    try{ localStorage.setItem('ascend-theme', t); }catch(e){}
+  }
+  let saved = 'dark';
+  try{ saved = localStorage.getItem('ascend-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); }catch(e){}
+  setTheme(saved);
+  btnDark.addEventListener('click', () => setTheme('dark'));
+  btnLight.addEventListener('click', () => setTheme('light'));
+
+  /* ---------- Page switch ---------- */
+  function goTo(page){
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+    document.querySelectorAll('[data-page]').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+    document.getElementById('mobileMenu').classList.remove('open');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', (e) => { e.preventDefault(); goTo(el.dataset.page); });
+  });
+
+  /* ---------- Mobile menu ---------- */
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  });
+
+  /* ---------- Listings data ---------- */
+  const listings = [
+    {game:'Roblox', title:'cuenta blox fruit dragon perma+gamepass y mucho más,más…', rank:'27800', price:'₱49.00', time:'1 day ago', seller:'Y'},
+    {game:'PUBG Mobile', title:'Diamond', rank:'DIAMOND', price:'₱7,516.00', time:'3 days ago', seller:'🐲'},
+    {game:'Mobile Legends', title:'MLBB Account | 186 Skins | 94 Heroes | Mythical Honor', rank:'MYTHICAL HONOR', price:'₱5,500.00', time:'3 days ago', seller:'L'},
+    {game:'Free Fire', title:'Rare Free Fire Account — First Edition Badge | Grandmaster | 36 Gun Skins', rank:'GRANDMASTER', price:'₱5,399.00', time:'4 days ago', seller:'F'},
+    {game:'Valorant', title:'Immortal 2 stacked account, rare skins bundle', rank:'IMMORTAL', price:'₱4,200.00', time:'5 days ago', seller:'V'},
+    {game:'COD Mobile', title:'Legendary rank, mythic weapon collection, full unlocks', rank:'LEGENDARY', price:'₱3,100.00', time:'5 days ago', seller:'C'},
+    {game:'Brawl Stars', title:'45 brawlers unlocked, all maxed power 11', rank:'GOLD', price:'₱1,850.00', time:'6 days ago', seller:'B'},
+    {game:'LoL: Wild Rift', title:'Diamond climb-ready account, 60+ champions', rank:'DIAMOND', price:'₱2,600.00', time:'6 days ago', seller:'W'},
+    {game:'Clash of Clans', title:'TH14 maxed base, max heroes, rushed troops', rank:'TH14', price:'₱6,000.00', time:'1 week ago', seller:'C'},
+    {game:'Fortnite', title:'OG skins bundle, Renegade Raider included', rank:'OG', price:'₱9,800.00', time:'1 week ago', seller:'F'},
+    {game:'Dunk City Dynasty', title:'S-tier lineup, full roster unlocked', rank:'S-TIER', price:'₱1,200.00', time:'1 week ago', seller:'D'},
+    {game:'PUBG Mobile', title:'Conqueror season account, mythic outfits', rank:'CONQUEROR', price:'₱8,750.00', time:'2 weeks ago', seller:'P'},
+  ];
+
+  const grid = document.getElementById('listingGrid');
+  const colors = ['#e5344a','#3a6ee5','#33a17a','#c78b1f','#8b5ce5'];
+  function render(filter){
+    grid.innerHTML = '';
+    listings
+      .filter(l => filter === 'all' || l.game === filter)
+      .forEach((l, i) => {
+        const c = colors[i % colors.length];
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-media" style="background:linear-gradient(135deg, ${c}22, ${c}44);">
+            <div class="tag-manual">🛈 MANUAL</div>
+            <button class="fav-btn">♡</button>
+            <div class="game-chip">
+              <span>${l.game}</span>
+              <span class="rank">◆ ${l.rank}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="card-title">${l.title}</p>
+            <div class="card-meta">${l.time}</div>
+            <div class="card-foot">
+              <span class="card-price">${l.price}</span>
+              <span class="seller-dot">${l.seller}</span>
+            </div>
+          </div>`;
+        grid.appendChild(card);
+      });
+  }
+  render('all');
+
+  document.getElementById('pillRow').addEventListener('click', (e) => {
+    const pill = e.target.closest('.pill');
+    if(!pill) return;
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    render(pill.dataset.filter);
+  });
+</script>
+</body>
+</html>

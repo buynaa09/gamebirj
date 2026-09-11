@@ -1,0 +1,56 @@
+.header {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 36px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.crumbs {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.crumbs .cur {
+  color: var(--text);
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.eyebrowRed {
+  color: var(--red);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.titleRow h2 {
+  font-size: 30px;
+  margin: 0 0 8px;
+  max-width: 640px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.titleRow p {
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 560px;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.headerActions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}

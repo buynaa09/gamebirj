@@ -1,0 +1,23 @@
+.sortSelect {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resultsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+
+.resultsRow b {
+  color: var(--text);
+}
