@@ -26,12 +26,12 @@ export function SellPage() {
   }
 
   const validate = (s: number): string | null => {
-    if (s === 0 && !draft.gameName) return 'Please choose a game to continue.';
+    if (s === 0 && !draft.gameName) return 'Үргэлжлүүлэхийн тулд тоглоомоо сонгоно уу.';
     if (s === 1) {
-      if (draft.title.trim() === '') return 'Please add a listing title.';
-      if (draft.price.trim() === '' || Number(draft.price) <= 0) return 'Please enter a valid price.';
+      if (draft.title.trim() === '') return 'Зарлалын гарчгийг оруулна уу.';
+      if (draft.price.trim() === '' || Number(draft.price) <= 0) return 'Зөв үнийн дүн оруулна уу.';
     }
-    if (s === 2 && images.length === 0) return 'Please add at least one screenshot.';
+    if (s === 2 && images.length === 0) return 'Ядаж нэг скриншот зургийг оруулна уу.';
     return null;
   };
 
@@ -76,15 +76,14 @@ export function SellPage() {
       <main className={styles.page}>
         <div className={styles.card}>
           <div className={styles.successBadge}>✓</div>
-          <h1 className={styles.title}>Listing published</h1>
+          <h1 className={styles.title}>Зар нийтлэгдлээ</h1>
           <p className={styles.subtitle}>
-            Your account is now live on the marketplace. Buyers pay into Midman escrow, and you get paid once delivery
-            is confirmed.
+            Таны аккаунт зах зээл дээр байршлаа. Худалдан авагчийн төлбөр Солилцоо эскроу системд хадгалагдах бөгөөд шилжүүлэг баталгаажсаны дараа та мөнгөө авах болно.
           </p>
-          <p className={styles.demoNote}>Demo — publishing is not wired to the backend yet.</p>
+          <p className={styles.demoNote}>Демо — одоогоор сервертэй холбогдоогүй байна.</p>
           <div className={styles.successActions}>
             <button className="btn btn-primary" onClick={() => navigate('/marketplace')}>
-              View marketplace
+              Зах зээлийг үзэх
             </button>
             <button
               className="btn btn-outline"
@@ -94,7 +93,7 @@ export function SellPage() {
                 setImages([]);
               }}
             >
-              Sell another
+              Дахин зар оруулах
             </button>
           </div>
         </div>
@@ -107,17 +106,17 @@ export function SellPage() {
   return (
     <main className={styles.page}>
       <div className={styles.crumbs}>
-        <Link to="/">Home</Link> &nbsp;›&nbsp; <span className={styles.cur}>Sell</span>
+        <Link to="/">Нүүр</Link> &nbsp;›&nbsp; <span className={styles.cur}>Зарах</span>
       </div>
 
-      <h1 className={styles.title}>Sell an Account</h1>
-      <p className={styles.subtitle}>List your gaming account on the Soliltsoo marketplace</p>
+      <h1 className={styles.title}>Аккаунт зарах</h1>
+      <p className={styles.subtitle}>Солилцоо платформд тоглоомын аккаунтоо байршуулаарай.</p>
 
       {restored && (
         <div className={styles.draftBanner}>
-          <span>Draft restored from your last session.</span>
+          <span>Сүүлд үлдээсэн сэргээгдсэн ноорог байна.</span>
           <button type="button" className={styles.draftDiscard} onClick={discardDraft}>
-            Discard draft
+            Нооргийг устгах
           </button>
         </div>
       )}
@@ -127,10 +126,10 @@ export function SellPage() {
           ⚠
         </span>
         <div>
-          <b>Add a payout method before your first sale</b>
-          <p>You can list right now — this only needs to be set before we can send your earnings.</p>
+          <b>Анхны борлуулалтаа хийхээс өмнө дансны мэдээллээ оруулна уу</b>
+          <p>Та яг одоо зараа байршуулах боломжтой — зөвхөн орлогоо татан авахаас өмнө тохируулахад хангалттай.</p>
           <a href="#" className={styles.payoutLink}>
-            Go to Seller Dashboard →
+            Борлуулагчийн хянах бар руу очих →
           </a>
         </div>
       </div>
@@ -156,18 +155,18 @@ export function SellPage() {
         <div className={styles.navRow}>
           {step > 0 ? (
             <button type="button" className="btn btn-outline" onClick={goBack}>
-              ← Back
+              ← Буцах
             </button>
           ) : (
             <span />
           )}
           {step < 3 ? (
             <button type="button" className="btn btn-primary" onClick={goNext}>
-              Next →
+              Үргэлжлүүлэх →
             </button>
           ) : (
             <button type="button" className="btn btn-primary" onClick={publish}>
-              Publish listing
+              Зар нийтлэх
             </button>
           )}
         </div>

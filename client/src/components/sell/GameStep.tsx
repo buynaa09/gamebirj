@@ -11,6 +11,7 @@ interface GameStepProps {
 export function GameStep({ selected, onSelect }: GameStepProps) {
   const games = useGames();
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,19 +32,28 @@ export function GameStep({ selected, onSelect }: GameStepProps) {
 
   const selectedGame = games.find((g) => g.name === selected) ?? null;
   const popular = games.slice(0, 6);
+  const filtered = games.filter((g) => g.name.toLowerCase().includes(query.trim().toLowerCase()));
+
+  const toggle = () => {
+    setOpen((o) => {
+      if (!o) setQuery('');
+      return !o;
+    });
+  };
 
   const choose = (game: Game) => {
     onSelect(game.name);
     setOpen(false);
+    setQuery('');
   };
 
   return (
     <div>
-      <h3 className={styles.heading}>Game</h3>
-      <p className={styles.lead}>Choose the game for your account. This helps buyers find you in the right category.</p>
+      <h3 className={styles.heading}>Тоглоом</h3>
+      <p className={styles.lead}>Аккунтынхаа тоглоомыг сонгоно уу. Энэ нь худалдан авагчдад таныг зөв ангилалаас олоход тусална.</p>
 
       <label className={styles.fieldLabel} htmlFor="sell-game-button">
-        Game *
+        Тоглоом *
       </label>
       <div className={styles.combo} ref={boxRef}>
         <button
@@ -60,14 +70,14 @@ export function GameStep({ selected, onSelect }: GameStepProps) {
               <span className={styles.comboName}>{selectedGame.name}</span>
             </>
           ) : (
-            <span className={styles.comboPlaceholder}>Select a game…</span>
+            <span className={styles.comboPlaceholder}>Тоглоом сонгох…</span>
           )}
           <span className={styles.chevron} aria-hidden="true">
             ↕
           </span>
         </button>
         {open && (
-          <ul className={styles.comboList} role="listbox" aria-label="Games">
+          <ul className={styles.comboList} role="listbox" aria-label="Тоглоомууд">
             {games.map((game) => (
               <li key={game.name}>
                 <button
@@ -87,7 +97,7 @@ export function GameStep({ selected, onSelect }: GameStepProps) {
         )}
       </div>
 
-      <div className={styles.popularTitle}>Popular this week</div>
+      <div className={styles.popularTitle}>Энэ долоо хоногийн тренд</div>
       <div className={styles.popularGrid}>
         {popular.map((game) => (
           <button

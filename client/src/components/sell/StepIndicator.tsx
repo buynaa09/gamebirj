@@ -1,6 +1,6 @@
 import styles from './StepIndicator.module.css';
 
-const STEPS = ['Game', 'Details', 'Media', 'Review'];
+const STEPS = ['Тоглоом', 'Мэдээлэл', 'Зураг', 'Шалгах'];
 
 export function StepIndicator({ current }: { current: number }) {
   return (
