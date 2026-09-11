@@ -21,7 +21,7 @@ export function Hero() {
           <div className={styles.heroCtas}>
             <button
               className="btn btn-primary"
-              onClick={() => navigate('/sell')}
+              onClick={() => navigate('/sell/processing')}
             >
               Account зарах
               <ArrowRightIcon />

@@ -207,9 +207,9 @@ function MobileMenu({
         Community
       </a>
       <NavLink
-        to="/sell"
+        to="/sell/processing"
         onClick={onNavigate}
-        className={`${styles.mobileLink} ${currentPath === '/sell' ? styles.mobileActive : ''}`}
+        className={`${styles.mobileLink} ${currentPath === '/sell/processing' ? styles.mobileActive : ''}`}
       >
         Sell
       </NavLink>

@@ -10,6 +10,7 @@ import { MarketplacePage } from './pages/MarketplacePage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { SellPage } from './pages/SellPage';
+import { SellDashboardPage } from './pages/SellDashboardPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
 import { WishlistPage } from './pages/WishlistPage';
 import './App.module.css';
@@ -37,7 +38,8 @@ function AppShell() {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/sell" element={<SellPage />} />
+        <Route path="/sell" element={<SellDashboardPage />} />
+        <Route path="/sell/processing" element={<SellPage />} />
         <Route path="/listing/:id" element={<ListingRoute />} />
         <Route path="/wishlist" element={<WishlistPage />} />
       </Routes>

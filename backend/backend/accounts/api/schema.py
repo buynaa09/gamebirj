@@ -13,6 +13,14 @@ class AccountImageSchema(Schema):
     image: str | None = None
 
 
+class AccountUpdateSchema(Schema):
+    title: str | None = None
+    price: str | None = None
+    description: str | None = None
+    accept_offers: bool | None = None
+    game_rank: str | None = None
+
+
 class AccountSchema(Schema):
     id: int
     title: str

@@ -20,7 +20,7 @@ export function MarketplaceHeader() {
         </div>
         <div className={styles.headerActions}>
           <button className="btn btn-outline">Зөвлөгөө</button>
-          <button className="btn btn-primary" onClick={() => navigate('/sell')}>+ Account зарах</button>
+          <button className="btn btn-primary" onClick={() => navigate('/sell/processing')}>+ Account зарах</button>
         </div>
       </div>
     </div>

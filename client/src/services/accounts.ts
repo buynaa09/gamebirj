@@ -1,4 +1,4 @@
-import { apiGet, apiPost, postForm } from './api';
+import { apiDelete, apiGet, apiPatch, apiPost, postForm } from './api';
 import type { CreatedAccount, MarketAccount, PublishListingInput } from '../types';
 
 export function fetchAccounts(params?: { game?: number; q?: string }): Promise<MarketAccount[]> {
@@ -15,6 +15,25 @@ export function fetchAccount(id: number): Promise<MarketAccount> {
 
 export function fetchWishlist(): Promise<MarketAccount[]> {
   return apiGet<MarketAccount[]>('/accounts/wishlist/');
+}
+
+export function fetchMyAccounts(): Promise<MarketAccount[]> {
+  return apiGet<MarketAccount[]>('/accounts/mine/');
+}
+
+export interface AccountPatch {
+  title?: string;
+  price?: string;
+  description?: string;
+  accept_offers?: boolean;
+}
+
+export function updateAccount(id: number, patch: AccountPatch): Promise<MarketAccount> {
+  return apiPatch<MarketAccount>(`/accounts/${id}/`, patch);
+}
+
+export function deleteAccount(id: number): Promise<void> {
+  return apiDelete<void>(`/accounts/${id}/`);
 }
 
 export function addWishlist(id: number): Promise<void> {

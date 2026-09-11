@@ -11,6 +11,7 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from backend.accounts.api.schema import AccountSchema
+from backend.accounts.api.schema import AccountUpdateSchema
 from backend.accounts.models import Account
 from backend.games.models import Game
 from backend.games.models import Listing
@@ -156,6 +157,64 @@ def add_wishlist(request, account_id: int):
 def remove_wishlist(request, account_id: int):
     request.user.wishlist.filter(account_id=account_id).delete()
     return {"wishlisted": False}
+
+
+def _own_account_or_404(request, account_id: int) -> Account:
+    try:
+        return Account.objects.select_related("game").get(
+            pk=account_id, user=request.user
+        )
+    except Account.DoesNotExist as exc:
+        raise _fail(404, "Listing not found.") from exc
+
+
+def _parse_price(raw: str) -> Decimal:
+    try:
+        amount = Decimal(raw)
+    except InvalidOperation as exc:
+        raise _fail(422, "Price must be a number.") from exc
+    if amount <= 0:
+        raise _fail(422, "Price must be greater than zero.")
+    return amount
+
+
+def _resolve_rank(game, rank_name: str):
+    name = rank_name.strip()
+    if not name:
+        return None
+    rank_obj = game.ranks.filter(name=name).first() if game else None
+    if rank_obj is None:
+        raise _fail(422, f"Rank '{name}' does not belong to this listing.")
+    return rank_obj
+
+
+@router.patch("/{account_id}/", response=AccountSchema)
+def update_account(request, account_id: int, data: AccountUpdateSchema):
+    account = _own_account_or_404(request, account_id)
+
+    if data.title is not None:
+        headline = data.title.strip()
+        if not headline:
+            raise _fail(422, "Title cannot be blank.")
+        account.title = headline[:100]
+    if data.price is not None:
+        account.price = _parse_price(data.price)
+    if data.description is not None:
+        account.description = data.description
+    if data.accept_offers is not None:
+        account.accept_offers = data.accept_offers
+    if data.game_rank is not None:
+        account.game_rank = _resolve_rank(account.game, data.game_rank)
+    account.save()
+    wishlist_ids = _my_wishlist_ids(request)
+    return _account_payload(request, _load_account(account.pk), wishlist_ids)
+
+
+@router.delete("/{account_id}/", response=dict)
+def delete_account(request, account_id: int):
+    account = _own_account_or_404(request, account_id)
+    account.delete()
+    return {"deleted": True}
 
 
 @router.post("/", response=AccountSchema)

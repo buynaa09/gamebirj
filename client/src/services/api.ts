@@ -42,7 +42,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   return payload as T;
 }
 
-async function apiSend<T>(method: 'POST' | 'DELETE', path: string, body: unknown): Promise<T> {
+async function apiSend<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body: unknown): Promise<T> {
   const headers = new Headers({ 'Content-Type': 'application/json' });
   const csrf = getCsrfToken();
   if (csrf) headers.set('X-CSRFToken', csrf);
@@ -63,6 +63,10 @@ async function apiSend<T>(method: 'POST' | 'DELETE', path: string, body: unknown
 
 export function apiPost<T>(path: string, body: unknown): Promise<T> {
   return apiSend<T>('POST', path, body);
+}
+
+export function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  return apiSend<T>('PATCH', path, body);
 }
 
 export function apiDelete<T>(path: string): Promise<T> {

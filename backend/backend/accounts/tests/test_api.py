@@ -301,3 +301,72 @@ def test_wishlist_missing_listing(client: Client):
     response = client.post(reverse("api:add_wishlist", kwargs={"account_id": 999999}))
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_update_own_account(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    game = _mlbb()
+    account = Account.objects.create(user=user, title="Old", game=game, price=10)
+
+    response = client.patch(
+        reverse("api:update_account", kwargs={"account_id": account.pk}),
+        data={"title": "New", "price": "777", "accept_offers": False},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.json()
+    account.refresh_from_db()
+    assert account.title == "New"
+    assert float(account.price) == 777.0
+    assert account.accept_offers is False
+
+
+def test_update_account_rejects_bad_price(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    account = Account.objects.create(user=user, title="Old", game=_mlbb(), price=10)
+
+    response = client.patch(
+        reverse("api:update_account", kwargs={"account_id": account.pk}),
+        data={"price": "-5"},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_update_other_users_account_not_found(client: Client):
+    owner = UserFactory.create()
+    client.force_login(UserFactory.create())
+    account = Account.objects.create(user=owner, title="Theirs", game=_mlbb(), price=10)
+
+    response = client.patch(
+        reverse("api:update_account", kwargs={"account_id": account.pk}),
+        data={"title": "Hijacked"},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_delete_own_account(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    account = Account.objects.create(user=user, title="Mine", game=_mlbb(), price=10)
+
+    response = client.delete(reverse("api:delete_account", kwargs={"account_id": account.pk}))
+
+    assert response.status_code == HTTPStatus.OK
+    assert Account.objects.filter(pk=account.pk).count() == 0
+
+
+def test_delete_other_users_account_not_found(client: Client):
+    owner = UserFactory.create()
+    client.force_login(UserFactory.create())
+    account = Account.objects.create(user=owner, title="Theirs", game=_mlbb(), price=10)
+
+    response = client.delete(reverse("api:delete_account", kwargs={"account_id": account.pk}))
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert Account.objects.filter(pk=account.pk).count() == 1
