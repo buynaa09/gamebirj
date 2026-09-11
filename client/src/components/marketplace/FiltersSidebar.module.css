@@ -118,6 +118,24 @@
   font-size: 13px;
 }
 
+.select,
+.textInput {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 9px;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.select:focus,
+.textInput:focus {
+  outline: none;
+  border-color: var(--red);
+}
+
 .range {
   width: 100%;
   margin-top: 12px;
