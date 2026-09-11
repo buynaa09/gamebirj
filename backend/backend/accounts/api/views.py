@@ -4,6 +4,7 @@ import json
 from decimal import Decimal
 from decimal import InvalidOperation
 
+from django.db.models import Q
 from ninja import Form
 from ninja import Router
 from ninja.errors import HttpError
@@ -59,6 +60,8 @@ def _account_payload(request, account: Account) -> dict:
         "price": float(account.price),
         "description": account.description,
         "accept_offers": account.accept_offers,
+        "seller": account.user.username,
+        "created_at": account.created_at.isoformat() if account.created_at else "",
         "listings": [_listing_payload(item) for item in account.listings.all()],
         "images": images,
     }
@@ -73,13 +76,33 @@ def _load_account(account_id: int) -> Account:
     )
 
 
+def _base_queryset():
+    return (
+        Account.objects.select_related("game", "game_rank", "user").prefetch_related(
+            "listings__listing", "listings__choices", "images",
+        )
+    )
+
+
+@router.get("/", response=list[AccountSchema], auth=None)
+def list_accounts(request, game: int | None = None, q: str | None = None):
+    accounts = _base_queryset().order_by("-created_at", "-id")
+    if game is not None:
+        accounts = accounts.filter(game_id=game)
+    if q:
+        accounts = accounts.filter(
+            Q(title__icontains=q)
+            | Q(description__icontains=q)
+            | Q(game__name__icontains=q)
+            | Q(game_rank__name__icontains=q)
+        )
+    return [_account_payload(request, account) for account in accounts]
+
+
 @router.get("/mine/", response=list[AccountSchema])
 def list_my_accounts(request):
     accounts = (
-        Account.objects.filter(user=request.user)
-        .select_related("game", "game_rank")
-        .prefetch_related("listings__listing", "listings__choices", "images")
-        .order_by("-id")
+        _base_queryset().filter(user=request.user).order_by("-created_at", "-id")
     )
     return [_account_payload(request, account) for account in accounts]
 

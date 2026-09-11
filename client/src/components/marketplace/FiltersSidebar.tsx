@@ -1,9 +1,13 @@
-import { sidebarCounts } from '../../data/games';
 import { useGames } from '../../hooks/useGames';
+import type { MarketAccount } from '../../types';
 import styles from './FiltersSidebar.module.css';
 
-export function FiltersSidebar() {
+export function FiltersSidebar({ accounts }: { accounts: MarketAccount[] }) {
   const games = useGames();
+  const counts = new Map<string, number>();
+  for (const account of accounts) {
+    if (account.game) counts.set(account.game, (counts.get(account.game) ?? 0) + 1);
+  }
 
   return (
     <aside className={styles.filters}>
@@ -27,7 +31,7 @@ export function FiltersSidebar() {
             )}
             <span className={styles.gameName}>{game.name}</span>
           </span>
-          <span className={styles.count}>{sidebarCounts[game.name] ?? 0}</span>
+          <span className={styles.count}>{counts.get(game.name) ?? 0}</span>
         </label>
       ))}
       <span className={styles.seeAll}>See all {games.length} games</span>

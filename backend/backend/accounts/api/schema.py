@@ -21,5 +21,7 @@ class AccountSchema(Schema):
     price: float
     description: str = ""
     accept_offers: bool = True
+    seller: str = ""
+    created_at: str = ""
     listings: list[AccountListingSchema] = []
     images: list[AccountImageSchema] = []

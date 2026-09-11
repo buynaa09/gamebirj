@@ -61,15 +61,25 @@ export interface Game {
   listings: GameListing[];
 }
 
-export interface Listing {
-  id: string;
-  game: string;
-  title: string;
-  rank: string;
-  price: string;
-  time: string;
-  seller: string;
+export interface MarketImage {
+  id: number;
+  image: string | null;
 }
+
+export interface MarketAccount {
+  id: number;
+  title: string;
+  game: string | null;
+  game_rank: string | null;
+  price: number;
+  description: string;
+  accept_offers: boolean;
+  seller: string;
+  created_at: string;
+  images: MarketImage[];
+}
+
+export type SortKey = 'newest' | 'oldest' | 'price-asc' | 'price-desc';
 
 export interface GameFilter {
   id: string;

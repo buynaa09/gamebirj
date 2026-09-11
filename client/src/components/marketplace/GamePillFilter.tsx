@@ -1,24 +1,29 @@
 import { gameIcons } from '../../data/games';
-import { listings } from '../../data/listings';
 import { useGames } from '../../hooks/useGames';
+import type { MarketAccount } from '../../types';
 import styles from './GamePillFilter.module.css';
 
 interface GamePillFilterProps {
   activeFilter: string;
   onFilterChange: (filter: string) => void;
+  accounts: MarketAccount[];
 }
 
-export function GamePillFilter({ activeFilter, onFilterChange }: GamePillFilterProps) {
+function countFor(accounts: MarketAccount[], gameName: string): number {
+  return accounts.filter((a) => a.game === gameName).length;
+}
+
+export function GamePillFilter({ activeFilter, onFilterChange, accounts }: GamePillFilterProps) {
   const games = useGames();
 
   const pills = [
-    { id: 'all', name: 'All games', icon: undefined, image: null, count: listings.length },
+    { id: 'all', name: 'All games', icon: undefined, image: null, count: accounts.length },
     ...games.map((game) => ({
       id: game.name,
       name: game.name,
       icon: gameIcons[game.name],
       image: game.image,
-      count: listings.filter((l) => l.game === game.name).length,
+      count: countFor(accounts, game.name),
     })),
   ];
 

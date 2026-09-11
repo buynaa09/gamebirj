@@ -1,5 +1,9 @@
-import { postForm } from './api';
-import type { CreatedAccount, PublishListingInput } from '../types';
+import { apiGet, postForm } from './api';
+import type { CreatedAccount, MarketAccount, PublishListingInput } from '../types';
+
+export function fetchAccounts(): Promise<MarketAccount[]> {
+  return apiGet<MarketAccount[]>('/accounts/');
+}
 
 export function publishListing(input: PublishListingInput): Promise<CreatedAccount> {
   const form = new FormData();

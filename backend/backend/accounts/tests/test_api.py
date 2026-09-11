@@ -180,3 +180,44 @@ def test_list_my_accounts_only_own(client: Client):
 
     assert response.status_code == HTTPStatus.OK
     assert [a["title"] for a in response.json()] == ["Mine"]
+
+
+def test_list_accounts_is_public_and_newest_first(client: Client):
+    user = UserFactory.create()
+    game = _mlbb()
+    other = Game.objects.create(name="Other Game")
+    Account.objects.create(user=user, title="Old", game=game, price=10)
+    Account.objects.create(user=user, title="New", game=other, price=20)
+
+    response = client.get(reverse("api:list_accounts"))
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.json()
+    assert [a["title"] for a in payload] == ["New", "Old"]
+    assert payload[0]["seller"] == user.username
+    assert payload[0]["created_at"] != ""
+
+
+def test_list_accounts_filter_by_game(client: Client):
+    user = UserFactory.create()
+    game = _mlbb()
+    other = Game.objects.create(name="Other Game")
+    Account.objects.create(user=user, title="Mlbb", game=game, price=10)
+    Account.objects.create(user=user, title="Other", game=other, price=20)
+
+    response = client.get(reverse("api:list_accounts"), {"game": str(game.pk)})
+
+    assert response.status_code == HTTPStatus.OK
+    assert [a["title"] for a in response.json()] == ["Mlbb"]
+
+
+def test_list_accounts_search(client: Client):
+    user = UserFactory.create()
+    game = _mlbb()
+    Account.objects.create(user=user, title="Mythic stacked", game=game, price=10)
+    Account.objects.create(user=user, title="Starter", game=game, price=20)
+
+    response = client.get(reverse("api:list_accounts"), {"q": "mythic"})
+
+    assert response.status_code == HTTPStatus.OK
+    assert [a["title"] for a in response.json()] == ["Mythic stacked"]

@@ -38,7 +38,7 @@ export function ReviewStep({ draft, images, game }: ReviewStepProps) {
         <div className={styles.row}>
           <dt>Price</dt>
           <dd className={styles.price}>
-            ₱{draft.price || '—'}
+            {draft.price || '—'}₮
             <span className={styles.firm}>{draft.acceptOffers ? ' · open to offers' : ' · firm'}</span>
           </dd>
         </div>

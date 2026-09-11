@@ -1,34 +1,40 @@
-import type { Listing } from '../../types';
-import { CARD_COLORS } from '../../data/listings';
+import type { MarketAccount } from '../../types';
+import { formatPrice, timeAgo } from '../../utils/format';
 import styles from './ListingCard.module.css';
 
+const CARD_COLORS = ['#e5344a', '#3a6ee5', '#33a17a', '#c78b1f', '#8b5ce5'];
+
 interface ListingCardProps {
-  listing: Listing;
+  listing: MarketAccount;
   index: number;
 }
 
 export function ListingCard({ listing, index }: ListingCardProps) {
   const color = CARD_COLORS[index % CARD_COLORS.length];
+  const cover = listing.images.find((img) => img.image)?.image ?? null;
+  const sellerInitial = listing.seller.charAt(0).toUpperCase() || '?';
 
   return (
     <article className={styles.card}>
       <div
         className={styles.cardMedia}
-        style={{ background: `linear-gradient(135deg, ${color}22, ${color}44)` }}
+        style={cover ? undefined : { background: `linear-gradient(135deg, ${color}22, ${color}44)` }}
       >
-        <div className={styles.tagManual}>🛈 MANUAL</div>
-        <button className={styles.favBtn} aria-label="Add to favorites">♡</button>
+        {cover && <img src={cover} alt="" className={styles.cover} loading="lazy" />}
+        <button className={styles.favBtn} aria-label="Add to favorites">
+          ♡
+        </button>
         <div className={styles.gameChip}>
-          <span>{listing.game}</span>
-          <span className={styles.rank}>◆ {listing.rank}</span>
+          <span>{listing.game ?? 'Unknown game'}</span>
+          {listing.game_rank && <span className={styles.rank}>◆ {listing.game_rank}</span>}
         </div>
       </div>
       <div className={styles.cardBody}>
         <p className={styles.cardTitle}>{listing.title}</p>
-        <div className={styles.cardMeta}>{listing.time}</div>
+        <div className={styles.cardMeta}>{timeAgo(listing.created_at)}</div>
         <div className={styles.cardFoot}>
-          <span className={styles.cardPrice}>{listing.price}</span>
-          <span className={styles.sellerDot}>{listing.seller}</span>
+          <span className={styles.cardPrice}>{formatPrice(listing.price)}</span>
+          <span className={styles.sellerDot}>{sellerInitial}</span>
         </div>
       </div>
     </article>
