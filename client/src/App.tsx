@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeProvider';
 import { AuthProvider } from './context/AuthProvider';
 import { TopBar } from './components/layout/TopBar';
@@ -9,6 +9,7 @@ import { MarketplacePage } from './pages/MarketplacePage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { SellPage } from './pages/SellPage';
+import { ListingDetailPage } from './pages/ListingDetailPage';
 import './App.module.css';
 
 export default function App() {
@@ -33,9 +34,16 @@ function AppShell() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/sell" element={<SellPage />} />
+        <Route path="/listing/:id" element={<ListingRoute />} />
       </Routes>
       <ChatBubble />
       <BottomNav />
     </>
   );
+}
+
+function ListingRoute() {
+  const { id } = useParams();
+  // Remount on id change so gallery state and data reset between listings.
+  return <ListingDetailPage key={id} id={Number(id)} />;
 }

@@ -77,10 +77,10 @@ def _load_account(account_id: int) -> Account:
 
 
 def _base_queryset():
-    return (
-        Account.objects.select_related("game", "game_rank", "user").prefetch_related(
-            "listings__listing", "listings__choices", "images",
-        )
+    return Account.objects.select_related("game", "game_rank", "user").prefetch_related(
+        "listings__listing",
+        "listings__choices",
+        "images",
     )
 
 
@@ -94,7 +94,7 @@ def list_accounts(request, game: int | None = None, q: str | None = None):
             Q(title__icontains=q)
             | Q(description__icontains=q)
             | Q(game__name__icontains=q)
-            | Q(game_rank__name__icontains=q)
+            | Q(game_rank__name__icontains=q),
         )
     return [_account_payload(request, account) for account in accounts]
 

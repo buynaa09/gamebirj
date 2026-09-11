@@ -45,16 +45,11 @@ export function ListingDetailPage({ id }: { id: number }) {
   const longDescription = account.description.length > 280;
 
   const share = () => {
-    const url = window.location.href;
-    if (navigator.clipboard) {
-      navigator.clipboard
-        .then(() => setShared(true))
-        .catch(() => setShared(false));
-      navigator.clipboard.writeText(url).then(
-        () => setShared(true),
-        () => setShared(false),
-      );
-    }
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(window.location.href).then(
+      () => setShared(true),
+      () => setShared(false),
+    );
   };
 
   return (
@@ -201,7 +196,7 @@ export function ListingDetailPage({ id }: { id: number }) {
         </section>
       )}
 
-      <section>
+      {/* <section>
         <h2 className={styles.sectionTitle}>Helpful guides</h2>
         <div className={styles.guides}>
           <a href="#" className={styles.guide}>
@@ -213,7 +208,7 @@ export function ListingDetailPage({ id }: { id: number }) {
             <span>How Midman escrow protects your purchase</span>
           </a>
         </div>
-      </section>
+      </section> */}
 
       <div className={styles.footRow}>
         <button type="button" className="btn btn-outline" onClick={share}>

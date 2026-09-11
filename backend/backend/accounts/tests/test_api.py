@@ -173,7 +173,9 @@ def test_retrieve_account_is_public(client: Client):
     game = _mlbb()
     account = Account.objects.create(user=user, title="Detail", game=game, price=99)
 
-    response = client.get(reverse("api:retrieve_account", kwargs={"account_id": account.pk}))
+    response = client.get(
+        reverse("api:retrieve_account", kwargs={"account_id": account.pk})
+    )
 
     assert response.status_code == HTTPStatus.OK
     payload = response.json()
@@ -182,7 +184,9 @@ def test_retrieve_account_is_public(client: Client):
 
 
 def test_retrieve_account_missing(client: Client):
-    response = client.get(reverse("api:retrieve_account", kwargs={"account_id": 999999}))
+    response = client.get(
+        reverse("api:retrieve_account", kwargs={"account_id": 999999})
+    )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 

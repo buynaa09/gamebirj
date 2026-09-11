@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import type { MarketAccount } from '../../types';
 import { formatPrice, timeAgo } from '../../utils/format';
 import styles from './ListingCard.module.css';
@@ -10,18 +11,23 @@ interface ListingCardProps {
 }
 
 export function ListingCard({ listing, index }: ListingCardProps) {
+  const navigate = useNavigate();
   const color = CARD_COLORS[index % CARD_COLORS.length];
   const cover = listing.images.find((img) => img.image)?.image ?? null;
   const sellerInitial = listing.seller.charAt(0).toUpperCase() || '?';
 
   return (
-    <article className={styles.card}>
+    <article className={styles.card} onClick={() => navigate(`/listing/${listing.id}`)}>
       <div
         className={styles.cardMedia}
         style={cover ? undefined : { background: `linear-gradient(135deg, ${color}22, ${color}44)` }}
       >
         {cover && <img src={cover} alt="" className={styles.cover} loading="lazy" />}
-        <button className={styles.favBtn} aria-label="Хадгалах хэсэгт нэмэх">
+        <button
+          className={styles.favBtn}
+          aria-label="Хадгалах хэсэгт нэмэх"
+          onClick={(e) => e.stopPropagation()}
+        >
           ♡
         </button>
         <div className={styles.gameChip}>
