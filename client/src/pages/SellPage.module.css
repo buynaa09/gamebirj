@@ -1,0 +1,155 @@
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+}
+
+.crumbs {
+  font-size: 13px;
+  color: var(--text-faint);
+  margin-bottom: 14px;
+}
+
+.crumbs .cur {
+  color: var(--text);
+}
+
+.title {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 6px;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 14.5px;
+  margin: 0 0 18px;
+}
+
+.draftBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 40%, var(--border));
+  color: var(--red);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.draftDiscard {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.payoutBanner {
+  display: flex;
+  gap: 12px;
+  background: color-mix(in srgb, #c78b1f 12%, transparent);
+  border: 1px solid color-mix(in srgb, #c78b1f 45%, var(--border));
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  margin-bottom: 22px;
+}
+
+.payoutIcon {
+  color: #c78b1f;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.payoutBanner b {
+  color: #c78b1f;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.payoutBanner p {
+  color: var(--text-dim);
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.payoutLink {
+  color: #c78b1f;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.payoutLink:hover {
+  text-decoration: underline;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 22px;
+}
+
+@media (min-width: 560px) {
+  .card {
+    padding: 28px 30px;
+  }
+}
+
+.error {
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 45%, var(--border));
+  color: var(--red);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 18px;
+}
+
+.navRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+.successBadge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #33a17a 15%, transparent);
+  border: 1px solid #33a17a;
+  color: #33a17a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.demoNote {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 16px 0 20px;
+}
+
+.successActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

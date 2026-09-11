@@ -5,11 +5,11 @@ import styles from './BottomNav.module.css';
 const routeLinks = [
   { to: '/', label: 'Home', icon: HomeIcon },
   { to: '/marketplace', label: 'Market', icon: ShopIcon },
+  { to: '/sell', label: 'Sell', icon: ClockIcon },
 ];
 
 const placeholderLinks = [
   { label: 'Dashboard', icon: GridIcon },
-  { label: 'Sell', icon: ClockIcon },
   { label: 'Messages', icon: ChatBubbleIcon },
   { label: 'Trades', icon: CheckIcon },
 ];

@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './MarketplaceHeader.module.css';
 
 export function MarketplaceHeader() {
+  const navigate = useNavigate();
   return (
     <div className={styles.header}>
       <div className={styles.crumbs}>
@@ -19,7 +20,7 @@ export function MarketplaceHeader() {
         </div>
         <div className={styles.headerActions}>
           <button className="btn btn-outline">Зөвлөгөө</button>
-          <button className="btn btn-primary">+ Account зарах</button>
+          <button className="btn btn-primary" onClick={() => navigate('/sell')}>+ Account зарах</button>
         </div>
       </div>
     </div>

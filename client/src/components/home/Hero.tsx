@@ -21,7 +21,7 @@ Soliltsoo — тоглоомын аккаунт худалдах, худалда
           <div className={styles.heroCtas}>
             <button
               className="btn btn-primary"
-              onClick={() => navigate('/marketplace')}
+              onClick={() => navigate('/sell')}
             >
               Account зарах
               <ArrowRightIcon />

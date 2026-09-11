@@ -76,7 +76,9 @@ function TopBarInner() {
             Marketplace
           </NavLink>
           <a href="#">Community</a>
-          <a href="#">Sell</a>
+          <NavLink to="/sell" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Sell
+          </NavLink>
           <a href="#">Transactions</a>
           <a href="#">More ▾</a>
         </nav>
@@ -201,9 +203,13 @@ function MobileMenu({
       <a href="#" className={styles.mobileLink}>
         Community
       </a>
-      <a href="#" className={styles.mobileLink}>
+      <NavLink
+        to="/sell"
+        onClick={onNavigate}
+        className={`${styles.mobileLink} ${currentPath === '/sell' ? styles.mobileActive : ''}`}
+      >
         Sell
-      </a>
+      </NavLink>
       <a href="#" className={styles.mobileLink}>
         Transactions
       </a>

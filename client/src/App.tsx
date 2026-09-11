@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
+import { SellPage } from './pages/SellPage';
 import './App.module.css';
 
 export default function App() {
@@ -31,6 +32,7 @@ function AppShell() {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/sell" element={<SellPage />} />
       </Routes>
       <ChatBubble />
       <BottomNav />

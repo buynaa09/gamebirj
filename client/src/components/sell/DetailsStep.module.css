@@ -1,0 +1,111 @@
+.heading {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.lead {
+  color: var(--text-dim);
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 0 0 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.field input,
+.field textarea {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--red);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--text-faint);
+}
+
+.highlightsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px 0 10px;
+}
+
+.highlightsTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.addBtn {
+  background: transparent;
+  border: none;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.highlightRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.highlightRow input {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+
+.highlightRow input:focus {
+  border-color: var(--red);
+}
+
+.removeBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-faint);
+  width: 38px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.removeBtn:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
