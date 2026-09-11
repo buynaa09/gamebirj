@@ -62,7 +62,7 @@ export function GameStep({ selected, onSelect }: GameStepProps) {
           className={styles.comboButton}
           aria-haspopup="listbox"
           aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
+          onClick={toggle}
         >
           {selectedGame ? (
             <>
@@ -77,23 +77,40 @@ export function GameStep({ selected, onSelect }: GameStepProps) {
           </span>
         </button>
         {open && (
-          <ul className={styles.comboList} role="listbox" aria-label="Тоглоомууд">
-            {games.map((game) => (
-              <li key={game.name}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={game.name === selected}
-                  className={`${styles.comboOption} ${game.name === selected ? styles.selected : ''}`}
-                  onClick={() => choose(game)}
-                >
-                  <GameThumb game={game} size="sm" />
-                  <span className={styles.comboName}>{game.name}</span>
-                  {game.name === selected && <span className={styles.check}>✓</span>}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className={styles.comboList}>
+            <div className={styles.searchRow}>
+              <span className={styles.searchIcon} aria-hidden="true">
+                ⌕
+              </span>
+              <input
+                type="text"
+                autoFocus
+                placeholder="Тоглоом хайх…"
+                aria-label="Тоглоом хайх"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
+            <ul role="listbox" aria-label="Тоглоомууд" className={styles.optionsList}>
+              {filtered.map((game) => (
+                <li key={game.name}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={game.name === selected}
+                    className={`${styles.comboOption} ${game.name === selected ? styles.selected : ''}`}
+                    onClick={() => choose(game)}
+                  >
+                    <GameThumb game={game} size="sm" />
+                    <span className={styles.comboName}>{game.name}</span>
+                    {game.name === selected && <span className={styles.check}>✓</span>}
+                  </button>
+                </li>
+              ))}
+              {filtered.length === 0 && <li className={styles.noResults}>Тоглоом олдсонгүй</li>}
+            </ul>
+          </div>
         )}
       </div>
 

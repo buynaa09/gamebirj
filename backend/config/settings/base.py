@@ -97,6 +97,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "backend.users",
     "backend.games",
+    "backend.accounts",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

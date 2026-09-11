@@ -68,15 +68,60 @@
   left: 0;
   right: 0;
   z-index: 20;
-  list-style: none;
   margin: 0;
   padding: 6px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
-  max-height: 260px;
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.searchIcon {
+  color: var(--text-faint);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: inherit;
+  padding: 0;
+}
+
+.searchInput::placeholder {
+  color: var(--text-faint);
+}
+
+.optionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   overflow-y: auto;
+}
+
+.noResults {
+  padding: 14px 10px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-faint);
 }
 
 .comboOption {
