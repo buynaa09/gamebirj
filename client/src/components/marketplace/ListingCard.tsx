@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useWishlist } from '../../context/WishlistContext';
 import type { MarketAccount } from '../../types';
 import { formatPrice, timeAgo } from '../../utils/format';
 import styles from './ListingCard.module.css';
@@ -12,6 +13,8 @@ interface ListingCardProps {
 
 export function ListingCard({ listing, index }: ListingCardProps) {
   const navigate = useNavigate();
+  const { ids, toggle } = useWishlist();
+  const saved = ids.has(listing.id);
   const color = CARD_COLORS[index % CARD_COLORS.length];
   const cover = listing.images.find((img) => img.image)?.image ?? null;
   const sellerInitial = listing.seller.charAt(0).toUpperCase() || '?';
@@ -24,11 +27,15 @@ export function ListingCard({ listing, index }: ListingCardProps) {
       >
         {cover && <img src={cover} alt="" className={styles.cover} loading="lazy" />}
         <button
-          className={styles.favBtn}
-          aria-label="Хадгалах хэсэгт нэмэх"
-          onClick={(e) => e.stopPropagation()}
+          className={`${styles.favBtn} ${saved ? styles.favActive : ''}`}
+          aria-label={saved ? 'Remove from wishlist' : 'Хадгалах хэсэгт нэмэх'}
+          aria-pressed={saved}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle(listing.id);
+          }}
         >
-          ♡
+          {saved ? '♥' : '♡'}
         </button>
         <div className={styles.gameChip}>
           <span>{listing.game ?? 'Тодорхойгүй тоглоом'}</span>

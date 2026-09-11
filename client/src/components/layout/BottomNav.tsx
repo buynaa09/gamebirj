@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, GridIcon, ShopIcon, ClockIcon, ChatBubbleIcon, CheckIcon } from '../icons/Icons';
+import { HomeIcon, ShopIcon, ClockIcon, ChatBubbleIcon, CheckIcon } from '../icons/Icons';
 import styles from './BottomNav.module.css';
 
 const routeLinks = [
@@ -9,7 +9,6 @@ const routeLinks = [
 ];
 
 const placeholderLinks = [
-  { label: 'Dashboard', icon: GridIcon },
   { label: 'Messages', icon: ChatBubbleIcon },
   { label: 'Trades', icon: CheckIcon },
 ];

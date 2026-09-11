@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAccount } from '../hooks/useAccount';
 import { useAccounts } from '../hooks/useAccounts';
+import { useWishlist } from '../context/WishlistContext';
 import { ListingCard } from '../components/marketplace/ListingCard';
+import { Lightbox } from '../components/marketplace/Lightbox';
 import { formatPrice, timeAgo } from '../utils/format';
 import styles from './ListingDetailPage.module.css';
 
@@ -12,14 +14,16 @@ export function ListingDetailPage({ id }: { id: number }) {
   const navigate = useNavigate();
   const { account, loading, error } = useAccount(id);
   const { accounts } = useAccounts();
+  const { ids, toggle } = useWishlist();
   const [activePhoto, setActivePhoto] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [shared, setShared] = useState(false);
 
   if (loading) {
     return (
       <main className={styles.page}>
-        <p className={styles.state}>Loading listing…</p>
+        <p className={styles.state}>Уншиж байна…</p>
       </main>
     );
   }
@@ -27,9 +31,9 @@ export function ListingDetailPage({ id }: { id: number }) {
   if (error || !account) {
     return (
       <main className={styles.page}>
-        <p className={styles.state}>Couldn't load this listing ({error ?? 'not found'}).</p>
+        <p className={styles.state}>Зарын мэдээллийг ачаалж чадсангүй ({error ?? 'олдсонгүй'}).</p>
         <button type="button" className="btn btn-outline" onClick={() => navigate('/marketplace')}>
-          Back to marketplace
+          Зарын хэсэг рүү буцах
         </button>
       </main>
     );
@@ -55,28 +59,35 @@ export function ListingDetailPage({ id }: { id: number }) {
   return (
     <main className={styles.page}>
       <button type="button" className={styles.backBtn} onClick={() => navigate(-1)}>
-        ← Back
+        ← Буцах
       </button>
       <div className={styles.crumbs}>
-        <Link to="/">Home</Link> &nbsp;›&nbsp; <Link to="/marketplace">Marketplace</Link> &nbsp;›&nbsp;{' '}
+        <Link to="/">Нүүр</Link> &nbsp;›&nbsp; <Link to="/marketplace">Зарын хэсэг</Link> &nbsp;›&nbsp;{' '}
         <span className={styles.cur}>{account.title.length > 28 ? `${account.title.slice(0, 28)}…` : account.title}</span>
       </div>
 
       <div className={styles.top}>
-        <section aria-label="Photos">
+        <section aria-label="Зургууд">
           <div
             className={styles.main}
             style={photos.length === 0 ? { background: `linear-gradient(135deg, ${color}22, ${color}44)` } : undefined}
           >
             {photos.length > 0 && (
-              <img src={photos[shown]} alt={account.title} className={styles.mainImg} />
+              <button
+                type="button"
+                className={styles.mainZoom}
+                aria-label="Зургийг томруулж харах"
+                onClick={() => setLightboxIndex(shown)}
+              >
+                <img src={photos[shown]} alt={account.title} className={styles.mainImg} />
+              </button>
             )}
             {photos.length > 1 && (
               <>
                 <button
                   type="button"
                   className={`${styles.arrow} ${styles.prev}`}
-                  aria-label="Previous photo"
+                  aria-label="Өмнөх зураг"
                   onClick={() => setActivePhoto((shown + photos.length - 1) % photos.length)}
                 >
                   ‹
@@ -84,7 +95,7 @@ export function ListingDetailPage({ id }: { id: number }) {
                 <button
                   type="button"
                   className={`${styles.arrow} ${styles.next}`}
-                  aria-label="Next photo"
+                  aria-label="Дараагийн зураг"
                   onClick={() => setActivePhoto((shown + 1) % photos.length)}
                 >
                   ›
@@ -103,7 +114,7 @@ export function ListingDetailPage({ id }: { id: number }) {
                   type="button"
                   className={`${styles.thumb} ${i === shown ? styles.thumbActive : ''}`}
                   onClick={() => setActivePhoto(i)}
-                  aria-label={`Photo ${i + 1}`}
+                  aria-label={`Зураг ${i + 1}`}
                 >
                   <img src={src} alt="" loading="lazy" />
                 </button>
@@ -117,30 +128,35 @@ export function ListingDetailPage({ id }: { id: number }) {
             <span className={styles.sellerDot}>{sellerInitial}</span>
             <div>
               <div className={styles.sellerName}>{account.seller}</div>
-              <div className={styles.sellerSub}>Seller</div>
+              <div className={styles.sellerSub}>Зарагч</div>
             </div>
           </div>
           <div className={styles.escrowNote}>
-            <b>🛡 100% money-back until you confirm</b>
-            <p>Payment is held in escrow and released only after you confirm delivery.</p>
+            <b>🛡 Баталгаажтал мөнгө 100% хамгаалагдана</b>
+            <p>Төлбөр дундын дансанд байрших бөгөөд та худалдан авалтаа баталгаажуулсны дараа зарагчид шилжинэ.</p>
           </div>
           <button type="button" className={`btn btn-primary ${styles.buyBtn}`}>
-            🛒 Buy with Escrow
+            🛒 Баталгаатай худалдан авах
           </button>
           <div className={styles.sideRow}>
             <button type="button" className="btn btn-outline">
-              💬 Ask a Question
+              💬 Асуулт асуух
             </button>
-            <button type="button" className="btn btn-outline">
-              ♡ Wishlist
+            <button
+              type="button"
+              className="btn btn-outline"
+              aria-pressed={ids.has(account.id)}
+              onClick={() => toggle(account.id)}
+            >
+              {ids.has(account.id) ? '♥ Хадгалагдсан' : '♡ Хадгалах'}
             </button>
           </div>
           {account.accept_offers && (
             <button type="button" className={`btn btn-outline ${styles.offerBtn}`}>
-              ✋ Make an offer
+              ✋ Үнэ санал болгох
             </button>
           )}
-          <p className={styles.tos}>Account transfers may violate the game publisher's Terms of Service. Purchase at your own risk.</p>
+          <p className={styles.tos}>Данс шилжүүлэх нь тухайн тоглоомын үйлчилгээний нөхцөлийг зөрчиж болзошгүйг анхаарна уу.</p>
         </aside>
       </div>
 
@@ -159,7 +175,7 @@ export function ListingDetailPage({ id }: { id: number }) {
         <div className={styles.stats}>
           {account.game_rank && (
             <div className={styles.stat}>
-              <span className={styles.statLabel}>Rank / Level</span>
+              <span className={styles.statLabel}>Ранк / Түвшин</span>
               <span className={styles.statValue}>{account.game_rank}</span>
             </div>
           )}
@@ -179,7 +195,7 @@ export function ListingDetailPage({ id }: { id: number }) {
           <p className={expanded ? undefined : styles.clamp}>{account.description}</p>
           {longDescription && (
             <button type="button" className={styles.seeMore} onClick={() => setExpanded((e) => !e)}>
-              {expanded ? 'See less ▴' : 'See more ▾'}
+              {expanded ? 'Хураах ▴' : 'Дэлгэрэнгүй ▾'}
             </button>
           )}
         </section>
@@ -187,7 +203,7 @@ export function ListingDetailPage({ id }: { id: number }) {
 
       {similar.length > 0 && (
         <section>
-          <h2 className={styles.sectionTitle}>Similar Listings</h2>
+          <h2 className={styles.sectionTitle}>Төстэй зарууд</h2>
           <div className={styles.similarGrid}>
             {similar.map((item, i) => (
               <ListingCard key={item.id} listing={item} index={i} />
@@ -197,27 +213,37 @@ export function ListingDetailPage({ id }: { id: number }) {
       )}
 
       {/* <section>
-        <h2 className={styles.sectionTitle}>Helpful guides</h2>
+        <h2 className={styles.sectionTitle}>Хэрэгцээт зөвлөмжүүд</h2>
         <div className={styles.guides}>
           <a href="#" className={styles.guide}>
-            <b>Guide</b>
-            <span>How to buy a {account.game ?? 'gaming'} account safely</span>
+            <b>Зөвлөмж</b>
+            <span>{account.game ?? 'Тоглоомын'} хаягийг хэрхэн аюулгүй худалдаж авах вэ</span>
           </a>
           <a href="#" className={styles.guide}>
-            <b>Guide</b>
-            <span>How Midman escrow protects your purchase</span>
+            <b>Зөвлөмж</b>
+            <span>Дундын escrow систем таны худалдан авалтыг хэрхэн хамгаалдаг вэ</span>
           </a>
         </div>
       </section> */}
 
       <div className={styles.footRow}>
         <button type="button" className="btn btn-outline" onClick={share}>
-          {shared ? '✓ Link copied' : '⤴ Share'}
+          {shared ? '✓ Холбоос хуулагдлаа' : '⤴ Хуваалцах'}
         </button>
         <button type="button" className="btn btn-outline">
-          ⚐ Report
+          ⚐ Мэдэгдэх
         </button>
       </div>
+
+      {lightboxIndex !== null && photos.length > 0 && (
+        <Lightbox
+          photos={photos}
+          index={lightboxIndex}
+          title={account.title}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </main>
   );
 }

@@ -4,6 +4,7 @@ import json
 from decimal import Decimal
 from decimal import InvalidOperation
 
+from django.db.models import Count
 from django.db.models import Q
 from ninja import Form
 from ninja import Router
@@ -44,7 +45,14 @@ def _listing_payload(account_listing) -> dict:
     }
 
 
-def _account_payload(request, account: Account) -> dict:
+def _my_wishlist_ids(request) -> set[int]:
+    user = request.user
+    if not user.is_authenticated:
+        return set()
+    return set(user.wishlist.values_list("account_id", flat=True))
+
+
+def _account_payload(request, account: Account, wishlist_ids: set[int]) -> dict:
     images = [
         {
             "id": img.id,
@@ -62,6 +70,8 @@ def _account_payload(request, account: Account) -> dict:
         "accept_offers": account.accept_offers,
         "seller": account.user.username,
         "created_at": account.created_at.isoformat() if account.created_at else "",
+        "wishlisted": account.id in wishlist_ids,
+        "wishlist_count": account.wishlist_count,
         "listings": [_listing_payload(item) for item in account.listings.all()],
         "images": images,
     }
@@ -72,15 +82,20 @@ def _load_account(account_id: int) -> Account:
         Account.objects.filter(pk=account_id)
         .select_related("game", "game_rank")
         .prefetch_related("listings__listing", "listings__choices", "images")
+        .annotate(wishlist_count=Count("wishlisted_by"))
         .get()
     )
 
 
 def _base_queryset():
-    return Account.objects.select_related("game", "game_rank", "user").prefetch_related(
-        "listings__listing",
-        "listings__choices",
-        "images",
+    return (
+        Account.objects.select_related("game", "game_rank", "user")
+        .prefetch_related(
+            "listings__listing",
+            "listings__choices",
+            "images",
+        )
+        .annotate(wishlist_count=Count("wishlisted_by"))
     )
 
 
@@ -96,13 +111,26 @@ def list_accounts(request, game: int | None = None, q: str | None = None):
             | Q(game__name__icontains=q)
             | Q(game_rank__name__icontains=q),
         )
-    return [_account_payload(request, account) for account in accounts]
+    wishlist_ids = _my_wishlist_ids(request)
+    return [_account_payload(request, account, wishlist_ids) for account in accounts]
 
 
 @router.get("/mine/", response=list[AccountSchema])
 def list_my_accounts(request):
     accounts = _base_queryset().filter(user=request.user).order_by("-created_at", "-id")
-    return [_account_payload(request, account) for account in accounts]
+    wishlist_ids = _my_wishlist_ids(request)
+    return [_account_payload(request, account, wishlist_ids) for account in accounts]
+
+
+@router.get("/wishlist/", response=list[AccountSchema])
+def list_wishlist(request):
+    accounts = (
+        _base_queryset()
+        .filter(wishlisted_by__user=request.user)
+        .order_by("-wishlisted_by__created_at", "-id")
+    )
+    wishlist_ids = _my_wishlist_ids(request)
+    return [_account_payload(request, account, wishlist_ids) for account in accounts]
 
 
 @router.get("/{account_id}/", response=AccountSchema, auth=None)
@@ -111,7 +139,23 @@ def retrieve_account(request, account_id: int):
         account = _base_queryset().get(pk=account_id)
     except Account.DoesNotExist as exc:
         raise _fail(404, "Listing not found.") from exc
-    return _account_payload(request, account)
+    return _account_payload(request, account, _my_wishlist_ids(request))
+
+
+@router.post("/{account_id}/wishlist/", response=dict)
+def add_wishlist(request, account_id: int):
+    try:
+        account = Account.objects.get(pk=account_id)
+    except Account.DoesNotExist as exc:
+        raise _fail(404, "Listing not found.") from exc
+    request.user.wishlist.get_or_create(account=account)
+    return {"wishlisted": True}
+
+
+@router.delete("/{account_id}/wishlist/", response=dict)
+def remove_wishlist(request, account_id: int):
+    request.user.wishlist.filter(account_id=account_id).delete()
+    return {"wishlisted": False}
 
 
 @router.post("/", response=AccountSchema)
@@ -163,7 +207,9 @@ def create_account(  # noqa: PLR0913, PLR0917
         account.delete()
         raise
 
-    return _account_payload(request, _load_account(account.pk))
+    return _account_payload(
+        request, _load_account(account.pk), _my_wishlist_ids(request)
+    )
 
 
 def _attach_details(account: Account, game_obj: Game, entries: list[dict]) -> None:

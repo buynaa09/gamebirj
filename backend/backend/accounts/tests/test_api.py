@@ -244,3 +244,60 @@ def test_list_accounts_search(client: Client):
 
     assert response.status_code == HTTPStatus.OK
     assert [a["title"] for a in response.json()] == ["Mythic stacked"]
+
+
+def test_wishlist_add_list_remove(client: Client):
+    user = UserFactory.create()
+    game = _mlbb()
+    account = Account.objects.create(user=user, title="Wanted", game=game, price=10)
+    client.force_login(user)
+
+    add = client.post(reverse("api:add_wishlist", kwargs={"account_id": account.pk}))
+    assert add.status_code == HTTPStatus.OK
+    assert add.json() == {"wishlisted": True}
+
+    # Idempotent re-add.
+    again = client.post(reverse("api:add_wishlist", kwargs={"account_id": account.pk}))
+    assert again.status_code == HTTPStatus.OK
+    assert user.wishlist.count() == 1
+
+    listed = client.get(reverse("api:list_wishlist"))
+    assert listed.status_code == HTTPStatus.OK
+    assert [a["id"] for a in listed.json()] == [account.pk]
+
+    detail = client.get(reverse("api:list_accounts"))
+    payload = next(a for a in detail.json() if a["id"] == account.pk)
+    assert payload["wishlisted"] is True
+    assert payload["wishlist_count"] == 1
+
+    remove = client.delete(reverse("api:remove_wishlist", kwargs={"account_id": account.pk}))
+    assert remove.status_code == HTTPStatus.OK
+    assert remove.json() == {"wishlisted": False}
+    assert user.wishlist.count() == 0
+
+
+def test_wishlist_requires_login(client: Client):
+    game = _mlbb()
+    account = Account.objects.create(
+        user=UserFactory.create(), title="Wanted", game=game, price=10
+    )
+
+    assert (
+        client.post(reverse("api:add_wishlist", kwargs={"account_id": account.pk})).status_code
+        == HTTPStatus.UNAUTHORIZED
+    )
+    assert (
+        client.delete(
+            reverse("api:remove_wishlist", kwargs={"account_id": account.pk})
+        ).status_code
+        == HTTPStatus.UNAUTHORIZED
+    )
+    assert client.get(reverse("api:list_wishlist")).status_code == HTTPStatus.UNAUTHORIZED
+
+
+def test_wishlist_missing_listing(client: Client):
+    client.force_login(UserFactory.create())
+
+    response = client.post(reverse("api:add_wishlist", kwargs={"account_id": 999999}))
+
+    assert response.status_code == HTTPStatus.NOT_FOUND

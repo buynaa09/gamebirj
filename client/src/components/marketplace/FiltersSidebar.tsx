@@ -10,6 +10,9 @@ interface FiltersSidebarProps {
   maxPrice: number | null;
   onMinChange: (value: number | null) => void;
   onMaxChange: (value: number | null) => void;
+  selectedGames: string[];
+  onToggleGame: (gameName: string) => void;
+  className?: string;
 }
 
 function PriceInput({
@@ -52,7 +55,16 @@ function PriceInput({
   );
 }
 
-export function FiltersSidebar({ accounts, minPrice, maxPrice, onMinChange, onMaxChange }: FiltersSidebarProps) {
+export function FiltersSidebar({
+  accounts,
+  minPrice,
+  maxPrice,
+  onMinChange,
+  onMaxChange,
+  selectedGames,
+  onToggleGame,
+  className,
+}: FiltersSidebarProps) {
   const games = useGames();
   const counts = new Map<string, number>();
   for (const account of accounts) {
@@ -60,14 +72,18 @@ export function FiltersSidebar({ accounts, minPrice, maxPrice, onMinChange, onMa
   }
 
   return (
-    <aside className={styles.filters}>
+    <aside className={className ? `${styles.filters} ${className}` : styles.filters}>
       <h4>Шүүлтүүр</h4>
 
       <div className={styles.groupTitle}>Тоглоом</div>
       {games.map((game) => (
         <label key={game.name} className={styles.fltRow}>
           <span className={styles.left}>
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              checked={selectedGames.includes(game.name)}
+              onChange={() => onToggleGame(game.name)}
+            />
             {game.image && (
               <img
                 src={game.image}

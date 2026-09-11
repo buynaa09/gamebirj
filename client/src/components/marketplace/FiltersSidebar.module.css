@@ -15,6 +15,15 @@
   }
 }
 
+/* Used inside the mobile drawer, where .filters is hidden by default. */
+.filtersVisible {
+  display: block;
+  border: none;
+  padding: 0;
+  position: static;
+  background: transparent;
+}
+
 .filters h4 {
   display: flex;
   align-items: center;

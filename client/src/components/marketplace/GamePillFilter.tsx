@@ -4,8 +4,8 @@ import type { MarketAccount } from '../../types';
 import styles from './GamePillFilter.module.css';
 
 interface GamePillFilterProps {
-  activeFilter: string;
-  onFilterChange: (filter: string) => void;
+  selectedGames: string[];
+  onSelectGame: (gameName: string) => void;
   accounts: MarketAccount[];
 }
 
@@ -13,8 +13,11 @@ function countFor(accounts: MarketAccount[], gameName: string): number {
   return accounts.filter((a) => a.game === gameName).length;
 }
 
-export function GamePillFilter({ activeFilter, onFilterChange, accounts }: GamePillFilterProps) {
+export function GamePillFilter({ selectedGames, onSelectGame, accounts }: GamePillFilterProps) {
   const games = useGames();
+
+  const isActive = (id: string) =>
+    id === 'all' ? selectedGames.length === 0 : selectedGames.length === 1 && selectedGames[0] === id;
 
   const pills = [
     { id: 'all', name: 'All games', icon: undefined, image: null, count: accounts.length },
@@ -32,10 +35,10 @@ export function GamePillFilter({ activeFilter, onFilterChange, accounts }: GameP
       {pills.map((game) => (
         <button
           key={game.id}
-          className={`${styles.pill} ${activeFilter === game.id ? styles.active : ''}`}
+          className={`${styles.pill} ${isActive(game.id) ? styles.active : ''}`}
           role="tab"
-          aria-selected={activeFilter === game.id}
-          onClick={() => onFilterChange(game.id)}
+          aria-selected={isActive(game.id)}
+          onClick={() => onSelectGame(game.id)}
         >
           {game.image ? (
             <img

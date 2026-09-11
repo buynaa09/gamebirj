@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeProvider';
 import { AuthProvider } from './context/AuthProvider';
+import { WishlistProvider } from './context/WishlistProvider';
 import { TopBar } from './components/layout/TopBar';
 import { BottomNav } from './components/layout/BottomNav';
 import { ChatBubble } from './components/layout/ChatBubble';
@@ -10,16 +11,19 @@ import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { SellPage } from './pages/SellPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
+import { WishlistPage } from './pages/WishlistPage';
 import './App.module.css';
 
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppShell />
-        </BrowserRouter>
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <WishlistProvider>
+            <AppShell />
+          </WishlistProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ThemeProvider>
   );
 }
@@ -35,6 +39,7 @@ function AppShell() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/sell" element={<SellPage />} />
         <Route path="/listing/:id" element={<ListingRoute />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
       </Routes>
       <ChatBubble />
       <BottomNav />

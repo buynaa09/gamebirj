@@ -83,6 +83,8 @@ export interface MarketAccount {
   accept_offers: boolean;
   seller: string;
   created_at: string;
+  wishlisted: boolean;
+  wishlist_count: number;
   images: MarketImage[];
   listings: MarketAccountDetail[];
 }

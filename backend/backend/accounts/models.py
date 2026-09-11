@@ -49,3 +49,22 @@ class AccountImage(models.Model):
 
     def __str__(self):
         return f"{self.account.title} - image {self.pk}"
+
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="wishlist"
+    )
+    account = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="wishlisted_by"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["user", "account"], name="unique_wishlist_entry")
+        ]
+
+    def __str__(self):
+        return f"{self.user} ♥ {self.account.title}"

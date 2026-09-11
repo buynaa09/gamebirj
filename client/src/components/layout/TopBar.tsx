@@ -132,6 +132,9 @@ function TopBarInner() {
                     <a href="#" role="menuitem">
                       Transactions
                     </a>
+                    <NavLink to="/wishlist" role="menuitem">
+                      Wishlist
+                    </NavLink>
                     <button role="menuitem" className={styles.dropdownLogout} onClick={handleLogout}>
                       Log out
                     </button>

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { MarketplaceHeader } from '../components/marketplace/MarketplaceHeader';
 import { FiltersSidebar } from '../components/marketplace/FiltersSidebar';
+import sidebarStyles from '../components/marketplace/FiltersSidebar.module.css';
+import { FiltersDrawer } from '../components/marketplace/FiltersDrawer';
 import { SearchBar } from '../components/marketplace/SearchBar';
 import { GamePillFilter } from '../components/marketplace/GamePillFilter';
 import { SortSelect } from '../components/marketplace/SortSelect';
@@ -38,16 +40,40 @@ function sortAccounts(accounts: MarketAccount[], sort: SortKey): MarketAccount[]
 export function MarketplacePage() {
   const { accounts, loading, error, reload } = useAccounts();
   const [query, setQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [selectedGames, setSelectedGames] = useState<string[]>([]);
   const [sort, setSort] = useState<SortKey>('newest');
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const toggleGame = (gameName: string) => {
+    setSelectedGames((prev) =>
+      prev.includes(gameName) ? prev.filter((g) => g !== gameName) : [...prev, gameName],
+    );
+  };
+
+  const selectGame = (gameName: string) => {
+    // Pills are single-select: tapping the active pill clears back to all.
+    setSelectedGames((prev) => (gameName === 'all' || (prev.length === 1 && prev[0] === gameName) ? [] : [gameName]));
+  };
+
+  const sidebar = (
+    <FiltersSidebar
+      accounts={accounts}
+      minPrice={minPrice}
+      maxPrice={maxPrice}
+      onMinChange={setMinPrice}
+      onMaxChange={setMaxPrice}
+      selectedGames={selectedGames}
+      onToggleGame={toggleGame}
+    />
+  );
 
   const filteredListings = useMemo(() => {
     let result = accounts;
 
-    if (activeFilter !== 'all') {
-      result = result.filter((a) => a.game === activeFilter);
+    if (selectedGames.length > 0) {
+      result = result.filter((a) => a.game !== null && selectedGames.includes(a.game));
     }
 
     if (minPrice !== null) {
@@ -64,26 +90,34 @@ export function MarketplacePage() {
     }
 
     return sortAccounts(result, sort);
-  }, [accounts, query, activeFilter, sort, minPrice, maxPrice]);
+  }, [accounts, query, selectedGames, sort, minPrice, maxPrice]);
 
   return (
     <main>
       <MarketplaceHeader />
       <div className={styles.body}>
-        <FiltersSidebar
-          accounts={accounts}
-          minPrice={minPrice}
-          maxPrice={maxPrice}
-          onMinChange={setMinPrice}
-          onMaxChange={setMaxPrice}
-        />
+        {sidebar}
         <section className={styles.main}>
-          <SearchBar query={query} onQueryChange={setQuery} />
-          <GamePillFilter activeFilter={activeFilter} onFilterChange={setActiveFilter} accounts={accounts} />
+          <SearchBar query={query} onQueryChange={setQuery} onOpenFilters={() => setFiltersOpen(true)} />
+          <GamePillFilter selectedGames={selectedGames} onSelectGame={selectGame} accounts={accounts} />
           <SortSelect shown={filteredListings.length} total={accounts.length} sort={sort} onSortChange={setSort} />
           <ListingGrid listings={filteredListings} loading={loading} error={error} onRetry={reload} />
         </section>
       </div>
+      {filtersOpen && (
+        <FiltersDrawer resultCount={filteredListings.length} onClose={() => setFiltersOpen(false)}>
+          <FiltersSidebar
+            accounts={accounts}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onMinChange={setMinPrice}
+            onMaxChange={setMaxPrice}
+            selectedGames={selectedGames}
+            onToggleGame={toggleGame}
+            className={sidebarStyles.filtersVisible}
+          />
+        </FiltersDrawer>
+      )}
     </main>
   );
 }

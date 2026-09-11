@@ -64,6 +64,10 @@
   cursor: pointer;
 }
 
+.favActive {
+  color: var(--red);
+}
+
 .gameChip {
   position: absolute;
   bottom: 8px;

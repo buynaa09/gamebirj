@@ -23,5 +23,7 @@ class AccountSchema(Schema):
     accept_offers: bool = True
     seller: str = ""
     created_at: str = ""
+    wishlisted: bool = False
+    wishlist_count: int = 0
     listings: list[AccountListingSchema] = []
     images: list[AccountImageSchema] = []
