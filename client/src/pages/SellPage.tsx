@@ -5,7 +5,6 @@ import { useGames } from '../hooks/useGames';
 import { useSellDraft } from '../hooks/useSellDraft';
 import { StepIndicator } from '../components/sell/StepIndicator';
 import { GameStep } from '../components/sell/GameStep';
-import { DeliveryStep } from '../components/sell/DeliveryStep';
 import { DetailsStep } from '../components/sell/DetailsStep';
 import { MediaStep } from '../components/sell/MediaStep';
 import type { PreviewImage } from '../components/sell/MediaStep';
@@ -28,12 +27,11 @@ export function SellPage() {
 
   const validate = (s: number): string | null => {
     if (s === 0 && !draft.gameName) return 'Please choose a game to continue.';
-    if (s === 1 && !draft.delivery) return 'Please choose a delivery method to continue.';
-    if (s === 2) {
+    if (s === 1) {
       if (draft.title.trim() === '') return 'Please add a listing title.';
       if (draft.price.trim() === '' || Number(draft.price) <= 0) return 'Please enter a valid price.';
     }
-    if (s === 3 && images.length === 0) return 'Please add at least one screenshot.';
+    if (s === 2 && images.length === 0) return 'Please add at least one screenshot.';
     return null;
   };
 
@@ -44,7 +42,7 @@ export function SellPage() {
       return;
     }
     setError(null);
-    setStep((s) => Math.min(s + 1, 4));
+    setStep((s) => Math.min(s + 1, 3));
   };
 
   const goBack = () => {
@@ -53,7 +51,7 @@ export function SellPage() {
   };
 
   const publish = () => {
-    for (let s = 0; s <= 3; s++) {
+    for (let s = 0; s <= 2; s++) {
       const problem = validate(s);
       if (problem) {
         setError(problem);
@@ -141,8 +139,7 @@ export function SellPage() {
 
       <div className={styles.card}>
         {step === 0 && <GameStep selected={draft.gameName} onSelect={(gameName) => update({ gameName })} />}
-        {step === 1 && <DeliveryStep value={draft.delivery} onChange={(delivery) => update({ delivery })} />}
-        {step === 2 && (
+        {step === 1 && (
           <DetailsStep
             title={draft.title}
             price={draft.price}
@@ -151,8 +148,8 @@ export function SellPage() {
             onChange={update}
           />
         )}
-        {step === 3 && <MediaStep images={images} onChange={setImages} />}
-        {step === 4 && <ReviewStep draft={draft} images={images} gameImage={gameImage} />}
+        {step === 2 && <MediaStep images={images} onChange={setImages} />}
+        {step === 3 && <ReviewStep draft={draft} images={images} gameImage={gameImage} />}
 
         {error && <div className={styles.error}>{error}</div>}
 
@@ -164,7 +161,7 @@ export function SellPage() {
           ) : (
             <span />
           )}
-          {step < 4 ? (
+          {step < 3 ? (
             <button type="button" className="btn btn-primary" onClick={goNext}>
               Next →
             </button>

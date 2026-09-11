@@ -8,11 +8,6 @@ interface ReviewStepProps {
   gameImage: string | null;
 }
 
-const DELIVERY_LABELS = {
-  manual: 'Manual handover',
-  instant: 'Instant delivery',
-} as const;
-
 export function ReviewStep({ draft, images, gameImage }: ReviewStepProps) {
   return (
     <div>
@@ -26,10 +21,6 @@ export function ReviewStep({ draft, images, gameImage }: ReviewStepProps) {
             {gameImage && <img src={gameImage} alt="" className={styles.gameThumb} />}
             {draft.gameName}
           </dd>
-        </div>
-        <div className={styles.row}>
-          <dt>Delivery</dt>
-          <dd>{draft.delivery ? DELIVERY_LABELS[draft.delivery] : '—'}</dd>
         </div>
         <div className={styles.row}>
           <dt>Title</dt>

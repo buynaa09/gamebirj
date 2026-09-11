@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-export type DeliveryMethod = 'manual' | 'instant';
-
 export interface Highlight {
   field: string;
   value: string;
@@ -9,7 +7,6 @@ export interface Highlight {
 
 export interface SellDraft {
   gameName: string | null;
-  delivery: DeliveryMethod | null;
   title: string;
   price: string;
   description: string;
@@ -18,7 +15,6 @@ export interface SellDraft {
 
 export const emptyDraft: SellDraft = {
   gameName: null,
-  delivery: null,
   title: '',
   price: '',
   description: '',
@@ -34,7 +30,6 @@ function loadDraft(): { draft: SellDraft; restored: boolean } {
     const parsed = { ...emptyDraft, ...(JSON.parse(raw) as Partial<SellDraft>) };
     const hasContent =
       parsed.gameName !== null ||
-      parsed.delivery !== null ||
       parsed.title.trim() !== '' ||
       parsed.price.trim() !== '' ||
       parsed.description.trim() !== '' ||
