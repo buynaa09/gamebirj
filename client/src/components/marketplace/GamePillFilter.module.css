@@ -38,3 +38,12 @@
   font-weight: 600;
   margin-left: 2px;
 }
+
+.gameIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--panel-2);
+  flex-shrink: 0;
+}

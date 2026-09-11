@@ -11,9 +11,10 @@ export function SortSelect({ total }: SortSelectProps) {
         Showing <b>{total}</b> of <b>{total}</b> listings
       </span>
       <select className={styles.sortSelect} aria-label="Sort listings">
-        <option>Newest first</option>
-        <option>Price: low to high</option>
-        <option>Price: high to low</option>
+        <option>Шинэ эхэнд</option>
+        <option>Үнэ: бага -{'>'} их</option>
+        <option>Үнэ: их -{'>'} бага</option>
+        <option>Хуучин эхэнд</option>
       </select>
     </div>
   );

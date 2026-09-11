@@ -22,3 +22,14 @@ export const sidebarGames: GameFilter[] = [
   { id: 'cod-mobile', name: 'COD Mobile', count: 2 },
   { id: 'pubg-mobile', name: 'PUBG Mobile', count: 2 },
 ];
+
+// Marketplace listing totals per game name (until a listings-count API exists).
+export const sidebarCounts: Record<string, number> = Object.fromEntries(
+  sidebarGames.map((g) => [g.name, g.count]),
+);
+
+// Pill icons keyed by game name, plus aliases where the API name differs.
+export const gameIcons: Record<string, string | undefined> = Object.fromEntries(
+  pillGames.map((g) => [g.name, g.icon]),
+);
+gameIcons['League of Legends: Wild Rift'] ??= '🗡️';

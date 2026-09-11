@@ -11,15 +11,15 @@ export function MarketplaceHeader() {
       <div className={styles.titleRow}>
         <div>
           <div className={styles.eyebrowRed}>Worldwide marketplace</div>
-          <h2>Gaming accounts for sale, every purchase escrow-protected</h2>
+          <h2>Борлуулалт,Худалдан авалт бүр 100% аюулгүй</h2>
           <p>
-            18 live listings across 40+ games. Your payment is held by ASCEND,
-            never sent straight to the seller.
+            Таны төлбөрийг худалдагчид шууд шилжүүлэхгүй бөгөөд 
+            Soliltsoo system дээр найдвартай хадгалагдана.
           </p>
         </div>
         <div className={styles.headerActions}>
-          <button className="btn btn-outline">Buyer guide</button>
-          <button className="btn btn-primary">+ Sell account</button>
+          <button className="btn btn-outline">Зөвлөгөө</button>
+          <button className="btn btn-primary">+ Account зарах</button>
         </div>
       </div>
     </div>

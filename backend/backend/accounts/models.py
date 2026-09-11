@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from backend.games.models import Game
 # Create your models here.
 
 
@@ -9,6 +10,7 @@ from django.contrib.auth.models import User
 class Account(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
+    game = models.ForeignKey(Game, on_delete=models.SET_NULL, null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='account_images/')
     description = models.TextField()

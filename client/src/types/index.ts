@@ -22,6 +22,12 @@ export interface SignupInput {
   password2: string;
 }
 
+export interface Game {
+  id: number;
+  name: string;
+  image: string | null;
+}
+
 export interface Listing {
   id: string;
   game: string;
