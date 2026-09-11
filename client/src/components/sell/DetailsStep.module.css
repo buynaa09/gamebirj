@@ -16,16 +16,36 @@
   flex-direction: column;
   gap: 6px;
   margin-bottom: 14px;
+  min-width: 0;
 }
 
 .field label {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-dim);
+  color: var(--text);
+}
+
+.optional {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.counter {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  flex-shrink: 0;
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -35,11 +55,15 @@
   font-family: inherit;
   outline: none;
   width: 100%;
+}
+
+.field textarea {
   resize: vertical;
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   border-color: var(--red);
 }
 
@@ -48,64 +72,206 @@
   color: var(--text-faint);
 }
 
-.highlightsHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 20px 0 10px;
+.hint {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin: 2px 0 0;
+  line-height: 1.5;
 }
 
-.highlightsTitle {
-  font-size: 13px;
-  font-weight: 700;
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 14px;
+}
+
+@media (min-width: 560px) {
+  .twoCol {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.selectWrap {
+  position: relative;
+}
+
+.selectWrap select {
+  appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.selectWrap select:invalid,
+.selectWrap select option {
+  color: var(--text);
+}
+
+.selectChevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.priceSide {
+  margin: 2px 0 18px;
+}
+
+.marketHint {
+  font-size: 12px;
   color: var(--text-dim);
+  line-height: 1.6;
+  margin: 0 0 12px;
 }
 
-.addBtn {
+.offersRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
   background: transparent;
   border: none;
-  color: var(--red);
-  font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
+  padding: 0;
   cursor: pointer;
-  padding: 4px 0;
+  font-family: inherit;
+  text-align: left;
 }
 
-.highlightRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.highlightRow input {
+.switch {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: background 0.15s;
+}
+
+.switchOn {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  transition: left 0.15s;
+}
+
+.switchOn .knob {
+  left: 18px;
+  background: #fff;
+}
+
+.offersText {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+.offersText b {
   color: var(--text);
-  padding: 10px 12px;
+}
+
+.gamePanel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+  background: color-mix(in srgb, var(--panel-2) 45%, transparent);
+}
+
+.gamePanelHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.gamePanelThumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.gamePanelTitle {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.gamePanelSub {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.gameGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 14px;
+}
+
+@media (min-width: 560px) {
+  .gameGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gameGrid .field {
+  margin-bottom: 12px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 2px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  padding: 6px 8px;
+}
+
+.toolbar button {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  min-width: 30px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
   font-size: 13.5px;
   font-family: inherit;
-  outline: none;
-  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
 }
 
-.highlightRow input:focus {
-  border-color: var(--red);
+.toolbar button:hover {
+  background: var(--border);
+  color: var(--text);
 }
 
-.removeBtn {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.field textarea {
+  border-radius: 0 0 8px 8px;
+}
+
+.descFoot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
   color: var(--text-faint);
-  width: 38px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.removeBtn:hover {
-  color: var(--red);
-  border-color: var(--red);
+  margin-top: 6px;
 }

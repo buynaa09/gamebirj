@@ -1,3 +1,4 @@
+import { detailLabelFor, detailSectionFor } from '../../data/gameDetails';
 import type { SellDraft } from '../../hooks/useSellDraft';
 import type { PreviewImage } from './MediaStep';
 import styles from './ReviewStep.module.css';
@@ -9,6 +10,9 @@ interface ReviewStepProps {
 }
 
 export function ReviewStep({ draft, images, gameImage }: ReviewStepProps) {
+  const filledDetails = detailSectionFor(draft.gameName).fields.filter(
+    (f) => (draft.detailValues[f.key] ?? '').trim() !== '',
+  );
   return (
     <div>
       <h3 className={styles.heading}>Review</h3>
@@ -24,32 +28,37 @@ export function ReviewStep({ draft, images, gameImage }: ReviewStepProps) {
         </div>
         <div className={styles.row}>
           <dt>Title</dt>
-          <dd>{draft.title || '—'}</dd>
+          <dd>{draft.listingTitle.trim() !== '' ? draft.listingTitle : draft.rank || '—'}</dd>
+        </div>
+        <div className={styles.row}>
+          <dt>Rank / Level</dt>
+          <dd>{draft.rank || '—'}</dd>
         </div>
         <div className={styles.row}>
           <dt>Price</dt>
-          <dd className={styles.price}>₱{draft.price || '—'}</dd>
+          <dd className={styles.price}>
+            ₱{draft.price || '—'}
+            <span className={styles.firm}>{draft.acceptOffers ? ' · open to offers' : ' · firm'}</span>
+          </dd>
         </div>
+        {filledDetails.length > 0 && (
+          <div className={styles.row}>
+            <dt>Details</dt>
+            <dd>
+              <ul className={styles.highlights}>
+                {filledDetails.map((f) => (
+                  <li key={f.key}>
+                    <b>{detailLabelFor(draft.gameName, f.key)}</b>: {draft.detailValues[f.key]}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        )}
         {draft.description.trim() !== '' && (
           <div className={styles.row}>
             <dt>Description</dt>
             <dd className={styles.clamp}>{draft.description}</dd>
-          </div>
-        )}
-        {draft.highlights.filter((h) => h.field.trim() !== '' || h.value.trim() !== '').length > 0 && (
-          <div className={styles.row}>
-            <dt>Highlights</dt>
-            <dd>
-              <ul className={styles.highlights}>
-                {draft.highlights
-                  .filter((h) => h.field.trim() !== '' || h.value.trim() !== '')
-                  .map((h, i) => (
-                    <li key={i}>
-                      <b>{h.field || '—'}</b>: {h.value || '—'}
-                    </li>
-                  ))}
-              </ul>
-            </dd>
           </div>
         )}
         <div className={styles.row}>

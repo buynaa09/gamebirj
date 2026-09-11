@@ -26,12 +26,11 @@ export function SellPage() {
   }
 
   const validate = (s: number): string | null => {
-    if (s === 0 && !draft.gameName) return 'Үргэлжлүүлэхийн тулд тоглоомоо сонгоно уу.';
-    if (s === 1) {
-      if (draft.title.trim() === '') return 'Зарлалын гарчгийг оруулна уу.';
-      if (draft.price.trim() === '' || Number(draft.price) <= 0) return 'Зөв үнийн дүн оруулна уу.';
+    if (s === 0 && !draft.gameName) return 'Please choose a game to continue.';
+    if (s === 1 && (draft.price.trim() === '' || Number(draft.price) <= 0)) {
+      return 'Please enter a valid price.';
     }
-    if (s === 2 && images.length === 0) return 'Ядаж нэг скриншот зургийг оруулна уу.';
+    if (s === 2 && images.length === 0) return 'Please add at least one screenshot.';
     return null;
   };
 
@@ -139,13 +138,7 @@ export function SellPage() {
       <div className={styles.card}>
         {step === 0 && <GameStep selected={draft.gameName} onSelect={(gameName) => update({ gameName })} />}
         {step === 1 && (
-          <DetailsStep
-            title={draft.title}
-            price={draft.price}
-            description={draft.description}
-            highlights={draft.highlights}
-            onChange={update}
-          />
+          <DetailsStep gameName={draft.gameName} gameImage={gameImage} draft={draft} onChange={update} />
         )}
         {step === 2 && <MediaStep images={images} onChange={setImages} />}
         {step === 3 && <ReviewStep draft={draft} images={images} gameImage={gameImage} />}

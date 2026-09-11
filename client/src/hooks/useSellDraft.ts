@@ -1,24 +1,23 @@
 import { useEffect, useState } from 'react';
 
-export interface Highlight {
-  field: string;
-  value: string;
-}
-
 export interface SellDraft {
   gameName: string | null;
-  title: string;
+  listingTitle: string;
+  rank: string;
   price: string;
+  acceptOffers: boolean;
+  detailValues: Record<string, string>;
   description: string;
-  highlights: Highlight[];
 }
 
 export const emptyDraft: SellDraft = {
   gameName: null,
-  title: '',
+  listingTitle: '',
+  rank: '',
   price: '',
+  acceptOffers: true,
+  detailValues: {},
   description: '',
-  highlights: [],
 };
 
 const STORAGE_KEY = 'soliltsoo-sell-draft';
@@ -30,10 +29,11 @@ function loadDraft(): { draft: SellDraft; restored: boolean } {
     const parsed = { ...emptyDraft, ...(JSON.parse(raw) as Partial<SellDraft>) };
     const hasContent =
       parsed.gameName !== null ||
-      parsed.title.trim() !== '' ||
+      parsed.listingTitle.trim() !== '' ||
+      parsed.rank.trim() !== '' ||
       parsed.price.trim() !== '' ||
       parsed.description.trim() !== '' ||
-      parsed.highlights.length > 0;
+      Object.values(parsed.detailValues).some((v) => v.trim() !== '');
     return { draft: parsed, restored: hasContent };
   } catch {
     return { draft: emptyDraft, restored: false };
