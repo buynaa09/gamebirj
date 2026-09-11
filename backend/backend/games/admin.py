@@ -15,6 +15,9 @@ class ListingAdmin(admin.ModelAdmin):
     list_filter = ["listing_type"]
 
 
+
+
+
 @admin.register(ListingChoice)
 class ListingChoiceAdmin(admin.ModelAdmin):
     list_display = ["listing", "choice_value"]

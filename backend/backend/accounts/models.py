@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from backend.games.models import Game, Listing, ListingChoice
+from backend.games.models import Game, Listing, ListingChoice,GameRank
 
 # Create your models here.
 
@@ -10,6 +10,7 @@ class Account(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     game = models.ForeignKey(Game, on_delete=models.SET_NULL, null=True, blank=True)
+    game_rank = models.ForeignKey(GameRank, on_delete=models.SET_NULL, null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
 

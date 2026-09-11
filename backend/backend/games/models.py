@@ -11,6 +11,16 @@ class Game(models.Model):
     def __str__(self):
         return self.name
 
+class GameRank(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="ranks")
+    order = models.PositiveIntegerField()
+    name = models.CharField(max_length=100)
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return f"{self.game.name} - Rank {self.name}"
+
 class Listing(models.Model):
     class ListingType(models.TextChoices):
         TEXT = "text", "Text"
