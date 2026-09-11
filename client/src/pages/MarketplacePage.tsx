@@ -40,6 +40,8 @@ export function MarketplacePage() {
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [sort, setSort] = useState<SortKey>('newest');
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
 
   const filteredListings = useMemo(() => {
     let result = accounts;
@@ -48,19 +50,33 @@ export function MarketplacePage() {
       result = result.filter((a) => a.game === activeFilter);
     }
 
+    if (minPrice !== null) {
+      result = result.filter((a) => a.price >= minPrice);
+    }
+
+    if (maxPrice !== null) {
+      result = result.filter((a) => a.price <= maxPrice);
+    }
+
     if (query.trim()) {
       const q = query.toLowerCase();
       result = result.filter((a) => matchesQuery(a, q));
     }
 
     return sortAccounts(result, sort);
-  }, [accounts, query, activeFilter, sort]);
+  }, [accounts, query, activeFilter, sort, minPrice, maxPrice]);
 
   return (
     <main>
       <MarketplaceHeader />
       <div className={styles.body}>
-        <FiltersSidebar accounts={accounts} />
+        <FiltersSidebar
+          accounts={accounts}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          onMinChange={setMinPrice}
+          onMaxChange={setMaxPrice}
+        />
         <section className={styles.main}>
           <SearchBar query={query} onQueryChange={setQuery} />
           <GamePillFilter activeFilter={activeFilter} onFilterChange={setActiveFilter} accounts={accounts} />

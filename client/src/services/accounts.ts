@@ -1,8 +1,16 @@
 import { apiGet, postForm } from './api';
 import type { CreatedAccount, MarketAccount, PublishListingInput } from '../types';
 
-export function fetchAccounts(): Promise<MarketAccount[]> {
-  return apiGet<MarketAccount[]>('/accounts/');
+export function fetchAccounts(params?: { game?: number; q?: string }): Promise<MarketAccount[]> {
+  const search = new URLSearchParams();
+  if (params?.game !== undefined) search.set('game', String(params.game));
+  if (params?.q) search.set('q', params.q);
+  const suffix = search.size > 0 ? `?${search.toString()}` : '';
+  return apiGet<MarketAccount[]>(`/accounts/${suffix}`);
+}
+
+export function fetchAccount(id: number): Promise<MarketAccount> {
+  return apiGet<MarketAccount>(`/accounts/${id}/`);
 }
 
 export function publishListing(input: PublishListingInput): Promise<CreatedAccount> {

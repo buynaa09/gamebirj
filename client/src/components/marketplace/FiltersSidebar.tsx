@@ -1,8 +1,58 @@
+import { useState } from 'react';
 import { useGames } from '../../hooks/useGames';
 import type { MarketAccount } from '../../types';
+import { formatPrice } from '../../utils/format';
 import styles from './FiltersSidebar.module.css';
 
-export function FiltersSidebar({ accounts }: { accounts: MarketAccount[] }) {
+interface FiltersSidebarProps {
+  accounts: MarketAccount[];
+  minPrice: number | null;
+  maxPrice: number | null;
+  onMinChange: (value: number | null) => void;
+  onMaxChange: (value: number | null) => void;
+}
+
+function PriceInput({
+  value,
+  placeholder,
+  ariaLabel,
+  onCommit,
+}: {
+  value: number | null;
+  placeholder: string;
+  ariaLabel: string;
+  onCommit: (value: number | null) => void;
+}) {
+  const [text, setText] = useState('');
+  const [focused, setFocused] = useState(false);
+
+  // Blurred: show formatted value with ₮. Focused: raw digits for editing.
+  const shown = focused ? text : value === null ? '' : formatPrice(value);
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label={ariaLabel}
+      placeholder={placeholder}
+      value={shown}
+      onChange={(e) => {
+        const digits = e.target.value.replace(/[^0-9]/g, '');
+        setText(digits);
+        onCommit(digits === '' ? null : Number(digits));
+      }}
+      onFocus={() => {
+        setFocused(true);
+        setText(value === null ? '' : String(value));
+      }}
+      onBlur={() => {
+        setFocused(false);
+      }}
+    />
+  );
+}
+
+export function FiltersSidebar({ accounts, minPrice, maxPrice, onMinChange, onMaxChange }: FiltersSidebarProps) {
   const games = useGames();
   const counts = new Map<string, number>();
   for (const account of accounts) {
@@ -38,12 +88,10 @@ export function FiltersSidebar({ accounts }: { accounts: MarketAccount[] }) {
 
       <div className={styles.groupTitle}>Үнийн хэмжээ</div>
       <div className={styles.priceInputs}>
-        <input type="text" defaultValue="0₮" />
+        <PriceInput value={minPrice} placeholder="0₮" ariaLabel="Minimum price" onCommit={onMinChange} />
         <span style={{ color: 'var(--text-faint)' }}>–</span>
-        <input type="text" defaultValue="100,000₮" />
+        <PriceInput value={maxPrice} placeholder="100,000₮" ariaLabel="Maximum price" onCommit={onMaxChange} />
       </div>
-
-     
     </aside>
   );
 }

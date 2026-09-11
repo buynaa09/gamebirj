@@ -11,7 +11,7 @@ export function MarketplaceHeader() {
       </div>
       <div className={styles.titleRow}>
         <div>
-          <div className={styles.eyebrowRed}>Worldwide marketplace</div>
+          <div className={styles.eyebrowRed}>Mongolian marketplace</div>
           <h2>Борлуулалт,Худалдан авалт бүр 100% аюулгүй</h2>
           <p>
             Таны төлбөрийг худалдагчид шууд шилжүүлэхгүй бөгөөд 

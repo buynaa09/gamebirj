@@ -168,6 +168,25 @@ def test_create_account_rejects_non_image(client: Client):
     assert Account.objects.count() == 0
 
 
+def test_retrieve_account_is_public(client: Client):
+    user = UserFactory.create()
+    game = _mlbb()
+    account = Account.objects.create(user=user, title="Detail", game=game, price=99)
+
+    response = client.get(reverse("api:retrieve_account", kwargs={"account_id": account.pk}))
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.json()
+    assert payload["title"] == "Detail"
+    assert payload["seller"] == user.username
+
+
+def test_retrieve_account_missing(client: Client):
+    response = client.get(reverse("api:retrieve_account", kwargs={"account_id": 999999}))
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
 def test_list_my_accounts_only_own(client: Client):
     me = UserFactory.create()
     other_user = UserFactory.create()

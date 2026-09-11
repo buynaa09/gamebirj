@@ -66,6 +66,13 @@ export interface MarketImage {
   image: string | null;
 }
 
+export interface MarketAccountDetail {
+  listing_id: number;
+  title: string;
+  value: string;
+  choices: string[];
+}
+
 export interface MarketAccount {
   id: number;
   title: string;
@@ -77,6 +84,7 @@ export interface MarketAccount {
   seller: string;
   created_at: string;
   images: MarketImage[];
+  listings: MarketAccountDetail[];
 }
 
 export type SortKey = 'newest' | 'oldest' | 'price-asc' | 'price-desc';

@@ -101,10 +101,17 @@ def list_accounts(request, game: int | None = None, q: str | None = None):
 
 @router.get("/mine/", response=list[AccountSchema])
 def list_my_accounts(request):
-    accounts = (
-        _base_queryset().filter(user=request.user).order_by("-created_at", "-id")
-    )
+    accounts = _base_queryset().filter(user=request.user).order_by("-created_at", "-id")
     return [_account_payload(request, account) for account in accounts]
+
+
+@router.get("/{account_id}/", response=AccountSchema, auth=None)
+def retrieve_account(request, account_id: int):
+    try:
+        account = _base_queryset().get(pk=account_id)
+    except Account.DoesNotExist as exc:
+        raise _fail(404, "Listing not found.") from exc
+    return _account_payload(request, account)
 
 
 @router.post("/", response=AccountSchema)
