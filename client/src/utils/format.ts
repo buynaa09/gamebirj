@@ -1,21 +1,22 @@
 export function formatPrice(value: number): string {
-  return `₱${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const grouped = value.toLocaleString('mn-MN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return `${grouped}₮`;
 }
 
 export function timeAgo(iso: string): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';
   const seconds = Math.max(0, Math.floor((Date.now() - then) / 1000));
-  if (seconds < 60) return 'just now';
+  if (seconds < 60) return 'дөнгөж сая';
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60) return `${minutes} минутын өмнө`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  if (hours < 24) return `${hours} цагийн өмнө`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+  if (days < 7) return `${days} өдрийн өмнө`;
   const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+  if (weeks < 5) return `${weeks} долоо хоногийн өмнө`;
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
-  return `${Math.floor(days / 365)} year${Math.floor(days / 365) === 1 ? '' : 's'} ago`;
+  if (months < 12) return `${months} сарын өмнө`;
+  return `${Math.floor(days / 365)} жилийн өмнө`;
 }

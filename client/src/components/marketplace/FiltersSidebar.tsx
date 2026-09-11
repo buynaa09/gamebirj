@@ -34,7 +34,7 @@ export function FiltersSidebar({ accounts }: { accounts: MarketAccount[] }) {
           <span className={styles.count}>{counts.get(game.name) ?? 0}</span>
         </label>
       ))}
-      <span className={styles.seeAll}>See all {games.length} games</span>
+      <span className={styles.seeAll}>Нийт {games.length} тоглоомыг харах</span>
 
       <div className={styles.groupTitle}>Үнийн хэмжээ</div>
       <div className={styles.priceInputs}>

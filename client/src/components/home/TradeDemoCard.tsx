@@ -9,7 +9,7 @@ export function TradeDemoCard() {
       </div>
 
       <div className={styles.priceRow}>
-        <span className={styles.cur}>PHP</span>
+        <span className={styles.cur}>₮</span>
         <span className={styles.amt}>18,900</span>
       </div>
       <div className={styles.statusLine}>BUYER PAID · CAPTURED</div>
@@ -31,7 +31,7 @@ export function TradeDemoCard() {
       </div>
 
       <div className={styles.flowChip}>
-        <span className={styles.sq} /> PHP 18,900
+          <span className={styles.sq} /> 18,900₮
       </div>
 
       <div className={styles.timeline}>

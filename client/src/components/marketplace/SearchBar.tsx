@@ -13,15 +13,15 @@ export function SearchBar({ query, onQueryChange }: SearchBarProps) {
         <SearchIcon size={15} />
         <input
           type="text"
-          placeholder="Search by title, game, rank, or item…"
+          placeholder="Гарчиг, тоглоом, ранк эсвэл зүйлээр хайх…"
           value={query}
           onChange={e => onQueryChange(e.target.value)}
-          aria-label="Search listings"
+          aria-label="Заруудаас хайх"
         />
       </div>
-      <button className={styles.filtersMobileBtn} aria-label="Open filters">
+      <button className={styles.filtersMobileBtn} aria-label="Шүүлтүүр нээх">
         <FilterIcon />
-        Filters
+        Шүүлтүүр
       </button>
     </div>
   );

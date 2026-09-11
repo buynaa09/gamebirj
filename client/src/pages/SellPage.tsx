@@ -140,8 +140,7 @@ export function SellPage() {
       </div>
 
       <h1 className={styles.title}>Аккаунт зарах</h1>
-      <p className={styles.subtitle}>Солилцоо платформд тоглоомын аккаунтоо байршуулаарай.</p>
-
+   
       {restored && (
         <div className={styles.draftBanner}>
           <span>Сүүлд үлдээсэн сэргээгдсэн ноорог байна.</span>

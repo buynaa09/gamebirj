@@ -21,11 +21,11 @@ export function ListingCard({ listing, index }: ListingCardProps) {
         style={cover ? undefined : { background: `linear-gradient(135deg, ${color}22, ${color}44)` }}
       >
         {cover && <img src={cover} alt="" className={styles.cover} loading="lazy" />}
-        <button className={styles.favBtn} aria-label="Add to favorites">
+        <button className={styles.favBtn} aria-label="Хадгалах хэсэгт нэмэх">
           ♡
         </button>
         <div className={styles.gameChip}>
-          <span>{listing.game ?? 'Unknown game'}</span>
+          <span>{listing.game ?? 'Тодорхойгүй тоглоом'}</span>
           {listing.game_rank && <span className={styles.rank}>◆ {listing.game_rank}</span>}
         </div>
       </div>

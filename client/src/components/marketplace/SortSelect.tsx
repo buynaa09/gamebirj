@@ -12,18 +12,18 @@ export function SortSelect({ shown, total, sort, onSortChange }: SortSelectProps
   return (
     <div className={styles.resultsRow}>
       <span>
-        Showing <b>{shown}</b> of <b>{total}</b> listings
+        Нийт <b>{total}</b> зарнаас <b>{shown}</b>-г харуулж байна
       </span>
       <select
         className={styles.sortSelect}
-        aria-label="Sort listings"
+        aria-label="Заруудыг эрэмбэлэх"
         value={sort}
         onChange={(e) => onSortChange(e.target.value as SortKey)}
       >
-        <option value="newest">Шинэ эхэнд</option>
-        <option value="price-asc">Үнэ: бага -{'>'} их</option>
-        <option value="price-desc">Үнэ: их -{'>'} бага</option>
-        <option value="oldest">Хуучин эхэнд</option>
+        <option value="newest">Шинэ нь эхэндээ</option>
+        <option value="price-asc">Үнэ: Багаас их рүү</option>
+        <option value="price-desc">Үнэ: Ихээс бага руу</option>
+        <option value="oldest">Хуучин нь эхэндээ</option>
       </select>
     </div>
   );
