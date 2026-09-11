@@ -15,12 +15,17 @@ class Listing(models.Model):
     class ListingType(models.TextChoices):
         TEXT = "text", "Text"
         CHOICE = "choice", "Choice"
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="listings", blank=True, null=True)
     title = models.CharField(max_length=100)
     place_holder_value = models.CharField(max_length=100, blank=True, null=True)
     listing_type = models.CharField(
         max_length=10, choices=ListingType.choices, default=ListingType.TEXT
     )
-    
+    def __str__(self):
+        return f"{self.title} ({self.listing_type})"
+
+    def is_choice(self):
+        return self.listing_type == self.ListingType.CHOICE
 
 
 class ListingChoice(models.Model):
