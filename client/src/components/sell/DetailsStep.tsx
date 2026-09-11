@@ -1,12 +1,12 @@
 import { useRef } from 'react';
-import { detailSectionFor, rankOptionsFor } from '../../data/gameDetails';
+import { resolveDetailFields, resolveRanks } from '../../data/gameDetails';
 import { listings } from '../../data/listings';
 import type { SellDraft } from '../../hooks/useSellDraft';
+import type { Game } from '../../types';
 import styles from './DetailsStep.module.css';
 
 interface DetailsStepProps {
-  gameName: string | null;
-  gameImage: string | null;
+  game: Game | null;
   draft: SellDraft;
   onChange: (patch: Partial<SellDraft>) => void;
 }
@@ -20,16 +20,18 @@ function parsePrice(raw: string): number | null {
 }
 
 function formatPeso(n: number): string {
-  return `₱${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₮${n.toLocaleString('mn-MN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
-export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsStepProps) {
+export function DetailsStep({ game, draft, onChange }: DetailsStepProps) {
+  const gameName = game?.name ?? null;
+  const gameImage = game?.image ?? null;
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const undoStack = useRef<string[]>([]);
   const redoStack = useRef<string[]>([]);
 
-  const section = detailSectionFor(gameName);
-  const ranks = rankOptionsFor(gameName);
+  const fields = resolveDetailFields(game);
+  const ranks = resolveRanks(game);
 
   const marketPrices = listings
     .filter((l) => gameName !== null && l.game === gameName)
@@ -60,7 +62,7 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
 
   const wrap = (before: string, after: string = before) => {
     applyEdit((value, s, e) => {
-      const sel = value.slice(s, e) || 'text';
+      const sel = value.slice(s, e) || 'текст';
       const next = value.slice(0, s) + before + sel + after + value.slice(e);
       return { value: next, caret: [s + before.length, s + before.length + sel.length] };
     });
@@ -98,13 +100,13 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
 
   return (
     <div>
-      <h3 className={styles.heading}>Details</h3>
-      <p className={styles.lead}>Add account details and pricing</p>
+      <h3 className={styles.heading}>Дэлгэрэнгүй мэдээлэл</h3>
+      <p className={styles.lead}>Аккунтын мэдээлэл болон үнийг оруулна уу</p>
 
       <div className={styles.field}>
         <div className={styles.labelRow}>
           <label htmlFor="sell-listing-title">
-            Listing Title <span className={styles.optional}>(optional)</span>
+            Зарын гарчиг <span className={styles.optional}>(заавал биш)</span>
           </label>
           <span className={styles.counter}>
             {draft.listingTitle.length}/{TITLE_LIMIT}
@@ -113,20 +115,20 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
         <input
           id="sell-listing-title"
           type="text"
-          placeholder='e.g. "Max Rank Mobile Legends — 200+ Skins"'
+          placeholder='Жишээ нь: "Mobile Legends high rank — 200+. Skins, heroes, and more!"'
           value={draft.listingTitle}
           maxLength={TITLE_LIMIT}
           onChange={(e) => onChange({ listingTitle: e.target.value })}
         />
-        <p className={styles.hint}>Give your listing a custom headline. If left blank, the rank will be used.</p>
+        <p className={styles.hint}>Зарандаа онцлох гарчиг өгнө үү. Энэ хэсгийг хоосон үлдээвэл ранкийг ашиглах болно.</p>
       </div>
 
       <div className={styles.twoCol}>
         <div className={styles.field}>
-          <label htmlFor="sell-rank">Rank / Level</label>
+          <label htmlFor="sell-rank">Ранк / Түвшин</label>
           <div className={styles.selectWrap}>
             <select id="sell-rank" value={draft.rank} onChange={(e) => onChange({ rank: e.target.value })}>
-              <option value="">Select rank</option>
+              <option value="">Ранк сонгох</option>
               {ranks.map((r) => (
                 <option key={r} value={r}>
                   {r}
@@ -139,7 +141,7 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
           </div>
         </div>
         <div className={styles.field}>
-          <label htmlFor="sell-price">Price (₱) *</label>
+          <label htmlFor="sell-price">Үнэ (₮) *</label>
           <input
             id="sell-price"
             type="number"
@@ -153,14 +155,7 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
       </div>
 
       <div className={styles.priceSide}>
-        {marketPrices.length > 0 && marketMedian !== null && (
-          <p className={styles.marketHint}>
-            {marketPrices.length} other {gameName} account{marketPrices.length === 1 ? '' : 's'} listed at{' '}
-            {formatPeso(marketPrices[0])}–{formatPeso(marketPrices[marketPrices.length - 1])}, typically{' '}
-            {formatPeso(marketMedian)}. These are asking prices, not sold prices — you set yours, and you can change
-            it later.
-          </p>
-        )}
+       
         <button
           type="button"
           role="switch"
@@ -172,8 +167,7 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
             <span className={styles.knob} />
           </span>
           <span className={styles.offersText}>
-            <b>Accept offers</b> — buyers can propose a lower price and you accept, decline, or counter. Turn this off
-            and your price shows as firm.
+            <b>Үнийн санал авах</b> — Худалдан авагч бага үнэ санал болгоход та зөвшөөрж, татгалж болно. Үүнийг унтраавал таны үнэ хөдөлгөөнгүй (тогтмол) болно.
           </span>
         </button>
       </div>
@@ -182,12 +176,14 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
         <div className={styles.gamePanelHead}>
           {gameImage && <img src={gameImage} alt="" className={styles.gamePanelThumb} />}
           <div>
-            <div className={styles.gamePanelTitle}>{section.heading}</div>
-            <div className={styles.gamePanelSub}>{section.subheading}</div>
+            <div className={styles.gamePanelTitle}>
+              {gameName ? `${gameName} дэлгэрэнгүй` : 'Аккунтын дэлгэрэнгүй'}
+            </div>
+            <div className={styles.gamePanelSub}>Эдгээр дэлгэрэнгүй мэдээлэл нь худалдан авагчдад таны зарыг олоход тусална</div>
           </div>
         </div>
         <div className={styles.gameGrid}>
-          {section.fields.map((field) => (
+          {fields.map((field) => (
             <div key={field.key} className={styles.field}>
               <label htmlFor={`sell-detail-${field.key}`}>{field.label}</label>
               {field.kind === 'select' ? (
@@ -197,7 +193,7 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
                     value={draft.detailValues[field.key] ?? ''}
                     onChange={(e) => setDetail(field.key, e.target.value)}
                   >
-                    <option value="">Select {field.label.toLowerCase()}</option>
+                    <option value="">Сонгох: {field.label.toLowerCase()}</option>
                     {(field.options ?? []).map((o) => (
                       <option key={o} value={o}>
                         {o}
@@ -211,8 +207,8 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
               ) : (
                 <input
                   id={`sell-detail-${field.key}`}
-                  type={field.kind === 'number' ? 'number' : 'text'}
-                  min={field.kind === 'number' ? 0 : undefined}
+                  type={field.numeric ? 'number' : 'text'}
+                  min={field.numeric ? 0 : undefined}
                   placeholder={field.placeholder}
                   value={draft.detailValues[field.key] ?? ''}
                   onChange={(e) => setDetail(field.key, e.target.value)}
@@ -225,37 +221,37 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
 
       <div className={styles.field}>
         <div className={styles.labelRow}>
-          <label htmlFor="sell-description">Description</label>
+          <label htmlFor="sell-description">Тайлбар</label>
           <span className={styles.counter}>
             {draft.description.length}/{DESCRIPTION_LIMIT}
           </span>
         </div>
-        <div className={styles.toolbar} role="toolbar" aria-label="Description formatting">
-          <button type="button" title="Undo" aria-label="Undo" onClick={undo}>
+        <div className={styles.toolbar} role="toolbar" aria-label="Тайлбар форматлах">
+          <button type="button" title="Буцаах" aria-label="Буцаах" onClick={undo}>
             ↩
           </button>
-          <button type="button" title="Redo" aria-label="Redo" onClick={redo}>
+          <button type="button" title="Дахин хийх" aria-label="Дахин хийх" onClick={redo}>
             ↪
           </button>
-          <button type="button" title="Bold" aria-label="Bold" onClick={() => wrap('**')}>
+          <button type="button" title="Тод" aria-label="Тод" onClick={() => wrap('**')}>
             <b>B</b>
           </button>
-          <button type="button" title="Italic" aria-label="Italic" onClick={() => wrap('*')}>
+          <button type="button" title="Хэвтээ" aria-label="Хэвтээ" onClick={() => wrap('*')}>
             <i>I</i>
           </button>
-          <button type="button" title="Bullet list" aria-label="Bullet list" onClick={() => prefixLines(() => '- ')}>
+          <button type="button" title="Жагсаалт" aria-label="Жагсаалт" onClick={() => prefixLines(() => '- ')}>
             ☰
           </button>
-          <button type="button" title="Numbered list" aria-label="Numbered list" onClick={() => prefixLines((i) => `${i + 1}. `)}>
+          <button type="button" title="Дугаарласан жагсаалт" aria-label="Дугаарласан жагсаалт" onClick={() => prefixLines((i) => `${i + 1}. `)}>
             1☰
           </button>
-          <button type="button" title="Link" aria-label="Link" onClick={() => wrap('[', '](url)')}>
+          <button type="button" title="Холбоос" aria-label="Холбоос" onClick={() => wrap('[', '](url)')}>
             🔗
           </button>
           <button
             type="button"
-            title="Emoji"
-            aria-label="Emoji"
+            title="Эможи"
+            aria-label="Эможи"
             onClick={() =>
               applyEdit((value, s, e) => {
                 const next = `${value.slice(0, s)}🙂${value.slice(e)}`;
@@ -271,12 +267,12 @@ export function DetailsStep({ gameName, gameImage, draft, onChange }: DetailsSte
           id="sell-description"
           rows={7}
           maxLength={DESCRIPTION_LIMIT}
-          placeholder="Describe your account — include notable items, resources, skins, etc."
+          placeholder="Аккунтынхаа талаар тодорхойлно уу — онцлох зүйлс, нөөц, скин гэх мэт."
           value={draft.description}
           onChange={(e) => onChange({ description: e.target.value })}
         />
         <div className={styles.descFoot}>
-          <span>{wordCount} words</span>
+          <span>{wordCount} үг</span>
           <span>
             {draft.description.length}/{DESCRIPTION_LIMIT}
           </span>

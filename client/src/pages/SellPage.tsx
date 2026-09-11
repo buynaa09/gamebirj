@@ -100,7 +100,7 @@ export function SellPage() {
     );
   }
 
-  const gameImage = games.find((g) => g.name === draft.gameName)?.image ?? null;
+  const game = games.find((g) => g.name === draft.gameName) ?? null;
 
   return (
     <main className={styles.page}>
@@ -137,11 +137,9 @@ export function SellPage() {
 
       <div className={styles.card}>
         {step === 0 && <GameStep selected={draft.gameName} onSelect={(gameName) => update({ gameName })} />}
-        {step === 1 && (
-          <DetailsStep gameName={draft.gameName} gameImage={gameImage} draft={draft} onChange={update} />
-        )}
+        {step === 1 && <DetailsStep game={game} draft={draft} onChange={update} />}
         {step === 2 && <MediaStep images={images} onChange={setImages} />}
-        {step === 3 && <ReviewStep draft={draft} images={images} gameImage={gameImage} />}
+        {step === 3 && <ReviewStep draft={draft} images={images} game={game} />}
 
         {error && <div className={styles.error}>{error}</div>}
 

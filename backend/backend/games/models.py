@@ -11,26 +11,39 @@ class Game(models.Model):
     def __str__(self):
         return self.name
 
+
 class GameRank(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="ranks")
     order = models.PositiveIntegerField()
     name = models.CharField(max_length=100)
+
     class Meta:
         ordering = ["order"]
 
     def __str__(self):
         return f"{self.game.name} - Rank {self.name}"
 
+
 class Listing(models.Model):
     class ListingType(models.TextChoices):
         TEXT = "text", "Text"
         CHOICE = "choice", "Choice"
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="listings", blank=True, null=True)
+
+    game = models.ForeignKey(
+        Game,
+        on_delete=models.CASCADE,
+        related_name="listings",
+        blank=True,
+        null=True,
+    )
     title = models.CharField(max_length=100)
     place_holder_value = models.CharField(max_length=100, blank=True, null=True)
     listing_type = models.CharField(
-        max_length=10, choices=ListingType.choices, default=ListingType.TEXT
+        max_length=10,
+        choices=ListingType.choices,
+        default=ListingType.TEXT,
     )
+
     def __str__(self):
         return f"{self.title} ({self.listing_type})"
 
@@ -39,7 +52,9 @@ class Listing(models.Model):
 
 
 class ListingChoice(models.Model):
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name="choices")
+    listing = models.ForeignKey(
+        Listing, on_delete=models.CASCADE, related_name="choices"
+    )
     choice_value = models.CharField(max_length=100)
 
     def __str__(self):

@@ -1,16 +1,17 @@
-import { detailLabelFor, detailSectionFor } from '../../data/gameDetails';
+import { resolveDetailFields } from '../../data/gameDetails';
 import type { SellDraft } from '../../hooks/useSellDraft';
+import type { Game } from '../../types';
 import type { PreviewImage } from './MediaStep';
 import styles from './ReviewStep.module.css';
 
 interface ReviewStepProps {
   draft: SellDraft;
   images: PreviewImage[];
-  gameImage: string | null;
+  game: Game | null;
 }
 
-export function ReviewStep({ draft, images, gameImage }: ReviewStepProps) {
-  const filledDetails = detailSectionFor(draft.gameName).fields.filter(
+export function ReviewStep({ draft, images, game }: ReviewStepProps) {
+  const filledDetails = resolveDetailFields(game).filter(
     (f) => (draft.detailValues[f.key] ?? '').trim() !== '',
   );
   return (
@@ -22,7 +23,7 @@ export function ReviewStep({ draft, images, gameImage }: ReviewStepProps) {
         <div className={styles.row}>
           <dt>Game</dt>
           <dd className={styles.gameCell}>
-            {gameImage && <img src={gameImage} alt="" className={styles.gameThumb} />}
+            {game?.image && <img src={game.image} alt="" className={styles.gameThumb} />}
             {draft.gameName}
           </dd>
         </div>
@@ -48,7 +49,7 @@ export function ReviewStep({ draft, images, gameImage }: ReviewStepProps) {
               <ul className={styles.highlights}>
                 {filledDetails.map((f) => (
                   <li key={f.key}>
-                    <b>{detailLabelFor(draft.gameName, f.key)}</b>: {draft.detailValues[f.key]}
+                    <b>{f.label}</b>: {draft.detailValues[f.key]}
                   </li>
                 ))}
               </ul>

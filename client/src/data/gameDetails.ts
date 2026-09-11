@@ -1,3 +1,5 @@
+import type { Game } from '../types';
+
 export interface DetailFieldDef {
   key: string;
   label: string;
@@ -77,4 +79,40 @@ export function detailSectionFor(gameName: string | null): GameDetailSection {
 export function detailLabelFor(gameName: string | null, key: string): string {
   const field = detailSectionFor(gameName).fields.find((f) => f.key === key);
   return field ? field.label : key;
+}
+
+// Unified field shape for the details panel. `key` is `listing:<id>`
+// for API rows so draft values stay stable across sessions.
+export interface DetailField {
+  key: string;
+  label: string;
+  kind: 'text' | 'select';
+  placeholder?: string;
+  options?: string[];
+  numeric?: boolean;
+}
+
+export function resolveRanks(game: Game | null): string[] {
+  if (game && game.ranks.length > 0) return game.ranks;
+  return rankOptionsFor(game?.name ?? null);
+}
+
+export function resolveDetailFields(game: Game | null): DetailField[] {
+  if (game && game.listings.length > 0) {
+    return game.listings.map((l) => ({
+      key: `listing:${l.id}`,
+      label: l.title,
+      kind: (l.listing_type === 'choice' ? 'select' : 'text') as 'text' | 'select',
+      placeholder: l.place_holder_value ?? undefined,
+      options: l.choices,
+    }));
+  }
+  return detailSectionFor(game?.name ?? null).fields.map((f) => ({
+    key: `static:${f.key}`,
+    label: f.label,
+    kind: f.kind === 'select' ? 'select' : 'text',
+    placeholder: f.placeholder,
+    options: f.options,
+    numeric: f.kind === 'number',
+  }));
 }

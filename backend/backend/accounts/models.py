@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from backend.games.models import Game, Listing, ListingChoice,GameRank
+from backend.games.models import Game, GameRank, Listing, ListingChoice,GameRank
 
 # Create your models here.
 

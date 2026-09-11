@@ -33,8 +33,10 @@ export function MediaStep({ images, onChange }: MediaStepProps) {
 
   return (
     <div>
-      <h3 className={styles.heading}>Media</h3>
-      <p className={styles.lead}>Show proof of rank, skins and inventory. Up to 8 screenshots — never include passwords.</p>
+      <h3 className={styles.heading}>Зураг</h3>
+      <p className={styles.lead}>
+        Ранк, скин болон инвенторийн нотолгоо болох зургуудыг оруулна уу. Нийт 8 хүртэлх скриншот оруулах боломжтой — нууц үгээ хэзээ ч бүү харуул.
+      </p>
 
       <input
         ref={inputRef}
@@ -42,7 +44,7 @@ export function MediaStep({ images, onChange }: MediaStepProps) {
         accept="image/*"
         multiple
         hidden
-        aria-label="Upload screenshots"
+        aria-label="Скриншот зураг оруулах"
         onChange={(e) => {
           addFiles(e.target.files);
           e.target.value = '';
@@ -53,8 +55,9 @@ export function MediaStep({ images, onChange }: MediaStepProps) {
         <div className={styles.grid}>
           {images.map((img, i) => (
             <div key={`${img.name}-${i}`} className={styles.cell}>
-              <img src={img.url} alt={`Screenshot ${i + 1}`} className={styles.thumb} />
-              <button type="button" className={styles.removeBtn} aria-label={`Remove screenshot ${i + 1}`} onClick={() => removeAt(i)}>
+              <img src={img.url} alt={`Скриншот ${i + 1}`} className={styles.thumb} />
+              {i === 0 && <span className={styles.coverBadge}>Үндсэн зураг</span>}
+              <button type="button" className={styles.removeBtn} aria-label={`Скриншот ${i + 1}-ийг устгах`} onClick={() => removeAt(i)}>
                 ✕
               </button>
             </div>
@@ -64,9 +67,13 @@ export function MediaStep({ images, onChange }: MediaStepProps) {
 
       {images.length < 8 && (
         <button type="button" className={styles.uploadBtn} onClick={() => inputRef.current?.click()}>
-          + Add screenshots ({images.length}/8)
+          + Зураг нэмэх ({images.length}/8)
         </button>
       )}
+
+      <p className={styles.note}>
+        * Хамгийн эхэнд оруулсан зураг нь таны зарын үндсэн нүүр зураг болно.
+      </p>
     </div>
   );
 }

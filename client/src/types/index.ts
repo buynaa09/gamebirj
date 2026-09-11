@@ -22,10 +22,20 @@ export interface SignupInput {
   password2: string;
 }
 
+export interface GameListing {
+  id: number;
+  title: string;
+  listing_type: string;
+  place_holder_value: string | null;
+  choices: string[];
+}
+
 export interface Game {
   id: number;
   name: string;
   image: string | null;
+  ranks: string[];
+  listings: GameListing[];
 }
 
 export interface Listing {
