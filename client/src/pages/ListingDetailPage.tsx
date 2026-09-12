@@ -50,6 +50,7 @@ export function ListingDetailPage({ id }: { id: number }) {
     .filter((a) => a.id !== account.id && account.game !== null && a.game === account.game)
     .slice(0, 4);
   const sellerInitial = account.seller.charAt(0).toUpperCase() || '?';
+  const isOwner = user?.username === account.seller;
   const longDescription = account.description.length > 280;
 
   const share = () => {
@@ -137,56 +138,65 @@ export function ListingDetailPage({ id }: { id: number }) {
           </div>
           <div className={styles.escrowNote}>
             <b>🛡 Баталгаажтал мөнгө 100% хамгаалагдана</b>
-            <p>Төлбөр дундын дансанд байрших бөгөөд та худалдан авалтаа баталгаажуулсны дараа зарагчид шилжинэ.</p>
+            <p>Төлбөр дундын дансанд байрших бөгөөд  худалдан авалтаа баталгаажуулсны дараа та мөнгөнийг хүлээн авна.</p>
           </div>
-          <button type="button" className={`btn btn-primary ${styles.buyBtn}`}>
-            🛒 Баталгаатай худалдан авах
-          </button>
-          <div className={styles.sideRow}>
-            {user?.username !== account.seller && (
-              <button
-                type="button"
-                className="btn btn-outline"
-                disabled={chatStarting}
-                onClick={() => {
-                  if (!user) {
-                    navigate('/login');
-                    return;
-                  }
-                  setChatStarting(true);
-                  setChatError(null);
-                  openSellerThread(account.seller, account.id).then(
-                    (conversationId) => {
-                      navigate(`/messages?conversation=${conversationId}`);
-                    },
-                    (err: unknown) => {
-                      setChatStarting(false);
-                      setChatError(err instanceof Error ? err.message : 'Чат нээж чадсангүй.');
-                    },
-                  );
-                }}
-              >
-                {chatStarting ? 'Нээж байна…' : '💬 Асуулт асуух'}
+          {isOwner ? (
+            <div className={styles.sideRow}>
+              <p className={styles.tos}>Энэ бол таны зар</p>
+              <button type="button" className="btn btn-outline" onClick={() => navigate('/sell')}>
+                Миний зарууд
               </button>
-            )}
-            <button
-              type="button"
-              className="btn btn-outline"
-              aria-pressed={ids.has(account.id)}
-              onClick={() => toggle(account.id)}
-            >
-              {ids.has(account.id) ? '♥ Хадгалагдсан' : '♡ Хадгалах'}
-            </button>
-          </div>
-          {chatError && (
-            <p className={styles.tos} role="alert">
-              {chatError}
-            </p>
-          )}
-          {account.accept_offers && (
-            <button type="button" className={`btn btn-outline ${styles.offerBtn}`}>
-              ✋ Үнэ санал болгох
-            </button>
+            </div>
+          ) : (
+            <>
+              <button type="button" className={`btn btn-primary ${styles.buyBtn}`}>
+                🛒 Баталгаатай худалдан авах
+              </button>
+              <div className={styles.sideRow}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={chatStarting}
+                  onClick={() => {
+                    if (!user) {
+                      navigate('/login');
+                      return;
+                    }
+                    setChatStarting(true);
+                    setChatError(null);
+                    openSellerThread(account.seller, account.id).then(
+                      (conversationId) => {
+                        navigate(`/messages?conversation=${conversationId}`);
+                      },
+                      (err: unknown) => {
+                        setChatStarting(false);
+                        setChatError(err instanceof Error ? err.message : 'Чат нээж чадсангүй.');
+                      },
+                    );
+                  }}
+                >
+                  {chatStarting ? 'Нээж байна…' : '💬 Асуулт асуух'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  aria-pressed={ids.has(account.id)}
+                  onClick={() => toggle(account.id)}
+                >
+                  {ids.has(account.id) ? '♥ Хадгалагдсан' : '♡ Хадгалах'}
+                </button>
+              </div>
+              {chatError && (
+                <p className={styles.tos} role="alert">
+                  {chatError}
+                </p>
+              )}
+              {account.accept_offers && (
+                <button type="button" className={`btn btn-outline ${styles.offerBtn}`}>
+                  ✋ Үнэ санал болгох
+                </button>
+              )}
+            </>
           )}
           <p className={styles.tos}>Данс шилжүүлэх нь тухайн тоглоомын үйлчилгээний нөхцөлийг зөрчиж болзошгүйг анхаарна уу.</p>
         </aside>
