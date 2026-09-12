@@ -15,7 +15,7 @@ class UserSchema(ModelSchema):
 
     class Meta:
         model = User
-        fields = ["username", "email", "name"]
+        fields = ["id", "username", "email", "name"]
 
     @staticmethod
     def resolve_url(obj: User):

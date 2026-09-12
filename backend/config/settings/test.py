@@ -34,5 +34,9 @@ TEMPLATES[0]["OPTIONS"]["debug"] = True  # type: ignore[index]
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = "http://media.testserver/"
+
+# Channels: use in-memory layer for tests (no Redis required).
+# ------------------------------------------------------------------------------
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 # Your stuff...
 # ------------------------------------------------------------------------------

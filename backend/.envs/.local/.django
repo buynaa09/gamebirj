@@ -2,3 +2,5 @@
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
+# Channels Redis layer (PostgreSQL remains the source of truth for messages)
+REDIS_URL=redis://redis:6379/1

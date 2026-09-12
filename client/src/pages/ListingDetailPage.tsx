@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAccount } from '../hooks/useAccount';
 import { useAccounts } from '../hooks/useAccounts';
+import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { ListingCard } from '../components/marketplace/ListingCard';
 import { Lightbox } from '../components/marketplace/Lightbox';
+import { openSellerThread } from '../services/chat';
 import { formatPrice, timeAgo } from '../utils/format';
 import styles from './ListingDetailPage.module.css';
 
@@ -14,11 +16,14 @@ export function ListingDetailPage({ id }: { id: number }) {
   const navigate = useNavigate();
   const { account, loading, error } = useAccount(id);
   const { accounts } = useAccounts();
+  const { user } = useAuth();
   const { ids, toggle } = useWishlist();
   const [activePhoto, setActivePhoto] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [shared, setShared] = useState(false);
+  const [chatStarting, setChatStarting] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -40,8 +45,7 @@ export function ListingDetailPage({ id }: { id: number }) {
   }
 
   const photos = account.images.map((img) => img.image).filter((src): src is string => src !== null);
-  const shown = Math.min(activePhoto, Math.max(photos.length - 1, 0));
-  const color = FALLBACK_COLORS[account.id % FALLBACK_COLORS.length];
+  const shown = Math.min(activePhoto, Math.max(photos.length - 1, 0));  const color = FALLBACK_COLORS[account.id % FALLBACK_COLORS.length];
   const similar = accounts
     .filter((a) => a.id !== account.id && account.game !== null && a.game === account.game)
     .slice(0, 4);
@@ -139,9 +143,32 @@ export function ListingDetailPage({ id }: { id: number }) {
             🛒 Баталгаатай худалдан авах
           </button>
           <div className={styles.sideRow}>
-            <button type="button" className="btn btn-outline">
-              💬 Асуулт асуух
-            </button>
+            {user?.username !== account.seller && (
+              <button
+                type="button"
+                className="btn btn-outline"
+                disabled={chatStarting}
+                onClick={() => {
+                  if (!user) {
+                    navigate('/login');
+                    return;
+                  }
+                  setChatStarting(true);
+                  setChatError(null);
+                  openSellerThread(account.seller, account.id).then(
+                    (conversationId) => {
+                      navigate(`/messages?conversation=${conversationId}`);
+                    },
+                    (err: unknown) => {
+                      setChatStarting(false);
+                      setChatError(err instanceof Error ? err.message : 'Чат нээж чадсангүй.');
+                    },
+                  );
+                }}
+              >
+                {chatStarting ? 'Нээж байна…' : '💬 Асуулт асуух'}
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-outline"
@@ -151,6 +178,11 @@ export function ListingDetailPage({ id }: { id: number }) {
               {ids.has(account.id) ? '♥ Хадгалагдсан' : '♡ Хадгалах'}
             </button>
           </div>
+          {chatError && (
+            <p className={styles.tos} role="alert">
+              {chatError}
+            </p>
+          )}
           {account.accept_offers && (
             <button type="button" className={`btn btn-outline ${styles.offerBtn}`}>
               ✋ Үнэ санал болгох

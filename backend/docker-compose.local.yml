@@ -12,6 +12,7 @@ services:
     container_name: backend_local_django
     depends_on:
       - postgres
+      - redis
     volumes:
       - /app/.venv
       - .:/app:z
@@ -23,6 +24,12 @@ services:
     ports:
       - '8000:8000'
     command: /start
+
+  redis:
+    image: redis:7.2
+    container_name: backend_local_redis
+    ports:
+      - '6379:6379'
 
   postgres:
     build:

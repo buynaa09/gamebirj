@@ -1,6 +1,7 @@
 export type Theme = 'dark' | 'light';
 
 export interface User {
+  id: number;
   username: string;
   email: string;
   name: string;
@@ -97,3 +98,57 @@ export interface GameFilter {
   icon?: string;
   count: number;
 }
+
+export interface ChatUserSummary {
+  id: number;
+  username: string;
+  name: string;
+}
+
+export interface Conversation {
+  id: number;
+  other_user: ChatUserSummary;
+  account_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationListItem {
+  conversation_id: number;
+  other_user: ChatUserSummary;
+  account_id: number | null;
+  last_message: string | null;
+  last_message_at: string | null;
+  unread_count: number;
+}
+
+export interface ChatMessage {
+  id: number;
+  conversation_id: number;
+  sender: ChatUserSummary;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+}
+
+export interface PaginatedMessages {
+  items: ChatMessage[];
+  page: number;
+  page_size: number;
+  total: number;
+}
+
+export type ChatServerEvent =
+  | {
+      type: 'message.created';
+      id: number;
+      conversation_id: number;
+      sender: ChatUserSummary;
+      content: string;
+      created_at: string;
+      is_read: boolean;
+    }
+  | { type: 'message.read'; user_id: number; read: number }
+  | { type: 'typing.started'; user_id: number }
+  | { type: 'typing.stopped'; user_id: number }
+  | { type: 'error'; detail: string };
