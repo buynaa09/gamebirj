@@ -2,7 +2,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon } from '../icons/Icons';
+import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon ,ChatBubbleIcon} from '../icons/Icons';
 import darkLogo from '../../assets/logo/dark.png';
 import lightLogo from '../../assets/logo/light.png';
 import styles from './TopBar.module.css';
@@ -109,6 +109,10 @@ function TopBarInner() {
 
           {!loading && user ? (
             <>
+              <button className={`${styles.iconBtn} ${styles.hideOnMobile}`} aria-label="Messages">
+                <ChatBubbleIcon />
+                <span className={styles.dotBadge} />
+              </button>
               <button className={styles.iconBtn} aria-label="Notifications">
                 <BellIcon />
                 <span className={styles.dotBadge} />

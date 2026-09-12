@@ -286,3 +286,9 @@ html[data-theme='light'] .avatar {
     display: none;
   }
 }
+
+@media (max-width: 899px) {
+  .hideOnMobile {
+    display: none;
+  }
+}
