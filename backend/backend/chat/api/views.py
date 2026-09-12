@@ -72,6 +72,11 @@ def _conversation_payload(conversation, user) -> dict:
         "id": conversation.id,
         "other_user": _user_summary(other),
         "account_id": conversation.account_id,
+        "agreed_price": (
+            float(conversation.agreed_price)
+            if conversation.agreed_price is not None
+            else None
+        ),
         "created_at": conversation.created_at,
         "updated_at": conversation.updated_at,
     }
@@ -118,9 +123,15 @@ def _broadcast_offer_updated(offer) -> None:
     if offer.decided_at is not None:
         payload["decided_at"] = offer.decided_at.isoformat()
     payload["created_at"] = offer.created_at.isoformat()
+    offer.conversation.refresh_from_db(fields=["agreed_price"])
+    agreed = offer.conversation.agreed_price
     _broadcast(
         f"chat_{offer.conversation_id}",
-        {"type": "offer.updated", "offer": payload},
+        {
+            "type": "offer.updated",
+            "offer": payload,
+            "agreed_price": float(agreed) if agreed is not None else None,
+        },
     )
 
 
@@ -182,6 +193,11 @@ def list_conversations(request):
                 "conversation_id": conversation.id,
                 "other_user": _user_summary(other),
                 "account_id": conversation.account_id,
+                "agreed_price": (
+                    float(conversation.agreed_price)
+                    if conversation.agreed_price is not None
+                    else None
+                ),
                 "last_message": conversation.last_message_content,
                 "last_message_at": conversation.last_message_at,
                 "unread_count": conversation.unread_count,

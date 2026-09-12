@@ -258,9 +258,13 @@ async def test_offer_updated_broadcast_received():
     payload = {"id": 7, "status": "accepted", "amount": 80.0}
     await get_channel_layer().group_send(
         f"chat_{conversation.pk}",
-        {"type": "offer.updated", "offer": payload},
+        {"type": "offer.updated", "offer": payload, "agreed_price": 80.0},
     )
     event = await communicator.receive_json_from(timeout=5)
 
-    assert event == {"type": "offer.updated", "offer": payload}
+    assert event == {
+        "type": "offer.updated",
+        "offer": payload,
+        "agreed_price": 80.0,
+    }
     await communicator.disconnect()

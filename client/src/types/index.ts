@@ -109,6 +109,7 @@ export interface Conversation {
   id: number;
   other_user: ChatUserSummary;
   account_id: number | null;
+  agreed_price: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -117,6 +118,7 @@ export interface ConversationListItem {
   conversation_id: number;
   other_user: ChatUserSummary;
   account_id: number | null;
+  agreed_price: number | null;
   last_message: string | null;
   last_message_at: string | null;
   unread_count: number;
@@ -164,7 +166,7 @@ export type ChatServerEvent =
       offer: Offer | null;
     }
   | { type: 'message.read'; user_id: number; read: number }
-  | { type: 'offer.updated'; offer: Offer }
+  | { type: 'offer.updated'; offer: Offer; agreed_price: number | null }
   | { type: 'typing.started'; user_id: number }
   | { type: 'typing.stopped'; user_id: number }
   | { type: 'error'; detail: string };

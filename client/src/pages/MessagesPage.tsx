@@ -151,6 +151,7 @@ export function MessagesPage() {
             conversation_id: conv.id,
             other_user: conv.other_user,
             account_id: conv.account_id,
+            agreed_price: conv.agreed_price,
             last_message: null,
             last_message_at: null,
             unread_count: 0,
@@ -296,6 +297,9 @@ export function MessagesPage() {
         }
       } else if (event.type === 'offer.updated') {
         applyOffer(event.offer);
+        patchConversation(event.offer.conversation_id, {
+          agreed_price: event.agreed_price,
+        });
         if (event.offer.status === 'accepted') {
           refreshListing();
         }
@@ -510,6 +514,12 @@ export function MessagesPage() {
 
             {listing && (
               <div className={styles.tradeCard}>
+                {selected.agreed_price != null && (
+                  <p className={styles.agreedBar}>
+                    <span>✓ Зөвшөөрсөн үнэ (зөвхөн та хоёр)</span>
+                    <strong>{formatPrice(selected.agreed_price)}</strong>
+                  </p>
+                )}
                 {listing.images[0]?.image && (
                   <img
                     className={styles.tradeThumb}

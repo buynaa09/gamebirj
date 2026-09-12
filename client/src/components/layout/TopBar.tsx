@@ -79,7 +79,6 @@ function TopBarInner() {
           <NavLink to="/sell" className={({ isActive }) => (isActive ? styles.active : '')}>
             Sell
           </NavLink>
-          <a href="#">Transactions</a>
           <a href="#">More ▾</a>
         </nav>
 

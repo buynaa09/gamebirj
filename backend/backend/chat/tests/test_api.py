@@ -434,6 +434,7 @@ def test_create_offer_non_participant(client: Client):
 
 def test_accept_offer(client: Client):
     alice, bob, account, conversation = _listing_conversation()
+    listing_price = account.price
     offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
     client.force_login(bob)
 
@@ -443,9 +444,11 @@ def test_accept_offer(client: Client):
     assert response.json()["status"] == "accepted"
     offer.refresh_from_db()
     assert offer.decided_by_id == bob.pk
-    # The agreed price becomes the listing price for everyone.
+    # Agreed price is private to the conversation; public listing is untouched.
+    conversation.refresh_from_db()
+    assert conversation.agreed_price == OFFER_AMOUNT
     account.refresh_from_db()
-    assert account.price == OFFER_AMOUNT
+    assert account.price == listing_price
 
 
 def test_sender_cannot_accept_own_offer(client: Client):
@@ -470,6 +473,8 @@ def test_decline_offer(client: Client):
     assert response.json()["status"] == "declined"
     account.refresh_from_db()
     assert account.price == original_price
+    conversation.refresh_from_db()
+    assert conversation.agreed_price is None
 
 
 def test_decide_offer_twice_rejected(client: Client):
@@ -517,6 +522,25 @@ def test_expired_offer_cannot_be_accepted(client: Client):
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     offer.refresh_from_db()
     assert offer.status == Offer.EXPIRED
+
+
+def test_agreed_price_visible_to_participants(client: Client):
+    alice, bob, _, conversation = _listing_conversation()
+    offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
+    services.decide_offer(offer, bob, "accept")
+
+    client.force_login(alice)
+    detail = client.get(
+        reverse("api:get_conversation", kwargs={"conversation_id": conversation.pk}),
+    ).json()
+    assert detail["agreed_price"] == OFFER_AMOUNT
+    listing = client.get(_list_url()).json()
+    assert listing[0]["agreed_price"] == OFFER_AMOUNT
+
+    # Outsiders cannot see it: the conversation is invisible to them.
+    carol = UserFactory.create()
+    client.force_login(carol)
+    assert client.get(_list_url()).json() == []
 
 
 def test_offer_visible_in_history(client: Client):

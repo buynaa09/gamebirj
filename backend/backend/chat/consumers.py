@@ -152,7 +152,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def offer_updated(self, event: dict):
-        await self.send_json({"type": "offer.updated", "offer": event["offer"]})
+        await self.send_json(
+            {
+                "type": "offer.updated",
+                "offer": event["offer"],
+                "agreed_price": event.get("agreed_price"),
+            },
+        )
 
     async def typing_started(self, event: dict):
         await self.send_json({"type": "typing.started", "user_id": event["user_id"]})

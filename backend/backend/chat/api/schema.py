@@ -25,6 +25,10 @@ class ConversationSchema(Schema):
         None,
         description="Linked listing ID, null for generic DMs",
     )
+    agreed_price: float | None = Field(
+        None,
+        description="Private agreed price (accepted offer), if any",
+    )
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last activity timestamp")
 
@@ -35,6 +39,10 @@ class ConversationListItem(Schema):
     account_id: int | None = Field(
         None,
         description="Linked listing ID, null for generic DMs",
+    )
+    agreed_price: float | None = Field(
+        None,
+        description="Private agreed price (accepted offer), if any",
     )
     last_message: str | None = Field(None, description="Last message preview")
     last_message_at: datetime | None = Field(

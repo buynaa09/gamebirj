@@ -19,7 +19,6 @@ from django.db.models import Q
 from django.db.models import Subquery
 from django.utils import timezone
 
-from backend.accounts.models import Account
 from backend.chat.models import Conversation
 from backend.chat.models import ConversationParticipant
 from backend.chat.models import Message
@@ -304,9 +303,10 @@ def decide_offer(offer: Offer, user, action: str) -> Offer:
         offer.save(
             update_fields=["status", "decided_at", "decided_by", "updated_at"],
         )
-        if offer.status == Offer.ACCEPTED and offer.conversation.account_id is not None:
-            # The agreed price becomes the listing price for everyone.
-            Account.objects.filter(pk=offer.conversation.account_id).update(
-                price=offer.amount,
+        if offer.status == Offer.ACCEPTED:
+            # The agreed price is private to this conversation's two
+            # participants; the public listing price never changes.
+            Conversation.objects.filter(pk=offer.conversation_id).update(
+                agreed_price=offer.amount,
             )
     return offer

@@ -42,6 +42,15 @@ class Conversation(models.Model):
         related_name="conversations_as_high",
     )
     pair_key = models.CharField(max_length=64, db_index=True)
+    # Private deal price agreed via an accepted offer. Visible only to the
+    # two participants through this conversation; the listing price is public
+    # and never changes.
+    agreed_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
