@@ -109,7 +109,11 @@ function TopBarInner() {
 
           {!loading && user ? (
             <>
-              <button className={`${styles.iconBtn} ${styles.hideOnMobile}`} aria-label="Messages">
+              <button
+                className={`${styles.iconBtn} ${styles.hideOnMobile}`}
+                aria-label="Messages"
+                onClick={() => navigate('/messages')}
+              >
                 <ChatBubbleIcon />
                 <span className={styles.dotBadge} />
               </button>

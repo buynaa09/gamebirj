@@ -1,0 +1,298 @@
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.listPanel,
+.detailPanel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-height: calc(100vh - 160px);
+}
+
+.listPanel {
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.listHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.composeBtn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.composeBtn:hover {
+  background: var(--panel-2);
+}
+
+.searchWrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  display: flex;
+  pointer-events: none;
+}
+
+.search {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 12px 10px 36px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+}
+
+.search::placeholder {
+  color: var(--text-faint);
+}
+
+.search:focus {
+  border-color: var(--border);
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pill {
+  border: none;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-family: inherit;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pill:hover {
+  color: var(--text);
+}
+
+.pillActive {
+  background: #f4f4f6;
+  color: #111;
+}
+
+html[data-theme='light'] .pillActive {
+  background: #17171a;
+  color: #fff;
+}
+
+.threads {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+}
+
+.thread {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text);
+}
+
+.thread:hover {
+  background: var(--panel-2);
+}
+
+.threadActive {
+  background: var(--panel-2);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--red);
+  background: rgba(229, 52, 74, 0.14);
+}
+
+html[data-theme='light'] .avatar {
+  background: #fbe4e8;
+}
+
+.threadMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.threadName {
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.threadSub {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.threadTime {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.noResults {
+  font-size: 13px;
+  color: var(--text-faint);
+  padding: 16px 8px;
+}
+
+.detailPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 260px;
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.emptyTitle {
+  margin: 0 0 6px;
+  font-size: 14.5px;
+  font-weight: 800;
+}
+
+.emptySub {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+/* Mobile: single full-bleed list like Image 2, detail hidden */
+@media (max-width: 899px) {
+  .page {
+    display: block;
+    max-width: none;
+    padding: 16px 16px 90px;
+  }
+
+  .listPanel {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+
+  .threadName {
+    font-size: 14.5px;
+  }
+
+  .threadSub {
+    font-size: 12.5px;
+  }
+
+  .detailPanel {
+    display: none;
+  }
+}

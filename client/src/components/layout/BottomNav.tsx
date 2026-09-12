@@ -8,10 +8,7 @@ const routeLinks = [
   { to: '/sell', label: 'Sell', icon: ClockIcon },
 ];
 
-const placeholderLinks = [
-  { label: 'Messages', icon: ChatBubbleIcon },
-  { label: 'Trades', icon: CheckIcon },
-];
+const placeholderLinks = [{ label: 'Trades', icon: CheckIcon }];
 
 export function BottomNav() {
   return (
@@ -27,6 +24,13 @@ export function BottomNav() {
           {label}
         </NavLink>
       ))}
+      <NavLink
+        to="/messages"
+        className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
+      >
+        <ChatBubbleIcon />
+        Messages
+      </NavLink>
       {placeholderLinks.map(({ label, icon: Icon }) => (
         <a key={label} href="#" className={styles.link}>
           <Icon />

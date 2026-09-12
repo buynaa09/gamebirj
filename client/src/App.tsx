@@ -13,6 +13,7 @@ import { SellPage } from './pages/SellPage';
 import { SellDashboardPage } from './pages/SellDashboardPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
 import { WishlistPage } from './pages/WishlistPage';
+import { MessagesPage } from './pages/MessagesPage';
 import './App.module.css';
 
 export default function App() {
@@ -42,6 +43,7 @@ function AppShell() {
         <Route path="/sell/processing" element={<SellPage />} />
         <Route path="/listing/:id" element={<ListingRoute />} />
         <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/messages" element={<MessagesPage />} />
       </Routes>
       <ChatBubble />
       <BottomNav />
