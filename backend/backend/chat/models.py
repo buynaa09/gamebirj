@@ -119,6 +119,13 @@ class Message(models.Model):
         related_name="chat_messages",
     )
     content = models.TextField()
+    offer = models.OneToOneField(
+        "Offer",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="message",
+    )
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -141,3 +148,66 @@ class Message(models.Model):
 
     def __str__(self) -> str:
         return f"Message {self.pk} from {self.sender_id}"
+
+
+class Offer(models.Model):
+    """A price offer on the listing linked to a conversation.
+
+    The seller has 48 hours to accept or decline. On accept the price is
+    held for the buyer for 24 hours (checkout itself is out of scope).
+    """
+
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+    STATUS_CHOICES = [
+        (PENDING, "Pending"),
+        (ACCEPTED, "Accepted"),
+        (DECLINED, "Declined"),
+        (EXPIRED, "Expired"),
+        (CANCELLED, "Cancelled"),
+    ]
+    ACTIVE_STATUSES = [PENDING]
+
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name="offers",
+    )
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="chat_offers",
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=PENDING)
+    expires_at = models.DateTimeField()
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="decided_offers",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(
+                fields=["conversation", "status"],
+                name="chat_offer_conv_status_idx",
+            ),
+            models.Index(fields=["sender"], name="chat_offer_sender_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"Offer {self.pk} ({self.amount} — {self.status})"
+
+    @property
+    def is_active(self) -> bool:
+        return self.status == self.PENDING

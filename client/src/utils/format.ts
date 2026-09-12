@@ -20,3 +20,17 @@ export function timeAgo(iso: string): string {
   if (months < 12) return `${months} сарын өмнө`;
   return `${Math.floor(days / 365)} жилийн өмнө`;
 }
+
+export function offerCountdown(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const remaining = then - Date.now();
+  if (remaining <= 0) return 'Хугацаа дууссан';
+  const hours = Math.floor(remaining / 3600000);
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    return `${days} өдөр ${hours % 24} цаг үлдсэн`;
+  }
+  if (hours >= 1) return `${hours} цаг үлдсэн`;
+  return `${Math.max(1, Math.floor(remaining / 60000))} минут үлдсэн`;
+}

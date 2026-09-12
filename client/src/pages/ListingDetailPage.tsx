@@ -6,7 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { ListingCard } from '../components/marketplace/ListingCard';
 import { Lightbox } from '../components/marketplace/Lightbox';
-import { openSellerThread } from '../services/chat';
+import { OfferModal } from '../components/chat/OfferModal';
+import { createOffer, openSellerThread } from '../services/chat';
 import { formatPrice, timeAgo } from '../utils/format';
 import styles from './ListingDetailPage.module.css';
 
@@ -24,6 +25,7 @@ export function ListingDetailPage({ id }: { id: number }) {
   const [shared, setShared] = useState(false);
   const [chatStarting, setChatStarting] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [offerOpen, setOfferOpen] = useState(false);
 
   if (loading) {
     return (
@@ -192,7 +194,17 @@ export function ListingDetailPage({ id }: { id: number }) {
                 </p>
               )}
               {account.accept_offers && (
-                <button type="button" className={`btn btn-outline ${styles.offerBtn}`}>
+                <button
+                  type="button"
+                  className={`btn btn-outline ${styles.offerBtn}`}
+                  onClick={() => {
+                    if (!user) {
+                      navigate('/login');
+                      return;
+                    }
+                    setOfferOpen(true);
+                  }}
+                >
                   ✋ Үнэ санал болгох
                 </button>
               )}
@@ -284,6 +296,21 @@ export function ListingDetailPage({ id }: { id: number }) {
           title={account.title}
           onIndexChange={setLightboxIndex}
           onClose={() => setLightboxIndex(null)}
+        />
+      )}
+
+      {offerOpen && (
+        <OfferModal
+          askingPrice={account.price}
+          onClose={() => setOfferOpen(false)}
+          onSend={(amount) =>
+            openSellerThread(account.seller, account.id).then((conversationId) =>
+              createOffer(conversationId, amount).then(() => {
+                setOfferOpen(false);
+                navigate(`/messages?conversation=${conversationId}`);
+              }),
+            )
+          }
         />
       )}
     </main>

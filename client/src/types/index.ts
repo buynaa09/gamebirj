@@ -129,6 +129,20 @@ export interface ChatMessage {
   content: string;
   created_at: string;
   is_read: boolean;
+  offer: Offer | null;
+}
+
+export type OfferStatus = 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
+
+export interface Offer {
+  id: number;
+  conversation_id: number;
+  sender: ChatUserSummary;
+  amount: number;
+  status: OfferStatus;
+  expires_at: string;
+  decided_at: string | null;
+  created_at: string;
 }
 
 export interface PaginatedMessages {
@@ -147,8 +161,10 @@ export type ChatServerEvent =
       content: string;
       created_at: string;
       is_read: boolean;
+      offer: Offer | null;
     }
   | { type: 'message.read'; user_id: number; read: number }
+  | { type: 'offer.updated'; offer: Offer }
   | { type: 'typing.started'; user_id: number }
   | { type: 'typing.stopped'; user_id: number }
   | { type: 'error'; detail: string };

@@ -3,6 +3,7 @@ import type {
   ChatMessage,
   Conversation,
   ConversationListItem,
+  Offer,
   PaginatedMessages,
 } from '../types';
 
@@ -51,6 +52,22 @@ export function sendMessageRest(conversationId: number, content: string): Promis
 
 export function markConversationRead(conversationId: number): Promise<{ read: number }> {
   return apiPost<{ read: number }>(`/chat/conversations/${conversationId}/read/`, {});
+}
+
+export function createOffer(conversationId: number, amount: number): Promise<ChatMessage> {
+  return apiPost<ChatMessage>(`/chat/conversations/${conversationId}/offers/`, { amount });
+}
+
+export function acceptOffer(offerId: number): Promise<Offer> {
+  return apiPost<Offer>(`/chat/offers/${offerId}/accept/`, {});
+}
+
+export function declineOffer(offerId: number): Promise<Offer> {
+  return apiPost<Offer>(`/chat/offers/${offerId}/decline/`, {});
+}
+
+export function cancelOffer(offerId: number): Promise<Offer> {
+  return apiPost<Offer>(`/chat/offers/${offerId}/cancel/`, {});
 }
 
 /** Start (or reuse) a 1-to-1 thread about a listing; returns the conversation id. */

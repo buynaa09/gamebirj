@@ -44,6 +44,17 @@ class ConversationListItem(Schema):
     unread_count: int = Field(0, description="Unread messages from the other user")
 
 
+class OfferSchema(Schema):
+    id: int = Field(..., description="Offer ID")
+    conversation_id: int = Field(..., description="Conversation ID")
+    sender: UserSummary = Field(..., description="Offer sender")
+    amount: float = Field(..., description="Offered price")
+    status: str = Field(..., description="pending/accepted/declined/expired/cancelled")
+    expires_at: datetime = Field(..., description="Decision deadline (48h)")
+    decided_at: datetime | None = Field(None, description="When it was decided")
+    created_at: datetime = Field(..., description="Creation timestamp")
+
+
 class MessageSchema(Schema):
     id: int = Field(..., description="Message ID")
     conversation_id: int = Field(..., description="Conversation ID")
@@ -51,6 +62,7 @@ class MessageSchema(Schema):
     content: str = Field(..., description="Message text")
     created_at: datetime = Field(..., description="Sent timestamp")
     is_read: bool = Field(default=False, description="Read state")
+    offer: OfferSchema | None = Field(None, description="Linked price offer, if any")
 
 
 class PaginatedMessages(Schema):
@@ -77,6 +89,10 @@ class CreateConversationRequest(Schema):
 
 class SendMessageRequest(Schema):
     content: str = Field(..., description="Message text (1-2000 characters)")
+
+
+class CreateOfferRequest(Schema):
+    amount: float = Field(..., description="Offered price (must be greater than zero)")
 
 
 class MarkReadResponse(Schema):

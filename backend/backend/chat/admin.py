@@ -3,6 +3,7 @@ from django.contrib import admin
 from backend.chat.models import Conversation
 from backend.chat.models import ConversationParticipant
 from backend.chat.models import Message
+from backend.chat.models import Offer
 
 
 class ConversationParticipantInline(admin.TabularInline):
@@ -53,3 +54,19 @@ class MessageAdmin(admin.ModelAdmin):
     @admin.display(description="Preview")
     def preview(self, obj: Message) -> str:
         return obj.content[:60]
+
+
+@admin.register(Offer)
+class OfferAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "conversation",
+        "sender",
+        "amount",
+        "status",
+        "expires_at",
+        "created_at",
+    )
+    list_filter = ("status", "conversation")
+    search_fields = ("sender__username",)
+    readonly_fields = ("created_at", "updated_at")

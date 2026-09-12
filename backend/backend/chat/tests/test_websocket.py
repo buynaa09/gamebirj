@@ -3,9 +3,11 @@ from __future__ import annotations
 import pytest
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 
+from backend.accounts.models import Account
 from backend.chat import services
 from backend.chat.models import Message
 from backend.chat.routing import websocket_urlpatterns
@@ -201,3 +203,64 @@ async def test_read_event_broadcast():
     assert event["user_id"] == bob.pk
     await alice_ws.disconnect()
     await bob_ws.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_offer_created_broadcast_includes_offer():
+    alice, bob, _ = await _users()
+    account = await sync_to_async(Account.objects.create)(
+        user=bob,
+        title="Dragon account",
+        price=100,
+    )
+    conversation, _ = await database_sync_to_async(
+        services.get_or_create_private_conversation,
+    )(alice, bob, account=account)
+    alice_ws = _communicator(conversation.pk, alice)
+    bob_ws = _communicator(conversation.pk, bob)
+    assert (await alice_ws.connect())[0]
+    assert (await bob_ws.connect())[0]
+
+    offer = await database_sync_to_async(services.create_offer)(
+        conversation,
+        alice,
+        80,
+    )
+    await get_channel_layer().group_send(
+        f"chat_{conversation.pk}",
+        {
+            "type": "message.created",
+            "id": 1,
+            "conversation_id": conversation.pk,
+            "sender": {"id": alice.pk, "username": alice.username, "name": ""},
+            "content": "Санал: 80₮",
+            "created_at": offer.created_at.isoformat(),
+            "is_read": False,
+            "offer": {"id": offer.pk, "status": "pending", "amount": 80.0},
+        },
+    )
+    event = await bob_ws.receive_json_from(timeout=5)
+
+    assert event["type"] == "message.created"
+    assert event["offer"]["id"] == offer.pk
+    assert event["offer"]["status"] == "pending"
+    await alice_ws.disconnect()
+    await bob_ws.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_offer_updated_broadcast_received():
+    alice, bob, _ = await _users()
+    conversation = await _conversation(alice, bob)
+    communicator = _communicator(conversation.pk, alice)
+    assert (await communicator.connect())[0]
+
+    payload = {"id": 7, "status": "accepted", "amount": 80.0}
+    await get_channel_layer().group_send(
+        f"chat_{conversation.pk}",
+        {"type": "offer.updated", "offer": payload},
+    )
+    event = await communicator.receive_json_from(timeout=5)
+
+    assert event == {"type": "offer.updated", "offer": payload}
+    await communicator.disconnect()

@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChatBubbleIcon, SearchIcon, SendIcon } from '../components/icons/Icons';
+import { OfferCard } from '../components/chat/OfferCard';
 import { useAuth } from '../context/AuthContext';
 import { useChatSocket } from '../hooks/useChatSocket';
 import { fetchAccount } from '../services/accounts';
 import {
+  acceptOffer,
+  cancelOffer,
+  declineOffer,
   fetchConversation,
   fetchConversations,
   fetchLatestMessages,
@@ -18,6 +22,7 @@ import type {
   ChatServerEvent,
   ConversationListItem,
   MarketAccount,
+  Offer,
 } from '../types';
 import styles from './MessagesPage.module.css';
 
@@ -56,6 +61,7 @@ export function MessagesPage() {
   const [sendError, setSendError] = useState<string | null>(null);
   const [typingName, setTypingName] = useState<string | null>(null);
   const [listing, setListing] = useState<MarketAccount | null>(null);
+  const [offerBusy, setOfferBusy] = useState<number | null>(null);
 
   const typingTimer = useRef<number | null>(null);
   const typingSentAt = useRef(0);
@@ -96,6 +102,12 @@ export function MessagesPage() {
       next.sort((a, b) => a.id - b.id);
       return next;
     });
+  }, []);
+
+  const applyOffer = useCallback((offer: Offer) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.offer?.id === offer.id ? { ...m, offer } : m)),
+    );
   }, []);
 
   // --- Conversation list -------------------------------------------------
@@ -157,6 +169,16 @@ export function MessagesPage() {
   // Listing linked to the open conversation (powers the trade card + seller panel).
   const selectedAccountId =
     conversations.find((c) => c.conversation_id === selectedId)?.account_id ?? null;
+
+  const refreshListing = useCallback(() => {
+    if (selectedAccountId === null) {
+      return;
+    }
+    fetchAccount(selectedAccountId).then(setListing, () => {
+      setListing(null);
+    });
+  }, [selectedAccountId]);
+
   useEffect(() => {
     if (selectedAccountId === null) {
       return;
@@ -176,7 +198,8 @@ export function MessagesPage() {
   }, [selectedAccountId]);
 
   // --- Thread history ----------------------------------------------------
-  useEffect(() => {    if (!user || selectedId === null) {
+  useEffect(() => {
+    if (!user || selectedId === null) {
       return;
     }
     let cancelled = false;
@@ -235,6 +258,7 @@ export function MessagesPage() {
           content: event.content,
           created_at: event.created_at,
           is_read: event.is_read,
+          offer: event.offer,
         };
         if (event.conversation_id === openId) {
           appendMessage(incoming);
@@ -270,6 +294,11 @@ export function MessagesPage() {
         if (user && event.user_id !== user.id && openId !== null) {
           setMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
         }
+      } else if (event.type === 'offer.updated') {
+        applyOffer(event.offer);
+        if (event.offer.status === 'accepted') {
+          refreshListing();
+        }
       } else if (event.type === 'typing.started' || event.type === 'typing.stopped') {
         if (user && event.user_id !== user.id) {
           if (typingTimer.current !== null) window.clearTimeout(typingTimer.current);
@@ -285,7 +314,7 @@ export function MessagesPage() {
         setSendError(event.detail);
       }
     },
-    [appendMessage, conversations, patchConversation, user],
+    [appendMessage, applyOffer, conversations, patchConversation, refreshListing, user],
   );
 
   const { connected, sendMessage, sendRead, sendTyping } = useChatSocket(selectedId, {
@@ -328,6 +357,33 @@ export function MessagesPage() {
       }
     },
     [sendTyping],
+  );
+
+  // --- Offer decisions -------------------------------------------------------
+  const decideOffer = useCallback(
+    (offer: Offer, action: 'accept' | 'decline' | 'cancel') => {
+      setOfferBusy(offer.id);
+      const request =
+        action === 'accept'
+          ? acceptOffer(offer.id)
+          : action === 'decline'
+            ? declineOffer(offer.id)
+            : cancelOffer(offer.id);
+      request.then(
+        (updated) => {
+          applyOffer(updated);
+          if (updated.status === 'accepted') {
+            refreshListing();
+          }
+        },
+        (err: unknown) => {
+          setSendError(err instanceof Error ? err.message : 'Санал шинэчилж чадсангүй.');
+        },
+      ).finally(() => {
+        setOfferBusy((busy) => (busy === offer.id ? null : busy));
+      });
+    },
+    [applyOffer, refreshListing],
   );
 
   // --- Auto-scroll ----------------------------------------------------------
@@ -512,9 +568,20 @@ export function MessagesPage() {
                 !threadError &&
                 messages.map((m) => {
                   const own = user !== null && m.sender.id === user.id;
+                  const offer = m.offer;
                   return (
                     <div key={m.id} className={`${styles.bubbleRow} ${own ? styles.own : ''}`}>
                       <div className={styles.bubble}>
+                        {offer && (
+                          <OfferCard
+                            offer={offer}
+                            isOwn={own}
+                            busy={offerBusy === offer.id}
+                            onAccept={() => decideOffer(offer, 'accept')}
+                            onDecline={() => decideOffer(offer, 'decline')}
+                            onCancel={() => decideOffer(offer, 'cancel')}
+                          />
+                        )}
                         <p className={styles.bubbleText}>{m.content}</p>
                         <span className={styles.bubbleMeta}>
                           {messageTime(m.created_at)}

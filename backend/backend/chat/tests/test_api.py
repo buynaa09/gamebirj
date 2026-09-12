@@ -7,11 +7,14 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.urls import reverse
+from django.utils import timezone
 
+from backend.accounts.models import Account
 from backend.chat import services
 from backend.chat.models import Conversation
 from backend.chat.models import ConversationParticipant
 from backend.chat.models import Message
+from backend.chat.models import Offer
 from backend.users.tests.factories import UserFactory
 
 if TYPE_CHECKING:
@@ -22,6 +25,7 @@ pytestmark = pytest.mark.django_db
 PAGE_SIZE = 30
 TOTAL_MESSAGES = 35
 EXPECTED_UNREAD = 2
+OFFER_AMOUNT = 80
 
 
 def _create_url() -> str:
@@ -352,3 +356,178 @@ def test_conversations_ordered_by_activity(client: Client):
     listing = client.get(_list_url()).json()
 
     assert [item["conversation_id"] for item in listing] == [first.pk, second.pk]
+
+
+# --- Offers ------------------------------------------------------------------
+
+
+def _listing_conversation():
+    alice = UserFactory.create()
+    bob = UserFactory.create()
+    account = Account.objects.create(user=bob, title="Dragon account", price=100)
+    conversation, _ = services.get_or_create_private_conversation(
+        alice,
+        bob,
+        account=account,
+    )
+    return (alice, bob, account, conversation)
+
+
+def _offer_url(conversation_id: int) -> str:
+    return reverse("api:create_offer", kwargs={"conversation_id": conversation_id})
+
+
+def test_create_offer(client: Client):
+    alice, _, _, conversation = _listing_conversation()
+    client.force_login(alice)
+
+    response = _post_json(client, _offer_url(conversation.pk), {"amount": OFFER_AMOUNT})
+
+    assert response.status_code == HTTPStatus.OK, response.json()
+    body = response.json()
+    assert body["offer"]["amount"] == OFFER_AMOUNT
+    assert body["offer"]["status"] == "pending"
+    assert body["offer"]["sender"]["id"] == alice.pk
+    assert Offer.objects.filter(conversation=conversation).count() == 1
+
+
+def test_create_offer_requires_listing_thread(client: Client):
+    alice = UserFactory.create()
+    bob = UserFactory.create()
+    conversation, _ = services.get_or_create_private_conversation(alice, bob)
+    client.force_login(alice)
+
+    response = _post_json(client, _offer_url(conversation.pk), {"amount": 10})
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_create_offer_invalid_amount(client: Client):
+    alice, _, _, conversation = _listing_conversation()
+    client.force_login(alice)
+
+    for bad in (0, -5, "junk"):
+        response = _post_json(client, _offer_url(conversation.pk), {"amount": bad})
+        assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_create_offer_duplicate_pending(client: Client):
+    alice, _, _, conversation = _listing_conversation()
+    client.force_login(alice)
+
+    first = _post_json(client, _offer_url(conversation.pk), {"amount": OFFER_AMOUNT})
+    assert first.status_code == HTTPStatus.OK
+    second = _post_json(client, _offer_url(conversation.pk), {"amount": 70})
+
+    assert second.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_create_offer_non_participant(client: Client):
+    _, _, _, conversation = _listing_conversation()
+    carol = UserFactory.create()
+    client.force_login(carol)
+
+    response = _post_json(client, _offer_url(conversation.pk), {"amount": 10})
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_accept_offer(client: Client):
+    alice, bob, account, conversation = _listing_conversation()
+    offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
+    client.force_login(bob)
+
+    response = client.post(reverse("api:accept_offer", kwargs={"offer_id": offer.pk}))
+
+    assert response.status_code == HTTPStatus.OK, response.json()
+    assert response.json()["status"] == "accepted"
+    offer.refresh_from_db()
+    assert offer.decided_by_id == bob.pk
+    # The agreed price becomes the listing price for everyone.
+    account.refresh_from_db()
+    assert account.price == OFFER_AMOUNT
+
+
+def test_sender_cannot_accept_own_offer(client: Client):
+    alice, _, _, conversation = _listing_conversation()
+    offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
+    client.force_login(alice)
+
+    response = client.post(reverse("api:accept_offer", kwargs={"offer_id": offer.pk}))
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_decline_offer(client: Client):
+    alice, bob, account, conversation = _listing_conversation()
+    original_price = account.price
+    offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
+    client.force_login(bob)
+
+    response = client.post(reverse("api:decline_offer", kwargs={"offer_id": offer.pk}))
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "declined"
+    account.refresh_from_db()
+    assert account.price == original_price
+
+
+def test_decide_offer_twice_rejected(client: Client):
+    alice, bob, _, conversation = _listing_conversation()
+    offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
+    client.force_login(bob)
+    client.post(reverse("api:accept_offer", kwargs={"offer_id": offer.pk}))
+
+    again = client.post(reverse("api:decline_offer", kwargs={"offer_id": offer.pk}))
+
+    assert again.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_cancel_offer_by_sender(client: Client):
+    alice, _, _, conversation = _listing_conversation()
+    offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
+    client.force_login(alice)
+
+    response = client.post(reverse("api:cancel_offer", kwargs={"offer_id": offer.pk}))
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "cancelled"
+
+
+def test_cancel_offer_by_other_rejected(client: Client):
+    alice, bob, _, conversation = _listing_conversation()
+    offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
+    client.force_login(bob)
+
+    response = client.post(reverse("api:cancel_offer", kwargs={"offer_id": offer.pk}))
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_expired_offer_cannot_be_accepted(client: Client):
+    alice, bob, _, conversation = _listing_conversation()
+    offer = services.create_offer(conversation, alice, OFFER_AMOUNT)
+    Offer.objects.filter(pk=offer.pk).update(
+        expires_at=timezone.now() - timezone.timedelta(hours=1),
+    )
+    client.force_login(bob)
+
+    response = client.post(reverse("api:accept_offer", kwargs={"offer_id": offer.pk}))
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    offer.refresh_from_db()
+    assert offer.status == Offer.EXPIRED
+
+
+def test_offer_visible_in_history(client: Client):
+    alice, bob, _, conversation = _listing_conversation()
+    services.create_offer(conversation, alice, OFFER_AMOUNT)
+    client.force_login(bob)
+
+    body = client.get(
+        reverse("api:list_messages", kwargs={"conversation_id": conversation.pk}),
+        {"page": 1, "page_size": 30},
+    ).json()
+
+    assert body["items"][0]["offer"]["amount"] == OFFER_AMOUNT
+    assert body["items"][0]["offer"]["status"] == "pending"

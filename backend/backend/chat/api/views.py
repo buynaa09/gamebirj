@@ -14,8 +14,10 @@ from backend.chat import services
 from backend.chat.api.schema import ConversationListItem
 from backend.chat.api.schema import ConversationSchema
 from backend.chat.api.schema import CreateConversationRequest
+from backend.chat.api.schema import CreateOfferRequest
 from backend.chat.api.schema import MarkReadResponse
 from backend.chat.api.schema import MessageSchema
+from backend.chat.api.schema import OfferSchema
 from backend.chat.api.schema import PaginatedMessages
 from backend.chat.api.schema import SendMessageRequest
 
@@ -34,7 +36,21 @@ def _user_summary(user) -> dict:
     return {"id": user.id, "username": user.username, "name": user.name or ""}
 
 
+def _offer_payload(offer) -> dict:
+    return {
+        "id": offer.id,
+        "conversation_id": offer.conversation_id,
+        "sender": _user_summary(offer.sender),
+        "amount": float(offer.amount),
+        "status": offer.status,
+        "expires_at": offer.expires_at,
+        "decided_at": offer.decided_at,
+        "created_at": offer.created_at,
+    }
+
+
 def _message_payload(message: Message) -> dict:
+    offer = getattr(message, "offer", None)
     return {
         "id": message.id,
         "conversation_id": message.conversation_id,
@@ -42,6 +58,7 @@ def _message_payload(message: Message) -> dict:
         "content": message.content,
         "created_at": message.created_at,
         "is_read": message.is_read,
+        "offer": _offer_payload(offer) if offer is not None else None,
     }
 
 
@@ -71,6 +88,15 @@ def _broadcast(group: str, event: dict) -> None:
 
 def _broadcast_message_created(message: Message) -> None:
     sender = message.sender
+    offer = getattr(message, "offer", None)
+    offer_event = None
+    if offer is not None:
+        payload = _offer_payload(offer)
+        payload["expires_at"] = offer.expires_at.isoformat()
+        if offer.decided_at is not None:
+            payload["decided_at"] = offer.decided_at.isoformat()
+        payload["created_at"] = offer.created_at.isoformat()
+        offer_event = payload
     _broadcast(
         f"chat_{message.conversation_id}",
         {
@@ -81,7 +107,20 @@ def _broadcast_message_created(message: Message) -> None:
             "content": message.content,
             "created_at": message.created_at.isoformat(),
             "is_read": message.is_read,
+            "offer": offer_event,
         },
+    )
+
+
+def _broadcast_offer_updated(offer) -> None:
+    payload = _offer_payload(offer)
+    payload["expires_at"] = offer.expires_at.isoformat()
+    if offer.decided_at is not None:
+        payload["decided_at"] = offer.decided_at.isoformat()
+    payload["created_at"] = offer.created_at.isoformat()
+    _broadcast(
+        f"chat_{offer.conversation_id}",
+        {"type": "offer.updated", "offer": payload},
     )
 
 
@@ -232,3 +271,67 @@ def mark_read(request, conversation_id: int):
             {"type": "message.read", "user_id": request.user.pk, "read": count},
         )
     return {"read": count}
+
+
+@router.post(
+    "/conversations/{conversation_id}/offers/",
+    response=MessageSchema,
+    description="Make a price offer on the conversation's listing (48h to decide).",
+)
+def create_offer(request, conversation_id: int, data: CreateOfferRequest):
+    try:
+        conversation = services.get_participant_conversation(
+            conversation_id,
+            request.user,
+        )
+    except services.NotParticipantError as exc:
+        raise _fail(404, str(exc)) from exc
+    try:
+        offer = services.create_offer(conversation, request.user, data.amount)
+    except services.OfferError as exc:
+        raise _fail(422, str(exc)) from exc
+    message = offer.message
+    message.sender = request.user
+    message.offer = offer
+    _broadcast_message_created(message)
+    return _message_payload(message)
+
+
+def _decide_offer(request, offer_id: int, action: str):
+    try:
+        offer = services.get_participant_offer(offer_id, request.user)
+    except services.NotParticipantError as exc:
+        raise _fail(404, str(exc)) from exc
+    try:
+        offer = services.decide_offer(offer, request.user, action)
+    except services.OfferError as exc:
+        raise _fail(422, str(exc)) from exc
+    _broadcast_offer_updated(offer)
+    return _offer_payload(offer)
+
+
+@router.post(
+    "/offers/{offer_id}/accept/",
+    response=OfferSchema,
+    description="Accept a pending offer (other participant only).",
+)
+def accept_offer(request, offer_id: int):
+    return _decide_offer(request, offer_id, "accept")
+
+
+@router.post(
+    "/offers/{offer_id}/decline/",
+    response=OfferSchema,
+    description="Decline a pending offer (other participant only).",
+)
+def decline_offer(request, offer_id: int):
+    return _decide_offer(request, offer_id, "decline")
+
+
+@router.post(
+    "/offers/{offer_id}/cancel/",
+    response=OfferSchema,
+    description="Cancel your own pending offer.",
+)
+def cancel_offer(request, offer_id: int):
+    return _decide_offer(request, offer_id, "cancel")

@@ -138,6 +138,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "content": event["content"],
                 "created_at": event["created_at"],
                 "is_read": event["is_read"],
+                "offer": event.get("offer"),
             },
         )
 
@@ -149,6 +150,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "read": event.get("read", 0),
             },
         )
+
+    async def offer_updated(self, event: dict):
+        await self.send_json({"type": "offer.updated", "offer": event["offer"]})
 
     async def typing_started(self, event: dict):
         await self.send_json({"type": "typing.started", "user_id": event["user_id"]})
