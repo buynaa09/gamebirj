@@ -20,7 +20,7 @@ export const emptyDraft: SellDraft = {
   description: '',
 };
 
-const STORAGE_KEY = 'soliltsoo-sell-draft';
+const STORAGE_KEY = 'soliltsoo-sell-draft-v2';
 
 function loadDraft(): { draft: SellDraft; restored: boolean } {
   try {

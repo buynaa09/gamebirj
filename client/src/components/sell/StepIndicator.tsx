@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import styles from './StepIndicator.module.css';
 
 const STEPS = ['Тоглоом', 'Мэдээлэл', 'Зураг', 'Шалгах'];
@@ -9,11 +10,19 @@ export function StepIndicator({ current }: { current: number }) {
         const done = index < current;
         const active = index === current;
         return (
-          <li key={label} className={`${styles.step} ${active ? styles.active : ''} ${done ? styles.done : ''}`}>
-            <span className={styles.dot}>{done ? '✓' : index + 1}</span>
-            <span className={styles.label}>{label}</span>
-            {index < STEPS.length - 1 && <span className={styles.line} aria-hidden="true" />}
-          </li>
+          <Fragment key={label}>
+            {index > 0 && <li className={styles.connector} aria-hidden="true" />}
+            <li
+              aria-label={`${index + 1}. ${label}`}
+              aria-current={active ? 'step' : undefined}
+              className={`${styles.step} ${active ? styles.active : ''} ${done ? styles.done : ''}`}
+            >
+              <span className={styles.dot} aria-hidden="true">
+                {done ? '✓' : index + 1}
+              </span>
+              {active && <span className={styles.label}>{label}</span>}
+            </li>
+          </Fragment>
         );
       })}
     </ol>
