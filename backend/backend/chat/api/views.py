@@ -92,10 +92,18 @@ def _broadcast_message_created(message: Message) -> None:
 )
 def create_conversation(request, data: CreateConversationRequest):
     user_model = get_user_model()
-    try:
-        other = user_model.objects.get(pk=data.user_id)
-    except user_model.DoesNotExist as exc:
-        raise _fail(404, "User not found.") from exc
+    if data.user_id is not None:
+        try:
+            other = user_model.objects.get(pk=data.user_id)
+        except user_model.DoesNotExist as exc:
+            raise _fail(404, "User not found.") from exc
+    elif data.username:
+        try:
+            other = user_model.objects.get(username=data.username)
+        except user_model.DoesNotExist as exc:
+            raise _fail(404, "User not found.") from exc
+    else:
+        raise _fail(422, "Provide user_id or username.")
     account = None
     if data.account_id is not None:
         try:

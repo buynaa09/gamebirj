@@ -4,7 +4,6 @@ import type {
   Conversation,
   ConversationListItem,
   PaginatedMessages,
-  User,
 } from '../types';
 
 export const CHAT_PAGE_SIZE = 30;
@@ -17,9 +16,13 @@ export function fetchConversation(id: number): Promise<Conversation> {
   return apiGet<Conversation>(`/chat/conversations/${id}/`);
 }
 
-export function createConversation(userId: number, accountId?: number): Promise<Conversation> {
+export function createConversation(
+  other: { userId?: number; username?: string },
+  accountId?: number,
+): Promise<Conversation> {
   return apiPost<Conversation>('/chat/conversations/', {
-    user_id: userId,
+    user_id: other.userId ?? null,
+    username: other.username ?? null,
     account_id: accountId ?? null,
   });
 }
@@ -50,14 +53,9 @@ export function markConversationRead(conversationId: number): Promise<{ read: nu
   return apiPost<{ read: number }>(`/chat/conversations/${conversationId}/read/`, {});
 }
 
-export function fetchUserByUsername(username: string): Promise<User> {
-  return apiGet<User>(`/users/${encodeURIComponent(username)}/`);
-}
-
 /** Start (or reuse) a 1-to-1 thread about a listing; returns the conversation id. */
 export async function openSellerThread(sellerUsername: string, accountId: number): Promise<number> {
-  const seller = await fetchUserByUsername(sellerUsername);
-  const conversation = await createConversation(seller.id, accountId);
+  const conversation = await createConversation({ username: sellerUsername }, accountId);
   return conversation.id;
 }
 

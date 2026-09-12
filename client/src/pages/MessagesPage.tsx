@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { ChatBubbleIcon, SearchIcon } from '../components/icons/Icons';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { ChatBubbleIcon, SearchIcon, SendIcon } from '../components/icons/Icons';
 import { useAuth } from '../context/AuthContext';
 import { useChatSocket } from '../hooks/useChatSocket';
+import { fetchAccount } from '../services/accounts';
 import {
   fetchConversation,
   fetchConversations,
@@ -11,8 +12,13 @@ import {
   markConversationRead,
   sendMessageRest,
 } from '../services/chat';
-import { timeAgo } from '../utils/format';
-import type { ChatMessage, ChatServerEvent, ConversationListItem } from '../types';
+import { formatPrice, timeAgo } from '../utils/format';
+import type {
+  ChatMessage,
+  ChatServerEvent,
+  ConversationListItem,
+  MarketAccount,
+} from '../types';
 import styles from './MessagesPage.module.css';
 
 const LIST_REFRESH_MS = 20000;
@@ -30,6 +36,7 @@ function messageTime(iso: string): string {
 
 export function MessagesPage() {
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = Number(searchParams.get('conversation')) || null;
 
@@ -48,6 +55,7 @@ export function MessagesPage() {
   const [draft, setDraft] = useState('');
   const [sendError, setSendError] = useState<string | null>(null);
   const [typingName, setTypingName] = useState<string | null>(null);
+  const [listing, setListing] = useState<MarketAccount | null>(null);
 
   const typingTimer = useRef<number | null>(null);
   const typingSentAt = useRef(0);
@@ -66,6 +74,7 @@ export function MessagesPage() {
       setThreadError(null);
       setTypingName(null);
       setSendError(null);
+      setListing(null);
       setThreadLoading(id !== null);
       if (id === null) {
         setSearchParams({}, { replace: true });
@@ -145,9 +154,29 @@ export function MessagesPage() {
     };
   }, [user, selectedId, conversations, selectConversation]);
 
-  // --- Thread history ----------------------------------------------------
+  // Listing linked to the open conversation (powers the trade card + seller panel).
+  const selectedAccountId =
+    conversations.find((c) => c.conversation_id === selectedId)?.account_id ?? null;
   useEffect(() => {
-    if (!user || selectedId === null) {
+    if (selectedAccountId === null) {
+      return;
+    }
+    let cancelled = false;
+    fetchAccount(selectedAccountId).then(
+      (account) => {
+        if (!cancelled) setListing(account);
+      },
+      () => {
+        if (!cancelled) setListing(null);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAccountId]);
+
+  // --- Thread history ----------------------------------------------------
+  useEffect(() => {    if (!user || selectedId === null) {
       return;
     }
     let cancelled = false;
@@ -316,6 +345,13 @@ export function MessagesPage() {
   const selected = conversations.find((c) => c.conversation_id === selectedId) ?? null;
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread_count, 0);
   const hasOlder = messages.length < totalMessages;
+  const otherIsSeller =
+    listing !== null && selected !== null && listing.seller === selected.other_user.username;
+  const roleLabel =
+    selected === null || listing === null ? null : otherIsSeller ? 'Зарагч' : 'Худалдан авагч';
+  const statusLine = typingName
+    ? 'Бичиж байна…'
+    : (roleLabel ?? (!connected ? 'Холбогдож байна…' : 'Идэвхтэй'));
 
   if (!authLoading && !user) {
     return (
@@ -412,11 +448,39 @@ export function MessagesPage() {
               </span>
               <div className={styles.threadHeadMeta}>
                 <strong>{displayName(selected)}</strong>
-                <span className={styles.statusText}>
-                  {!connected ? 'Холбогдож байна…' : typingName ? 'Бичиж байна…' : 'Идэвхтэй'}
-                </span>
+                <span className={styles.statusText}>{statusLine}</span>
               </div>
             </header>
+
+            {listing && (
+              <div className={styles.tradeCard}>
+                {listing.images[0]?.image && (
+                  <img
+                    className={styles.tradeThumb}
+                    src={listing.images[0].image}
+                    alt=""
+                    loading="lazy"
+                  />
+                )}
+                <div className={styles.tradeInfo}>
+                  <p className={styles.tradeKicker}>Худалдаанд бэлэн</p>
+                  <strong className={styles.tradeTitle}>{listing.title}</strong>
+                  <span className={styles.tradeSub}>
+                    {listing.game} • {formatPrice(listing.price)}
+                  </span>
+                  <p className={styles.tradeNote}>
+                    Та баталгаажуултал мөнгө дундын дансанд хадгалагдана.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={styles.buyNow}
+                  onClick={() => navigate(`/listing/${listing.id}`)}
+                >
+                  Buy now
+                </button>
+              </div>
+            )}
 
             <div className={styles.messages} ref={scrollRef} aria-live="polite">
               {hasOlder && (
@@ -431,6 +495,19 @@ export function MessagesPage() {
               )}
               {threadLoading && <p className={styles.noResults}>Уншиж байна…</p>}
               {threadError && <p className={styles.errorText}>{threadError}</p>}
+              {!threadLoading && !threadError && messages.length === 0 && (
+                <div className={styles.noChat}>
+                  <span className={styles.noChatIcon} aria-hidden="true">
+                    <ChatBubbleIcon size={20} />
+                  </span>
+                  <p className={styles.noChatTitle}>Зурвас алга</p>
+                  <p className={styles.noChatSub}>
+                    {listing
+                      ? `${listing.game ?? listing.title} заруудын талаар яриа эхлүүлээрэй`
+                      : 'Сайн уу гэж бичээд яриагаа эхлүүлээрэй'}
+                  </p>
+                </div>
+              )}
               {!threadLoading &&
                 !threadError &&
                 messages.map((m) => {
@@ -465,7 +542,7 @@ export function MessagesPage() {
               <textarea
                 className={styles.input}
                 rows={1}
-                placeholder="Зурвас бичих…"
+                placeholder="Type a message… (Enter to send)"
                 value={draft}
                 onChange={(e) => handleDraftChange(e.target.value)}
                 onBlur={() => sendTyping(false)}
@@ -477,13 +554,65 @@ export function MessagesPage() {
                 }}
                 aria-label="Зурвас бичих"
               />
-              <button type="submit" className="btn btn-primary" disabled={!draft.trim()}>
-                Илгээх
+              <button
+                type="submit"
+                className={styles.sendBtn}
+                disabled={!draft.trim()}
+                aria-label="Илгээх"
+              >
+                <SendIcon size={16} />
               </button>
             </form>
           </div>
         )}
       </section>
+
+      {selected && listing && (
+        <aside className={styles.sellerPanel} aria-label="Зарагчийн мэдээлэл">
+          <p className={styles.sellerKicker}>Seller</p>
+          <div className={styles.sellerTop}>
+            <span className={styles.avatar} aria-hidden="true">
+              {listing.seller.charAt(0).toUpperCase()}
+            </span>
+            <div className={styles.sellerTopMeta}>
+              <strong>{listing.seller}</strong>
+              <span className={styles.sellerProfile}>View profile</span>
+            </div>
+          </div>
+
+          <div className={styles.statRow}>
+            <div className={styles.stat}>
+              <strong>—</strong>
+              <span>Rating</span>
+            </div>
+            <div className={styles.stat}>
+              <strong>0</strong>
+              <span>Sales</span>
+            </div>
+            <div className={styles.stat}>
+              <strong>0</strong>
+              <span>Disputes</span>
+            </div>
+          </div>
+
+          <div className={styles.infoBlock}>
+            <p className={styles.infoKicker}>How payment works</p>
+            <p className={styles.infoText}>
+              <strong>Баталгаажтал мөнгө 100% хамгаалагдана.</strong> Та баталгаажуулсны дараа
+              зарагчид шилжинэ.
+            </p>
+          </div>
+
+          <div className={styles.infoBlock}>
+            <p className={styles.infoKicker}>Stay safe</p>
+            <ul className={styles.safeList}>
+              <li>OTP болон 2FA кодыг чатаас гадуур хэзээ ч бүү хуваалцаарай.</li>
+              <li>Төлбөрөө суллахаасаа өмнө нэвтрэлтийг шалгаарай.</li>
+              <li>Зөвхөн платформоор дамжуулан төлбөрөө төлөөрэй.</li>
+            </ul>
+          </div>
+        </aside>
+      )}
     </main>
   );
 }

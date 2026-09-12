@@ -87,7 +87,46 @@ def test_create_conversation_self_chat_rejected(client: Client):
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
+def test_create_conversation_by_username(client: Client):
+    alice = UserFactory.create()
+    bob = UserFactory.create()
+    client.force_login(alice)
+
+    response = _post_json(client, _create_url(), {"username": bob.username})
+
+    assert response.status_code == HTTPStatus.OK, response.json()
+    assert response.json()["other_user"]["id"] == bob.pk
+
+    # Reuses the same thread as the user_id flow.
+    again = _post_json(client, _create_url(), {"user_id": bob.pk}).json()
+    assert again["id"] == response.json()["id"]
+
+
+def test_create_conversation_unknown_username(client: Client):
+    alice = UserFactory.create()
+    client.force_login(alice)
+
+    response = _post_json(client, _create_url(), {"username": "nobody-here"})
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
 def test_create_conversation_unknown_user(client: Client):
+    alice = UserFactory.create()
+    client.force_login(alice)
+
+    response = _post_json(client, _create_url(), {"user_id": 999999})
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_create_conversation_missing_identifier(client: Client):
+    alice = UserFactory.create()
+    client.force_login(alice)
+
+    response = _post_json(client, _create_url(), {})
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     alice = UserFactory.create()
     client.force_login(alice)
 

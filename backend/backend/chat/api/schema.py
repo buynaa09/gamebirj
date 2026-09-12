@@ -61,7 +61,14 @@ class PaginatedMessages(Schema):
 
 
 class CreateConversationRequest(Schema):
-    user_id: int = Field(..., description="The other participant's user ID")
+    user_id: int | None = Field(
+        None,
+        description="The other participant's user ID (either this or username)",
+    )
+    username: str | None = Field(
+        None,
+        description="The other participant's username (either this or user_id)",
+    )
     account_id: int | None = Field(
         None,
         description="Optional listing ID to scope the thread",
