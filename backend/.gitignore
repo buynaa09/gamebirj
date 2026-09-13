@@ -274,4 +274,4 @@ backend/media/
 .ipython/
 .env
 .envs/*
-!.envs/.local/
+.envs/.local/
