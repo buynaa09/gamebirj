@@ -1,4 +1,4 @@
-import { API_BASE, apiGet, apiPost } from './api';
+import { API_BASE, apiGet, apiPost, postForm } from './api';
 import type {
   ChatMessage,
   Conversation,
@@ -46,8 +46,23 @@ export async function fetchLatestMessages(conversationId: number): Promise<Pagin
   return fetchMessages(conversationId, lastPage, first.page_size);
 }
 
+/** Text fallback via multipart (the endpoint accepts form data). */
 export function sendMessageRest(conversationId: number, content: string): Promise<ChatMessage> {
-  return apiPost<ChatMessage>(`/chat/conversations/${conversationId}/messages/`, { content });
+  const form = new FormData();
+  form.set('content', content);
+  return postForm<ChatMessage>(`/chat/conversations/${conversationId}/messages/`, form);
+}
+
+/** Text and/or image via multipart (WebSocket transport is text-only). */
+export function sendMessageWithImage(
+  conversationId: number,
+  content: string,
+  image: File,
+): Promise<ChatMessage> {
+  const form = new FormData();
+  form.set('content', content);
+  form.append('image', image);
+  return postForm<ChatMessage>(`/chat/conversations/${conversationId}/messages/`, form);
 }
 
 export function markConversationRead(conversationId: number): Promise<{ read: number }> {

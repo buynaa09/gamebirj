@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model
+from ninja import Form
 from ninja import Router
 from ninja.errors import HttpError
 
@@ -19,7 +20,6 @@ from backend.chat.api.schema import MarkReadResponse
 from backend.chat.api.schema import MessageSchema
 from backend.chat.api.schema import OfferSchema
 from backend.chat.api.schema import PaginatedMessages
-from backend.chat.api.schema import SendMessageRequest
 
 if TYPE_CHECKING:
     from backend.chat.models import Message
@@ -49,13 +49,17 @@ def _offer_payload(offer) -> dict:
     }
 
 
-def _message_payload(message: Message) -> dict:
+def _message_payload(request, message: Message) -> dict:
     offer = getattr(message, "offer", None)
+    image_url = None
+    if message.image:
+        image_url = request.build_absolute_uri(message.image.url)
     return {
         "id": message.id,
         "conversation_id": message.conversation_id,
         "sender": _user_summary(message.sender),
         "content": message.content,
+        "image": image_url,
         "created_at": message.created_at,
         "is_read": message.is_read,
         "offer": _offer_payload(offer) if offer is not None else None,
@@ -102,6 +106,7 @@ def _broadcast_message_created(message: Message) -> None:
             payload["decided_at"] = offer.decided_at.isoformat()
         payload["created_at"] = offer.created_at.isoformat()
         offer_event = payload
+    image = getattr(message, "image", None)
     _broadcast(
         f"chat_{message.conversation_id}",
         {
@@ -110,6 +115,9 @@ def _broadcast_message_created(message: Message) -> None:
             "conversation_id": message.conversation_id,
             "sender": _user_summary(sender),
             "content": message.content,
+            # Relative media URL (no request here); clients resolve it
+            # against the API origin. REST payloads carry absolute URLs.
+            "image": image.url if image else None,
             "created_at": message.created_at.isoformat(),
             "is_read": message.is_read,
             "offer": offer_event,
@@ -246,7 +254,7 @@ def list_messages(request, conversation_id: int, page: int = 1, page_size: int =
     items, total = services.get_conversation_messages(conversation, page, page_size)
     size = min(max(page_size, 1), services.MAX_PAGE_SIZE)
     return {
-        "items": [_message_payload(message) for message in items],
+        "items": [_message_payload(request, message) for message in items],
         "page": max(page, 1),
         "page_size": size,
         "total": total,
@@ -256,9 +264,9 @@ def list_messages(request, conversation_id: int, page: int = 1, page_size: int =
 @router.post(
     "/conversations/{conversation_id}/messages/",
     response=MessageSchema,
-    description="Send a message via REST (fallback; WebSocket is preferred).",
+    description="Send a text and/or image message (multipart; WebSocket is text-only).",
 )
-def send_message(request, conversation_id: int, data: SendMessageRequest):
+def send_message(request, conversation_id: int, content: str = Form("")):
     try:
         conversation = services.get_participant_conversation(
             conversation_id,
@@ -266,13 +274,14 @@ def send_message(request, conversation_id: int, data: SendMessageRequest):
         )
     except services.NotParticipantError as exc:
         raise _fail(404, str(exc)) from exc
+    image = request.FILES.get("image")
     try:
-        message = services.send_message(conversation, request.user, data.content)
-    except services.InvalidMessageError as exc:
+        message = services.send_message(conversation, request.user, content, image)
+    except (services.InvalidMessageError, services.InvalidImageError) as exc:
         raise _fail(422, str(exc)) from exc
     message.sender = request.user
     _broadcast_message_created(message)
-    return _message_payload(message)
+    return _message_payload(request, message)
 
 
 @router.post(
@@ -318,7 +327,7 @@ def create_offer(request, conversation_id: int, data: CreateOfferRequest):
     message.sender = request.user
     message.offer = offer
     _broadcast_message_created(message)
-    return _message_payload(message)
+    return _message_payload(request, message)
 
 
 def _decide_offer(request, offer_id: int, action: str):

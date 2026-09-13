@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon ,ChatBubbleIcon} from '../icons/Icons';
 import darkLogo from '../../assets/logo/dark.png';
 import lightLogo from '../../assets/logo/light.png';
@@ -19,6 +20,7 @@ function TopBarInner() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const unreadMessages = useUnreadMessages();
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -114,11 +116,10 @@ function TopBarInner() {
                 onClick={() => navigate('/messages')}
               >
                 <ChatBubbleIcon />
-                <span className={styles.dotBadge} />
+                {unreadMessages > 0 && <span className={styles.dotBadge} />}
               </button>
               <button className={styles.iconBtn} aria-label="Notifications">
                 <BellIcon />
-                <span className={styles.dotBadge} />
               </button>
 
               <div className={styles.profileWrap} ref={dropdownRef}>

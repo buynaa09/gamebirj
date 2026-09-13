@@ -1,6 +1,15 @@
 export const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000/api';
 
+/** Resolve a media URL: absolute URLs pass through, relative ones (WS events)
+ *  are resolved against the API origin (same host that serves /media/). */
+export function resolveMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  const origin = API_BASE.replace(/\/api\/?$/, '');
+  return `${origin}${url.startsWith('/') ? url : `/${url}`}`;
+}
+
 export function getCsrfToken(): string | undefined {
   const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/);
   return match ? decodeURIComponent(match[1]) : undefined;

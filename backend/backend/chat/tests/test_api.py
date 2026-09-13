@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.urls import reverse
 from django.utils import timezone
@@ -26,6 +27,12 @@ PAGE_SIZE = 30
 TOTAL_MESSAGES = 35
 EXPECTED_UNREAD = 2
 OFFER_AMOUNT = 80
+
+GIF = (
+    b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00"
+    b"\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00"
+    b"\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b"
+)
 
 
 def _create_url() -> str:
@@ -203,10 +210,9 @@ def test_non_participant_cannot_access_conversation(client: Client):
     )
     assert messages.status_code == HTTPStatus.NOT_FOUND
 
-    send = _post_json(
-        client,
+    send = client.post(
         reverse("api:send_message", kwargs={"conversation_id": conversation.pk}),
-        {"content": "Hello"},
+        data={"content": "Hello"},
     )
     assert send.status_code == HTTPStatus.NOT_FOUND
 
@@ -254,15 +260,15 @@ def test_send_message(client: Client):
     conversation, _ = services.get_or_create_private_conversation(alice, bob)
     client.force_login(alice)
 
-    response = _post_json(
-        client,
+    response = client.post(
         reverse("api:send_message", kwargs={"conversation_id": conversation.pk}),
-        {"content": "Hello Bob"},
+        data={"content": "Hello Bob"},
     )
 
     assert response.status_code == HTTPStatus.OK, response.json()
     body = response.json()
     assert body["content"] == "Hello Bob"
+    assert body["image"] is None
     assert body["sender"]["id"] == alice.pk
     assert body["is_read"] is False
     assert Message.objects.filter(conversation=conversation).count() == 1
@@ -274,10 +280,9 @@ def test_send_empty_message_rejected(client: Client):
     conversation, _ = services.get_or_create_private_conversation(alice, bob)
     client.force_login(alice)
 
-    response = _post_json(
-        client,
+    response = client.post(
         reverse("api:send_message", kwargs={"conversation_id": conversation.pk}),
-        {"content": "   "},
+        data={"content": "   "},
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
@@ -289,13 +294,83 @@ def test_send_too_long_message_rejected(client: Client):
     conversation, _ = services.get_or_create_private_conversation(alice, bob)
     client.force_login(alice)
 
-    response = _post_json(
-        client,
+    response = client.post(
         reverse("api:send_message", kwargs={"conversation_id": conversation.pk}),
-        {"content": "x" * (services.MAX_MESSAGE_LENGTH + 1)},
+        data={"content": "x" * (services.MAX_MESSAGE_LENGTH + 1)},
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def _gif(name="shot.gif"):
+    return SimpleUploadedFile(name, GIF, content_type="image/gif")
+
+
+def test_send_image_only_message(client: Client):
+    alice = UserFactory.create()
+    bob = UserFactory.create()
+    conversation, _ = services.get_or_create_private_conversation(alice, bob)
+    client.force_login(alice)
+
+    response = client.post(
+        reverse("api:send_message", kwargs={"conversation_id": conversation.pk}),
+        data={"content": "", "image": _gif()},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.json()
+    body = response.json()
+    assert body["content"] == ""
+    assert body["image"] is not None
+    assert "chat_images" in body["image"]
+    message = Message.objects.get(conversation=conversation)
+    assert message.image
+
+
+def test_send_text_with_image(client: Client):
+    alice = UserFactory.create()
+    bob = UserFactory.create()
+    conversation, _ = services.get_or_create_private_conversation(alice, bob)
+    client.force_login(alice)
+
+    response = client.post(
+        reverse("api:send_message", kwargs={"conversation_id": conversation.pk}),
+        data={"content": "Look at this", "image": _gif()},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.json()
+    assert response.json()["content"] == "Look at this"
+    assert response.json()["image"] is not None
+
+
+def test_send_non_image_rejected(client: Client):
+    alice = UserFactory.create()
+    bob = UserFactory.create()
+    conversation, _ = services.get_or_create_private_conversation(alice, bob)
+    client.force_login(alice)
+    text_file = SimpleUploadedFile("note.txt", b"hello", content_type="text/plain")
+
+    response = client.post(
+        reverse("api:send_message", kwargs={"conversation_id": conversation.pk}),
+        data={"content": "", "image": text_file},
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_message_history_includes_image(client: Client):
+    alice = UserFactory.create()
+    bob = UserFactory.create()
+    conversation, _ = services.get_or_create_private_conversation(alice, bob)
+    services.send_message(conversation, alice, "", _gif())
+    client.force_login(bob)
+
+    body = client.get(
+        reverse("api:list_messages", kwargs={"conversation_id": conversation.pk}),
+    ).json()
+
+    assert body["total"] == 1
+    assert body["items"][0]["image"] is not None
+    assert "chat_images" in body["items"][0]["image"]
 
 
 def test_message_history_pagination(client: Client):

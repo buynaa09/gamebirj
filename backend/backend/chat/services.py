@@ -52,6 +52,13 @@ class OfferError(ChatError):
     """Raised when an offer fails validation or a decision is forbidden."""
 
 
+class InvalidImageError(ChatError):
+    """Raised when an uploaded message image fails validation."""
+
+
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+
 def validate_content(content: str) -> str:
     text = (content or "").strip()
     if not text:
@@ -124,9 +131,37 @@ def is_participant(conversation: Conversation, user) -> bool:
     return user.pk in (conversation.user_low_id, conversation.user_high_id)
 
 
-def send_message(conversation: Conversation, sender, content: str) -> Message:
-    """Validate, persist, and return a new message; bumps activity."""
-    text = validate_content(content)
+def validate_image(upload) -> None:
+    content_type = (getattr(upload, "content_type", "") or "")
+    if not content_type.startswith("image/"):
+        msg = f"File '{getattr(upload, 'name', '?')}' is not an image."
+        raise InvalidImageError(msg)
+    size = getattr(upload, "size", None)
+    if size is not None and size > MAX_IMAGE_BYTES:
+        msg = "Image is too large (max 5 MB)."
+        raise InvalidImageError(msg)
+
+
+def send_message(
+    conversation: Conversation,
+    sender,
+    content: str,
+    image=None,
+) -> Message:
+    """Validate, persist, and return a new message; bumps activity.
+
+    Text may be empty when an image is attached, but at least one of the
+    two is required.
+    """
+    text = (content or "").strip()
+    if len(text) > MAX_MESSAGE_LENGTH:
+        msg = f"Message is too long (max {MAX_MESSAGE_LENGTH} characters)."
+        raise InvalidMessageError(msg)
+    if image is not None:
+        validate_image(image)
+    if not text and image is None:
+        msg = "Message content cannot be empty."
+        raise InvalidMessageError(msg)
     if not is_participant(conversation, sender):
         msg = "You are not a participant of this conversation."
         raise NotParticipantError(msg)
@@ -135,6 +170,7 @@ def send_message(conversation: Conversation, sender, content: str) -> Message:
             conversation=conversation,
             sender=sender,
             content=text,
+            image=image,
         )
         Conversation.objects.filter(pk=conversation.pk).update(
             updated_at=timezone.now(),

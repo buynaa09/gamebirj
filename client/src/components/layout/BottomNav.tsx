@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { HomeIcon, ShopIcon, ClockIcon, ChatBubbleIcon, CheckIcon } from '../icons/Icons';
+import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import styles from './BottomNav.module.css';
 
 const routeLinks = [
@@ -11,6 +12,7 @@ const routeLinks = [
 const placeholderLinks = [{ label: 'Trades', icon: CheckIcon }];
 
 export function BottomNav() {
+  const unreadMessages = useUnreadMessages();
   return (
     <nav className={styles.nav} aria-label="Mobile navigation">
       {routeLinks.map(({ to, label, icon: Icon }) => (
@@ -30,6 +32,7 @@ export function BottomNav() {
       >
         <ChatBubbleIcon />
         Messages
+        {unreadMessages > 0 && <span className={styles.dot} aria-hidden="true" />}
       </NavLink>
       {placeholderLinks.map(({ label, icon: Icon }) => (
         <a key={label} href="#" className={styles.link}>

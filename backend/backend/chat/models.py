@@ -128,6 +128,7 @@ class Message(models.Model):
         related_name="chat_messages",
     )
     content = models.TextField()
+    image = models.ImageField(upload_to="chat_images/", null=True, blank=True)
     offer = models.OneToOneField(
         "Offer",
         on_delete=models.SET_NULL,

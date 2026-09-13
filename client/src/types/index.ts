@@ -149,6 +149,7 @@ export interface ChatMessage {
   conversation_id: number;
   sender: ChatUserSummary;
   content: string;
+  image: string | null;
   created_at: string;
   is_read: boolean;
   offer: Offer | null;
@@ -181,6 +182,7 @@ export type ChatServerEvent =
       conversation_id: number;
       sender: ChatUserSummary;
       content: string;
+      image: string | null;
       created_at: string;
       is_read: boolean;
       offer: Offer | null;

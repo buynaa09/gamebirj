@@ -67,7 +67,8 @@ class MessageSchema(Schema):
     id: int = Field(..., description="Message ID")
     conversation_id: int = Field(..., description="Conversation ID")
     sender: UserSummary = Field(..., description="Sender summary")
-    content: str = Field(..., description="Message text")
+    content: str = Field(..., description="Message text (may be empty for image-only)")
+    image: str | None = Field(None, description="Absolute image URL, if attached")
     created_at: datetime = Field(..., description="Sent timestamp")
     is_read: bool = Field(default=False, description="Read state")
     offer: OfferSchema | None = Field(None, description="Linked price offer, if any")
@@ -93,10 +94,6 @@ class CreateConversationRequest(Schema):
         None,
         description="Optional listing ID to scope the thread",
     )
-
-
-class SendMessageRequest(Schema):
-    content: str = Field(..., description="Message text (1-2000 characters)")
 
 
 class CreateOfferRequest(Schema):
