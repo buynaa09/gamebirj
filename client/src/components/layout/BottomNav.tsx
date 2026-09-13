@@ -4,17 +4,17 @@ import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import styles from './BottomNav.module.css';
 
 const routeLinks = [
-  { to: '/', label: 'Home', icon: HomeIcon },
-  { to: '/marketplace', label: 'Market', icon: ShopIcon },
-  { to: '/sell', label: 'Sell', icon: ClockIcon },
+  { to: '/', label: 'Нүүр', icon: HomeIcon },
+  { to: '/marketplace', label: 'Зарууд', icon: ShopIcon },
+  { to: '/sell', label: 'Зарах', icon: ClockIcon },
 ];
 
-const placeholderLinks = [{ label: 'Trades', icon: CheckIcon }];
+const placeholderLinks = [{ label: 'Арилжаа', icon: CheckIcon }];
 
 export function BottomNav() {
   const unreadMessages = useUnreadMessages();
   return (
-    <nav className={styles.nav} aria-label="Mobile navigation">
+    <nav className={styles.nav} aria-label="Мобайл цэс">
       {routeLinks.map(({ to, label, icon: Icon }) => (
         <NavLink
           key={label}
@@ -31,7 +31,7 @@ export function BottomNav() {
         className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
       >
         <ChatBubbleIcon />
-        Messages
+        Зурвас
         {unreadMessages > 0 && <span className={styles.dot} aria-hidden="true" />}
       </NavLink>
       {placeholderLinks.map(({ label, icon: Icon }) => (

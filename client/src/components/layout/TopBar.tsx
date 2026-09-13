@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useUnreadMessages } from '../../hooks/useUnreadMessages';
-import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon ,ChatBubbleIcon} from '../icons/Icons';
+import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon, ChatBubbleIcon } from '../icons/Icons';
 import darkLogo from '../../assets/logo/dark.png';
 import lightLogo from '../../assets/logo/light.png';
 import styles from './TopBar.module.css';
@@ -42,7 +42,6 @@ function TopBarInner() {
     };
   }, [dropdownOpen]);
 
-  // Close the dropdown when navigating via the brand link.
   const handleBrandClick = () => {
     setDropdownOpen(false);
     closeMobileMenu();
@@ -53,7 +52,7 @@ function TopBarInner() {
     closeMobileMenu();
     logout()
       .catch(() => {
-        // Session already gone — still treat as logged out.
+        // Ниш хэдийн дууссан ч гарсанд тооцно.
       })
       .finally(() => {
         navigate('/', { replace: true });
@@ -70,41 +69,42 @@ function TopBarInner() {
           <span className={styles.brandWord}>Soliltsoo</span>
         </NavLink>
 
-        <nav className={styles.navLinks} aria-label="Main navigation">
+        <nav className={styles.navLinks} aria-label="Үндсэн цэс">
           <NavLink to="/" className={({ isActive }) => (isActive ? styles.active : '')} end>
-            Home
+            Нүүр
           </NavLink>
           <NavLink to="/marketplace" className={({ isActive }) => (isActive ? styles.active : '')}>
-            Marketplace
+            Зарууд
           </NavLink>
         
           <NavLink to="/sell" className={({ isActive }) => (isActive ? styles.active : '')}>
-            Sell
+            Зарах
           </NavLink>
-          <a href="#">More ▾</a>
+          <a href="#">Түрээс ▾</a>
+          <a href="#">Бусад ▾</a>
         </nav>
 
         <div className={styles.topActions}>
-          <div className={styles.themeToggle} role="group" aria-label="Theme toggle">
+          <div className={styles.themeToggle} role="group" aria-label="Загвар солих">
             <button
               className={theme === 'dark' ? styles.on : ''}
-              title="Dark mode"
-              aria-label="Dark mode"
+              title="Харанхуй горим"
+              aria-label="Харанхуй горим"
               onClick={toggleTheme}
             >
               <MoonIcon />
             </button>
             <button
               className={theme === 'light' ? styles.on : ''}
-              title="Light mode"
-              aria-label="Light mode"
+              title="Гэгээлэг горим"
+              aria-label="Гэгээлэг горим"
               onClick={toggleTheme}
             >
               <SunIcon />
             </button>
           </div>
 
-          <button className={styles.iconBtn} aria-label="Search">
+          <button className={styles.iconBtn} aria-label="Хайх">
             <SearchIcon />
           </button>
 
@@ -112,20 +112,20 @@ function TopBarInner() {
             <>
               <button
                 className={`${styles.iconBtn} ${styles.hideOnMobile}`}
-                aria-label="Messages"
+                aria-label="Зурвас"
                 onClick={() => navigate('/messages')}
               >
                 <ChatBubbleIcon />
                 {unreadMessages > 0 && <span className={styles.dotBadge} />}
               </button>
-              <button className={styles.iconBtn} aria-label="Notifications">
+              <button className={styles.iconBtn} aria-label="Мэдэгдэл">
                 <BellIcon />
               </button>
 
               <div className={styles.profileWrap} ref={dropdownRef}>
                 <button
                   className={styles.avatar}
-                  aria-label="Profile menu"
+                  aria-label="Профайл цэс"
                   aria-expanded={dropdownOpen}
                   onClick={() => setDropdownOpen((o) => !o)}
                 >
@@ -135,16 +135,16 @@ function TopBarInner() {
                   <div className={styles.dropdown} role="menu">
                     <div className={styles.dropdownHeader}>{user.username}</div>
                     <a href="#" role="menuitem">
-                      Profile
+                      Профайл
                     </a>
                     <a href="#" role="menuitem">
-                      Transactions
+                      Гүйлгээнүүд
                     </a>
                     <NavLink to="/wishlist" role="menuitem">
-                      Wishlist
+                      Хадгалсан
                     </NavLink>
                     <button role="menuitem" className={styles.dropdownLogout} onClick={handleLogout}>
-                      Log out
+                      Гарах
                     </button>
                   </div>
                 )}
@@ -154,10 +154,10 @@ function TopBarInner() {
             !loading && (
               <div className={styles.authBtns}>
                 <NavLink to="/login" className={`btn btn-outline ${styles.authBtn}`}>
-                  Log in
+                  Нэвтрэх
                 </NavLink>
                 <NavLink to="/signup" className={`btn btn-primary ${styles.authBtn}`}>
-                  Sign up
+                  Бүртгүүлэх
                 </NavLink>
               </div>
             )
@@ -165,7 +165,7 @@ function TopBarInner() {
 
           <button
             className={styles.hamburger}
-            aria-label="Menu"
+            aria-label="Цэс"
             onClick={() => setMobileMenuOpen((o) => !o)}
           >
             <MenuIcon />
@@ -202,30 +202,30 @@ function MobileMenu({
         onClick={onNavigate}
         className={`${styles.mobileLink} ${currentPath === '/' ? styles.mobileActive : ''}`}
       >
-        Home
+        Нүүр
       </NavLink>
       <NavLink
         to="/marketplace"
         onClick={onNavigate}
         className={`${styles.mobileLink} ${currentPath === '/marketplace' ? styles.mobileActive : ''}`}
       >
-        Marketplace
+        Зарууд
       </NavLink>
       <a href="#" className={styles.mobileLink}>
-        Community
+        Хамт олон
       </a>
       <NavLink
         to="/sell/processing"
         onClick={onNavigate}
         className={`${styles.mobileLink} ${currentPath === '/sell/processing' ? styles.mobileActive : ''}`}
       >
-        Sell
+        Зарах
       </NavLink>
       <a href="#" className={styles.mobileLink}>
-        Transactions
+        Гүйлгээнүүд
       </a>
       <a href="#" className={`${styles.mobileLink} ${styles.mobileLast}`}>
-        More
+        Бусад
       </a>
 
       {!loading &&
@@ -233,16 +233,16 @@ function MobileMenu({
           <div className={styles.mobileAuth}>
             <span className={styles.mobileUser}>{user.username}</span>
             <button className={`btn btn-outline ${styles.mobileAuthBtn}`} onClick={onLogout}>
-              Log out
+              Гарах
             </button>
           </div>
         ) : (
           <div className={styles.mobileAuth}>
             <NavLink to="/login" onClick={onNavigate} className={`btn btn-outline ${styles.mobileAuthBtn}`}>
-              Log in
+              Нэвтрэх
             </NavLink>
             <NavLink to="/signup" onClick={onNavigate} className={`btn btn-primary ${styles.mobileAuthBtn}`}>
-              Sign up
+              Бүртгүүлэх
             </NavLink>
           </div>
         ))}

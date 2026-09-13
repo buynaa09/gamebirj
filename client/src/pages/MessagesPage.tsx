@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChatBubbleIcon, SearchIcon, SendIcon } from '../components/icons/Icons';
+import { ChatBubbleIcon, ImageIcon, SearchIcon, SendIcon } from '../components/icons/Icons';
 import { OfferCard } from '../components/chat/OfferCard';
 import { useAuth } from '../context/AuthContext';
 import { useChatSocket } from '../hooks/useChatSocket';
@@ -15,7 +15,9 @@ import {
   fetchMessages,
   markConversationRead,
   sendMessageRest,
+  sendMessageWithImage,
 } from '../services/chat';
+import { resolveMediaUrl } from '../services/api';
 import { formatPrice, timeAgo } from '../utils/format';
 import type {
   ChatMessage,
@@ -60,6 +62,8 @@ export function MessagesPage() {
 
   const [draft, setDraft] = useState('');
   const [sendError, setSendError] = useState<string | null>(null);
+  const [attached, setAttached] = useState<{ file: File; preview: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [typingName, setTypingName] = useState<string | null>(null);
   const [listing, setListing] = useState<MarketAccount | null>(null);
   const [offerBusy, setOfferBusy] = useState<number | null>(null);
@@ -87,6 +91,10 @@ export function MessagesPage() {
       setListing(null);
       setOrder(null);
       setConfirmArmed(false);
+      setAttached((prev) => {
+        if (prev) URL.revokeObjectURL(prev.preview);
+        return null;
+      });
       setThreadLoading(id !== null);
       if (id === null) {
         setSearchParams({}, { replace: true });
@@ -275,23 +283,25 @@ export function MessagesPage() {
           conversation_id: event.conversation_id,
           sender: event.sender,
           content: event.content,
+          image: resolveMediaUrl(event.image),
           created_at: event.created_at,
           is_read: event.is_read,
           offer: event.offer,
         };
+        const preview = event.content || (event.image ? '🖼 Зураг' : '');
         if (event.conversation_id === openId) {
           appendMessage(incoming);
           if (user && event.sender.id !== user.id) {
             // Our socket is open: persist read state server-side.
             sendReadRef.current();
             patchConversation(event.conversation_id, {
-              last_message: event.content,
+              last_message: preview,
               last_message_at: event.created_at,
               unread_count: 0,
             });
           } else {
             patchConversation(event.conversation_id, {
-              last_message: event.content,
+              last_message: preview,
               last_message_at: event.created_at,
             });
           }
@@ -301,7 +311,7 @@ export function MessagesPage() {
               c.conversation_id === event.conversation_id
                 ? {
                     ...c,
-                    last_message: event.content,
+                    last_message: preview,
                     last_message_at: event.created_at,
                     unread_count: c.unread_count + 1,
                   }
@@ -357,13 +367,54 @@ export function MessagesPage() {
   }, [sendRead]);
 
   // --- Sending -------------------------------------------------------------
+  const clearAttached = useCallback(() => {
+    setAttached((prev) => {
+      if (prev) URL.revokeObjectURL(prev.preview);
+      return null;
+    });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  const attachImage = useCallback((file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setSendError('Зөвхөн зураг хавсаргах боломжтой.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSendError('Зураг хэт том байна (хамгийн ихдээ 5 MB).');
+      return;
+    }
+    setSendError(null);
+    setAttached((prev) => {
+      if (prev) URL.revokeObjectURL(prev.preview);
+      return { file, preview: URL.createObjectURL(file) };
+    });
+  }, []);
+
   const send = useCallback(async () => {
     const content = draft.trim();
-    if (!content || selectedId === null) return;
+    if ((!content && !attached) || selectedId === null) return;
     setSendError(null);
     setDraft('');
     sendTyping(false);
     typingSentAt.current = 0;
+    if (attached) {
+      const image = attached;
+      clearAttached();
+      try {
+        const saved = await sendMessageWithImage(selectedId, content, image.file);
+        appendMessage(saved);
+        patchConversation(selectedId, {
+          last_message: saved.content || (saved.image ? '🖼 Зураг' : ''),
+          last_message_at: saved.created_at,
+        });
+      } catch (err) {
+        setSendError(err instanceof Error ? err.message : 'Зураг илгээж чадсангүй.');
+        setDraft(content);
+      }
+      return;
+    }
     if (sendMessage(content)) return; // Server echo appends it.
     try {
       const saved = await sendMessageRest(selectedId, content);
@@ -376,7 +427,7 @@ export function MessagesPage() {
       setSendError(err instanceof Error ? err.message : 'Зурвас илгээж чадсангүй.');
       setDraft(content);
     }
-  }, [draft, selectedId, sendMessage, sendTyping, appendMessage, patchConversation]);
+  }, [draft, attached, selectedId, sendMessage, sendTyping, appendMessage, patchConversation, clearAttached]);
 
   const handleDraftChange = useCallback(
     (value: string) => {
@@ -694,7 +745,18 @@ export function MessagesPage() {
                             onCancel={() => decideOffer(offer, 'cancel')}
                           />
                         )}
-                        <p className={styles.bubbleText}>{m.content}</p>
+                        {m.image && (
+                          <a
+                            href={m.image}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={styles.bubbleImageLink}
+                            aria-label="Зургийг бүтнээр харах"
+                          >
+                            <img src={m.image} alt="" loading="lazy" className={styles.bubbleImage} />
+                          </a>
+                        )}
+                        {m.content && <p className={styles.bubbleText}>{m.content}</p>}
                         <span className={styles.bubbleMeta}>
                           {messageTime(m.created_at)}
                           {own && m.is_read ? ' • Уншсан' : ''}
@@ -711,6 +773,20 @@ export function MessagesPage() {
                 {sendError}
               </p>
             )}
+            {attached && (
+              <div className={styles.attachPreview}>
+                <img src={attached.preview} alt="" className={styles.attachThumb} />
+                <span className={styles.attachName}>{attached.file.name}</span>
+                <button
+                  type="button"
+                  className={styles.attachRemove}
+                  onClick={clearAttached}
+                  aria-label="Хавсралтыг хасах"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <form
               className={styles.composer}
               onSubmit={(e) => {
@@ -718,6 +794,26 @@ export function MessagesPage() {
                 void send();
               }}
             >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                aria-hidden="true"
+                tabIndex={-1}
+                onChange={(e) => {
+                  attachImage(e.target.files?.[0]);
+                }}
+              />
+              <button
+                type="button"
+                className={styles.attachBtn}
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Зураг хавсаргах"
+                title="Зураг хавсаргах"
+              >
+                <ImageIcon size={18} />
+              </button>
               <textarea
                 className={styles.input}
                 rows={1}
@@ -736,7 +832,7 @@ export function MessagesPage() {
               <button
                 type="submit"
                 className={styles.sendBtn}
-                disabled={!draft.trim()}
+                disabled={!draft.trim() && !attached}
                 aria-label="Илгээх"
               >
                 <SendIcon size={16} />
