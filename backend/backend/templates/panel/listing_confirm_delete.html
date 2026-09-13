@@ -1,0 +1,13 @@
+{% extends "panel/base.html" %}
+{% block title %}Field устгах{% endblock title %}
+{% block heading %}Field устгах{% endblock heading %}
+{% block content %}
+  <div class="panel-card">
+    <p>«{{ listing.title }}» field-ийг сонголтуудын хамт устгах уу? Энэ field-тэй холбоотой зар хадгалагдсан дэлгэрэнгүй нь мөн устахыг анхаарна уу.</p>
+    <form method="post" class="inline-form">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Тийм, устгах</button>
+      <a href="{% url 'panel:listing_detail' listing.pk %}" class="btn btn-outline-secondary">Болих</a>
+    </form>
+  </div>
+{% endblock content %}

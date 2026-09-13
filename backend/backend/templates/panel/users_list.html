@@ -1,0 +1,60 @@
+{% extends "panel/base.html" %}
+{% block title %}Хэрэглэгчид{% endblock title %}
+{% block heading %}Хэрэглэгчид{% endblock heading %}
+{% block content %}
+  <form method="get" class="filter-row">
+    <input type="search"
+           name="q"
+           value="{{ q }}"
+           placeholder="username / email / нэр…"
+           class="form-control" />
+    <button type="submit" class="btn btn-primary">Хайх</button>
+  </form>
+  <div class="panel-card table-wrap">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Нэр</th>
+          <th>Email</th>
+          <th>Идэвхтэй</th>
+          <th>Staff</th>
+          <th>Бүртгүүлсэн</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <td>
+              <a href="{% url 'panel:user_detail' user.username %}">{{ user.username }}</a>
+            </td>
+            <td>{{ user.name|default:"—" }}</td>
+            <td>{{ user.email|default:"—" }}</td>
+            <td>
+              {% if user.is_active %}✓{% else %}✕{% endif %}
+            </td>
+            <td>
+              {% if user.is_staff %}✓{% else %}—{% endif %}
+            </td>
+            <td>{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">Хэрэглэгч олдсонгүй.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+    <nav class="pager">
+      {% if page_obj.has_previous %}
+        <a href="?q={{ q }}&page={{ page_obj.previous_page_number }}">← Өмнөх</a>
+      {% endif %}
+      <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?q={{ q }}&page={{ page_obj.next_page_number }}">Дараах →</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% endblock content %}

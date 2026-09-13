@@ -1,0 +1,48 @@
+{% extends "panel/base.html" %}
+{% block title %}{{ game.name }}{% endblock title %}
+{% block heading %}{{ game.name }}{% endblock heading %}
+{% block actions %}
+  <a href="{% url 'panel:game_edit' game.pk %}" class="btn btn-outline-secondary btn-sm">Засах</a>
+{% endblock actions %}
+{% block content %}
+  <div class="panel-cols">
+    <section class="panel-card">
+      <h2>Ранкууд</h2>
+      <ul class="link-list">
+        {% for rank in ranks %}
+          <li>
+            {{ rank.order }}. {{ rank.name }}
+            <form method="post"
+                  action="{% url 'panel:rank_delete' game.pk rank.pk %}"
+                  class="inline-form"
+                  data-confirm="Ранк устгах уу?">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-danger">устгах</button>
+            </form>
+          </li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="{% url 'panel:rank_add' game.pk %}" class="row-form">
+        {% csrf_token %}
+        {{ rank_form.as_p }}
+        <button type="submit" class="btn btn-primary btn-sm">+ Ранк</button>
+      </form>
+    </section>
+    <section class="panel-card">
+      <h2>Field-үүд</h2>
+      <ul class="link-list">
+        {% for listing in listings %}
+          <li>
+            <a href="{% url 'panel:listing_detail' listing.pk %}">{{ listing.title }}</a>
+            <span class="badge bg-secondary">{{ listing.listing_type }}</span>
+          </li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+      <a href="{% url 'panel:listing_add' %}?game={{ game.pk }}" class="btn btn-outline-primary btn-sm">+ Field</a>
+    </section>
+  </div>
+{% endblock content %}

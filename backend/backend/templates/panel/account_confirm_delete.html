@@ -1,0 +1,13 @@
+{% extends "panel/base.html" %}
+{% block title %}Зар устгах{% endblock title %}
+{% block heading %}Зар устгах{% endblock heading %}
+{% block content %}
+  <div class="panel-card">
+    <p>«{{ account.title }}» (ID {{ account.pk }}) зарыг холбогдох зураг, гүйлгээний хамт бүрмөсөн устгах уу?</p>
+    <form method="post" class="inline-form">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Тийм, устгах</button>
+      <a href="{% url 'panel:account_detail' account.pk %}" class="btn btn-outline-secondary">Болих</a>
+    </form>
+  </div>
+{% endblock content %}

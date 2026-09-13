@@ -1,0 +1,73 @@
+{% extends "panel/base.html" %}
+{% block title %}Зарууд{% endblock title %}
+{% block heading %}Зарууд{% endblock heading %}
+{% block content %}
+  <form method="get" class="filter-row">
+    <input type="search"
+           name="q"
+           value="{{ q }}"
+           placeholder="гарчиг / зарлагч / тоглоом…"
+           class="form-control" />
+    <select name="kind" class="form-select">
+      <option value="">Бүх төрөл</option>
+      <option value="sale" {% if kind == "sale" %}selected{% endif %}>Зарах</option>
+      <option value="rent" {% if kind == "rent" %}selected{% endif %}>Түрээс</option>
+    </select>
+    <select name="status" class="form-select">
+      <option value="">Бүх статус</option>
+      <option value="available" {% if status == "available" %}selected{% endif %}>available</option>
+      <option value="sold" {% if status == "sold" %}selected{% endif %}>sold</option>
+      <option value="rented" {% if status == "rented" %}selected{% endif %}>rented</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Шүүх</button>
+  </form>
+  <div class="panel-card table-wrap">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Гарчиг</th>
+          <th>Тоглоом</th>
+          <th>Үнэ</th>
+          <th>Төрөл</th>
+          <th>Статус</th>
+          <th>Зарлагч</th>
+          <th>Огноо</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for account in accounts %}
+          <tr>
+            <td>{{ account.pk }}</td>
+            <td>
+              <a href="{% url 'panel:account_detail' account.pk %}">{{ account.title }}</a>
+            </td>
+            <td>{{ account.game.name|default:"—" }}</td>
+            <td>{{ account.price }}₮</td>
+            <td>{{ account.kind }}</td>
+            <td>
+              <span class="badge bg-secondary">{{ account.status }}</span>
+            </td>
+            <td>{{ account.user.username }}</td>
+            <td>{{ account.created_at|date:"Y-m-d" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8">Зар олдсонгүй.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+    <nav class="pager">
+      {% if page_obj.has_previous %}
+        <a href="?q={{ q }}&kind={{ kind }}&status={{ status }}&page={{ page_obj.previous_page_number }}">← Өмнөх</a>
+      {% endif %}
+      <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?q={{ q }}&kind={{ kind }}&status={{ status }}&page={{ page_obj.next_page_number }}">Дараах →</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% endblock content %}

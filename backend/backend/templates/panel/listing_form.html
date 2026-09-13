@@ -1,0 +1,15 @@
+{% extends "panel/base.html" %}
+{% block title %}Field{% endblock title %}
+{% block heading %}
+  {% if object %}Засах: {{ object.title }}{% else %}Field нэмэх{% endif %}
+{% endblock heading %}
+{% block content %}
+  <div class="panel-card form-card">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Хадгалах</button>
+      <a href="{% url 'panel:game_list' %}" class="btn btn-outline-secondary">Болих</a>
+    </form>
+  </div>
+{% endblock content %}

@@ -1,0 +1,86 @@
+{% extends "panel/base.html" %}
+{% block title %}{{ profile_user.username }}{% endblock title %}
+{% block heading %}{{ profile_user.username }}{% endblock heading %}
+{% block actions %}
+  <form method="post"
+        action="{% url 'panel:user_toggle_active' profile_user.username %}"
+        class="inline-form"
+        data-confirm="Идэвхжүүлэх/хаах уу?">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-warning btn-sm">
+      {% if profile_user.is_active %}Хаах{% else %}Идэвхжүүлэх{% endif %}
+    </button>
+  </form>
+  <form method="post"
+        action="{% url 'panel:user_toggle_staff' profile_user.username %}"
+        class="inline-form"
+        data-confirm="Staff эрх өөрчлөх үү?">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-secondary btn-sm">
+      {% if profile_user.is_staff %}Staff хураах{% else %}Staff болгох{% endif %}
+    </button>
+  </form>
+{% endblock actions %}
+{% block content %}
+  <div class="panel-card">
+    <dl class="detail-list">
+      <dt>Email</dt>
+      <dd>{{ profile_user.email|default:"—" }}</dd>
+      <dt>Нэр</dt>
+      <dd>{{ profile_user.name|default:"—" }}</dd>
+      <dt>Идэвхтэй</dt>
+      <dd>
+        {% if profile_user.is_active %}✓{% else %}✕{% endif %}
+      </dd>
+      <dt>Staff</dt>
+      <dd>
+        {% if profile_user.is_staff %}✓{% else %}—{% endif %}
+      </dd>
+      <dt>Superuser</dt>
+      <dd>
+        {% if profile_user.is_superuser %}✓{% else %}—{% endif %}
+      </dd>
+      <dt>Бүртгүүлсэн</dt>
+      <dd>{{ profile_user.date_joined|date:"Y-m-d H:i" }}</dd>
+      <dt>Сүүлд нэвтэрсэн</dt>
+      <dd>{{ profile_user.last_login|date:"Y-m-d H:i"|default:"—" }}</dd>
+    </dl>
+  </div>
+  <div class="panel-cols">
+    <section class="panel-card">
+      <h2>Зарууд ({{ accounts|length }})</h2>
+      <ul class="link-list">
+        {% for account in accounts %}
+          <li>
+            <a href="{% url 'panel:account_detail' account.pk %}">{{ account.title }}</a>
+            <span class="badge bg-secondary">{{ account.status }}</span>
+          </li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="panel-card">
+      <h2>Худалдан авалт ({{ purchases|length }})</h2>
+      <ul class="link-list">
+        {% for account in purchases %}
+          <li>
+            <a href="{% url 'panel:account_detail' account.pk %}">{{ account.title }}</a>
+          </li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="panel-card">
+      <h2>Түрээслэлт ({{ rentals|length }})</h2>
+      <ul class="link-list">
+        {% for rental in rentals %}
+          <li>{{ rental.account.title }} · {{ rental.total }}₮ ({{ rental.status }})</li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+{% endblock content %}

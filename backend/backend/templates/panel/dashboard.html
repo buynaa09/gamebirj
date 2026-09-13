@@ -1,0 +1,105 @@
+{% extends "panel/base.html" %}
+{% block title %}Хянах самбар{% endblock title %}
+{% block heading %}Хянах самбар{% endblock heading %}
+{% block content %}
+  <div class="stat-grid">
+    <div class="stat-card">
+      <span class="stat-num">{{ user_count }}</span>
+      <span class="stat-label">Хэрэглэгч ({{ staff_count }} staff)</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">{{ sale_available }}</span>
+      <span class="stat-label">Идэвхтэй зар (sale)</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">{{ sale_sold }}</span>
+      <span class="stat-label">Зарагдсан</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">{{ rent_available }}</span>
+      <span class="stat-label">Идэвхтэй түрээс</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">{{ rent_rented }}</span>
+      <span class="stat-label">Түрээслэгдсэн</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">{{ escrow_held }}₮</span>
+      <span class="stat-label">Escrow held</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">{{ escrow_released }}₮</span>
+      <span class="stat-label">Escrow released</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">{{ active_rentals }}</span>
+      <span class="stat-label">Идэвхтэй түрээслэлт</span>
+    </div>
+  </div>
+  <div class="panel-cols">
+    <section class="panel-card">
+      <h2>Сүүлийн гүйлгээнүүд</h2>
+      <table class="table table-sm">
+        <tbody>
+          {% for order in recent_escrows %}
+            <tr>
+              <td>{{ order.account.title }}</td>
+              <td>{{ order.amount }}₮</td>
+              <td>
+                <span class="badge bg-secondary">{{ order.status }}</span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td>Хоосон</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a href="{% url 'panel:transaction_list' %}">Бүгд →</a>
+    </section>
+    <section class="panel-card">
+      <h2>Сүүлийн зарууд</h2>
+      <table class="table table-sm">
+        <tbody>
+          {% for account in recent_accounts %}
+            <tr>
+              <td>
+                <a href="{% url 'panel:account_detail' account.pk %}">{{ account.title }}</a>
+              </td>
+              <td>{{ account.price }}₮</td>
+              <td>
+                <span class="badge bg-secondary">{{ account.status }}</span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td>Хоосон</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a href="{% url 'panel:account_list' %}">Бүгд →</a>
+    </section>
+    <section class="panel-card">
+      <h2>Сүүлийн хэрэглэгчид</h2>
+      <table class="table table-sm">
+        <tbody>
+          {% for user in recent_users %}
+            <tr>
+              <td>
+                <a href="{% url 'panel:user_detail' user.username %}">{{ user.username }}</a>
+              </td>
+              <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td>Хоосон</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a href="{% url 'panel:user_list' %}">Бүгд →</a>
+    </section>
+  </div>
+{% endblock content %}

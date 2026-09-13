@@ -1,0 +1,47 @@
+{% extends "panel/base.html" %}
+{% block title %}Чат #{{ conversation.pk }}{% endblock title %}
+{% block heading %}Чат #{{ conversation.pk }} (read-only){% endblock heading %}
+{% block content %}
+  <div class="panel-card">
+    <dl class="detail-list">
+      <dt>Оролцогчид</dt>
+      <dd>{{ conversation.user_low.username }} ↔ {{ conversation.user_high.username }}</dd>
+      <dt>Зар</dt>
+      <dd>
+        {% if conversation.account %}
+          <a href="{% url 'panel:account_detail' conversation.account_id %}">{{ conversation.account.title }}</a>
+        {% else %}—{% endif %}
+      </dd>
+      <dt>Тохирсон үнэ</dt>
+      <dd>
+        {% if conversation.agreed_price %}{{ conversation.agreed_price }}₮{% else %}—{% endif %}
+      </dd>
+    </dl>
+  </div>
+  <div class="panel-cols">
+    <section class="panel-card">
+      <h2>Зурвас ({{ messages|length }})</h2>
+      <ol class="chat-log">
+        {% for message in messages %}
+          <li>
+            <b>{{ message.sender.username }}</b>
+            <span class="text-muted">{{ message.created_at|date:"m-d H:i" }}</span>
+            <p>{{ message.content|linebreaksbr }}</p>
+          </li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ol>
+    </section>
+    <section class="panel-card">
+      <h2>Саналууд ({{ offers|length }})</h2>
+      <ul class="link-list">
+        {% for offer in offers %}
+          <li>{{ offer.sender.username }} · {{ offer.amount }}₮ · {{ offer.status }}</li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+{% endblock content %}

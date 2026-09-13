@@ -1,0 +1,49 @@
+{% extends "panel/base.html" %}
+{% block title %}{{ listing.title }}{% endblock title %}
+{% block heading %}{{ listing.title }}{% endblock heading %}
+{% block actions %}
+  <a href="{% url 'panel:listing_edit' listing.pk %}" class="btn btn-outline-secondary btn-sm">Засах</a>
+  <a href="{% url 'panel:listing_delete' listing.pk %}" class="btn btn-outline-danger btn-sm">Устгах</a>
+{% endblock actions %}
+{% block content %}
+  <div class="panel-card">
+    <dl class="detail-list">
+      <dt>Тоглоом</dt>
+      <dd>
+        {% if listing.game %}
+          <a href="{% url 'panel:game_detail' listing.game.pk %}">{{ listing.game.name }}</a>
+        {% else %}Бүгд (global){% endif %}
+      </dd>
+      <dt>Төрөл</dt>
+      <dd>{{ listing.listing_type }}</dd>
+      <dt>Placeholder</dt>
+      <dd>{{ listing.place_holder_value|default:"—" }}</dd>
+    </dl>
+  </div>
+  {% if listing.is_choice %}
+    <section class="panel-card">
+      <h2>Сонголтууд</h2>
+      <ul class="link-list">
+        {% for choice in listing.choices.all %}
+          <li>
+            {{ choice.choice_value }}
+            <form method="post"
+                  action="{% url 'panel:choice_delete' listing.pk choice.pk %}"
+                  class="inline-form"
+                  data-confirm="Сонголт устгах уу?">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-danger">устгах</button>
+            </form>
+          </li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="{% url 'panel:choice_add' listing.pk %}" class="row-form">
+        {% csrf_token %}
+        {{ choice_form.as_p }}
+        <button type="submit" class="btn btn-primary btn-sm">+ Сонголт</button>
+      </form>
+    </section>
+  {% endif %}
+{% endblock content %}

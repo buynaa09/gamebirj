@@ -1,0 +1,78 @@
+{% extends "panel/base.html" %}
+{% block title %}{{ account.title }}{% endblock title %}
+{% block heading %}{{ account.title }}{% endblock heading %}
+{% block actions %}
+  <form method="post"
+        action="{% url 'panel:account_toggle_offers' account.pk %}"
+        class="inline-form">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-secondary btn-sm">
+      Санал: {% if account.accept_offers %}авах{% else %}авахгүй{% endif %}
+    </button>
+  </form>
+  <a href="{% url 'panel:account_delete' account.pk %}" class="btn btn-outline-danger btn-sm">Устгах</a>
+{% endblock actions %}
+{% block content %}
+  <div class="panel-card">
+    <dl class="detail-list">
+      <dt>ID</dt>
+      <dd>{{ account.pk }}</dd>
+      <dt>Төрөл / статус</dt>
+      <dd>{{ account.kind }} / {{ account.status }}</dd>
+      <dt>Тоглоом</dt>
+      <dd>{{ account.game.name|default:"—" }} ({{ account.game_rank.name|default:"—" }})</dd>
+      <dt>Үнэ</dt>
+      <dd>{{ account.price }}₮{% if account.kind == "rent" %} / {{ account.rental_unit }}{% endif %}</dd>
+      <dt>Зарлагч</dt>
+      <dd>
+        <a href="{% url 'panel:user_detail' account.user.username %}">{{ account.user.username }}</a>
+      </dd>
+      <dt>Худалдан авагч</dt>
+      <dd>
+        {% if account.buyer %}
+          <a href="{% url 'panel:user_detail' account.buyer.username %}">{{ account.buyer.username }}</a>
+          ({{ account.sold_price }}₮, {{ account.sold_at|date:"Y-m-d H:i" }})
+        {% else %}—{% endif %}
+      </dd>
+      <dt>Тайлбар</dt>
+      <dd>{{ account.description|default:"—"|linebreaksbr }}</dd>
+    </dl>
+  </div>
+  <div class="panel-cols">
+    <section class="panel-card">
+      <h2>Зураг ({{ account.images.count }})</h2>
+      <div class="thumb-row">
+        {% for image in account.images.all %}
+          <a href="{{ image.image.url }}"><img src="{{ image.image.url }}" alt="" loading="lazy" /></a>
+        {% empty %}
+          <p>Зураггүй.</p>
+        {% endfor %}
+      </div>
+      <h2>Дэлгэрэнгүй</h2>
+      <ul class="link-list">
+        {% for item in account.listings.all %}
+          <li>{{ item.listing.title }}: {{ item.value|default:item.choices.all|join:", " }}</li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="panel-card">
+      <h2>Escrow</h2>
+      {% if escrow %}
+        <p>#{{ escrow.pk }} · {{ escrow.amount }}₮ · <span class="badge bg-secondary">{{ escrow.status }}</span></p>
+        <p>{{ escrow.buyer.username }} → {{ escrow.seller.username }}</p>
+      {% else %}
+        <p>Байхгүй.</p>
+      {% endif %}
+      <h2>Түрээс ({{ rentals|length }})</h2>
+      <ul class="link-list">
+        {% for rental in rentals %}
+          <li>#{{ rental.pk }} · {{ rental.renter.username }} · {{ rental.duration }} {{ rental.unit }} · {{ rental.total }}₮ ({{ rental.status }})</li>
+        {% empty %}
+          <li>Хоосон</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+{% endblock content %}

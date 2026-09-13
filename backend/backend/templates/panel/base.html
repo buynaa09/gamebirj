@@ -1,0 +1,72 @@
+{% load static %}<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}Админ{% endblock title %} · Soliltsoo Panel
+    </title>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
+          integrity="sha512-SbiR/eusphKoMVVXysTKG/7VseWii+Y3FdHrt0EpKgpToZeemhqHeZeLWLhJutz/2ut2Vw1uQEj2MbRF+TVBUA=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
+    <link href="{% static 'panel/css/panel.css' %}" rel="stylesheet" />
+    {% block extra_css %}
+    {% endblock extra_css %}
+  </head>
+  <body>
+    <div class="panel-shell">
+      <aside class="panel-sidebar">
+        <a class="panel-brand" href="{% url 'panel:dashboard' %}">Soliltsoo Panel</a>
+        <nav class="panel-nav">
+          <a href="{% url 'panel:dashboard' %}"
+             class="{% if request.resolver_match.url_name == 'dashboard' %}on{% endif %}">Хянах самбар</a>
+          <a href="{% url 'panel:user_list' %}"
+             class="{% if 'user_' in request.resolver_match.url_name %}on{% endif %}">Хэрэглэгчид</a>
+          <a href="{% url 'panel:account_list' %}"
+             class="{% if 'account_' in request.resolver_match.url_name %}on{% endif %}">Зарууд</a>
+          <a href="{% url 'panel:transaction_list' %}"
+             class="{% if 'transaction_' in request.resolver_match.url_name %}on{% endif %}">Гүйлгээнүүд</a>
+          <a href="{% url 'panel:game_list' %}"
+             class="{% if 'game_' in request.resolver_match.url_name or 'rank_' in request.resolver_match.url_name or 'listing_' in request.resolver_match.url_name or 'choice_' in request.resolver_match.url_name %}on{% endif %}">Тоглоомууд</a>
+          <a href="{% url 'panel:chat_list' %}"
+             class="{% if 'chat_' in request.resolver_match.url_name or 'conversation_' in request.resolver_match.url_name %}on{% endif %}">Чат</a>
+        </nav>
+        <div class="panel-side-foot">
+          <span>{{ request.user.username }}</span>
+          <a href="{% url 'account_logout' %}">Гарах</a>
+        </div>
+      </aside>
+      <div class="panel-main">
+        <header class="panel-topbar">
+          <h1>
+            {% block heading %}Админ{% endblock heading %}
+          </h1>
+          <div>
+            {% block actions %}
+            {% endblock actions %}
+          </div>
+        </header>
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-dismissible alert-{{ message.tags }}">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Хаах"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+        {% block content %}
+        {% endblock content %}
+      </div>
+    </div>
+    <script defer
+            src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.min.js"
+            integrity="sha512-1/RvZTcCDEUjY/CypiMz+iqqtaoQfAITmNSJY17Myp4Ms5mdxPS5UV7iOfdZoxcGhzFbOm6sntTKJppjvuhg4g=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <script defer src="{% static 'panel/js/panel.js' %}"></script>
+    {% block inline_javascript %}
+    {% endblock inline_javascript %}
+  </body>
+</html>

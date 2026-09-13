@@ -18,6 +18,8 @@ urlpatterns = [
     ),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
+    # Staff panel (Django templates, staff-only)
+    path("panel/", include("backend.panel.urls", namespace="panel")),
     # User management
     path("users/", include("backend.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
