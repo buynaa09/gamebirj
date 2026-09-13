@@ -100,6 +100,16 @@ export interface PurchaseOrder {
   sold_at: string;
 }
 
+export interface EscrowOrder {
+  order_id: number;
+  account_id: number;
+  amount: number;
+  status: string;
+  sold_at: string;
+  is_buyer: boolean;
+  is_seller: boolean;
+}
+
 export type SortKey = 'newest' | 'oldest' | 'price-asc' | 'price-desc';
 
 export interface GameFilter {
@@ -177,6 +187,7 @@ export type ChatServerEvent =
     }
   | { type: 'message.read'; user_id: number; read: number }
   | { type: 'offer.updated'; offer: Offer; agreed_price: number | null }
+  | { type: 'escrow.updated'; order: EscrowOrder }
   | { type: 'typing.started'; user_id: number }
   | { type: 'typing.stopped'; user_id: number }
   | { type: 'error'; detail: string };

@@ -543,6 +543,69 @@ html[data-theme='light'] .avatar {
   cursor: pointer;
 }
 
+.escrowBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: rgba(51, 161, 122, 0.12);
+  border: 1px solid rgba(51, 161, 122, 0.45);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.escrowText {
+  flex: 1 1 220px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.confirmBtn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  background: #33a17a;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.confirmBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.confirmArmed {
+  background: var(--red);
+}
+
+.escrowNote,
+.escrowDone {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+
+.escrowNote {
+  background: rgba(232, 178, 58, 0.12);
+  border: 1px solid rgba(232, 178, 58, 0.45);
+  color: var(--text);
+}
+
+.escrowDone {
+  background: rgba(51, 161, 122, 0.12);
+  border: 1px solid rgba(51, 161, 122, 0.45);
+  color: var(--text);
+}
+
 .sellerPanel {
   padding: 18px 16px;
   display: flex;

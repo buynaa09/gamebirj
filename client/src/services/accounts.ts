@@ -1,5 +1,11 @@
 import { apiDelete, apiGet, apiPatch, apiPost, postForm } from './api';
-import type { CreatedAccount, MarketAccount, PublishListingInput, PurchaseOrder } from '../types';
+import type {
+  CreatedAccount,
+  EscrowOrder,
+  MarketAccount,
+  PublishListingInput,
+  PurchaseOrder,
+} from '../types';
 
 export function fetchAccounts(params?: { game?: number; q?: string }): Promise<MarketAccount[]> {
   const search = new URLSearchParams();
@@ -46,6 +52,14 @@ export function removeWishlist(id: number): Promise<void> {
 
 export function buyAccount(id: number): Promise<PurchaseOrder> {
   return apiPost<PurchaseOrder>(`/accounts/${id}/buy/`, {});
+}
+
+export function fetchOrder(id: number): Promise<EscrowOrder> {
+  return apiGet<EscrowOrder>(`/accounts/${id}/order/`);
+}
+
+export function confirmReceipt(id: number): Promise<EscrowOrder> {
+  return apiPost<EscrowOrder>(`/accounts/${id}/confirm/`, {});
 }
 
 export function publishListing(input: PublishListingInput): Promise<CreatedAccount> {

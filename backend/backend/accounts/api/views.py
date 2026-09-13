@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import logging
 from decimal import Decimal
 from decimal import InvalidOperation
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.db.models import Count
 from django.db.models import Q
 from ninja import Form
@@ -12,16 +15,25 @@ from ninja.errors import HttpError
 
 from backend.accounts.api.schema import AccountSchema
 from backend.accounts.api.schema import AccountUpdateSchema
+from backend.accounts.api.schema import EscrowStatusSchema
 from backend.accounts.api.schema import OrderSchema
 from backend.accounts.models import Account
+from backend.accounts.models import EscrowTransaction
 from backend.accounts.services import AlreadySoldError
-from backend.accounts.services import buy_account
 from backend.accounts.services import ListingNotFoundError
+from backend.accounts.services import NotBuyerError
+from backend.accounts.services import OrderNotFoundError
+from backend.accounts.services import OrderStateError
 from backend.accounts.services import SelfPurchaseError
+from backend.accounts.services import buy_account
+from backend.accounts.services import release_escrow
+from backend.chat.models import Conversation
 from backend.games.models import Game
 from backend.games.models import Listing
 
 router = Router(tags=["accounts"])
+
+logger = logging.getLogger(__name__)
 
 MAX_IMAGES = 8
 
@@ -177,7 +189,7 @@ def remove_wishlist(request, account_id: int):
 def _own_account_or_404(request, account_id: int) -> Account:
     try:
         return Account.objects.select_related("game").get(
-            pk=account_id, user=request.user
+            pk=account_id, user=request.user,
         )
     except Account.DoesNotExist as exc:
         raise _fail(404, "Listing not found.") from exc
@@ -255,6 +267,91 @@ def buy_listing(request, account_id: int):
     }
 
 
+def _escrow_payload(request, order: EscrowTransaction) -> dict:
+    return {
+        "order_id": order.pk,
+        "account_id": order.account_id,
+        "amount": float(order.amount),
+        "status": order.status,
+        "sold_at": order.created_at.isoformat(),
+        "is_buyer": request.user.pk == order.buyer_id,
+        "is_seller": request.user.pk == order.seller_id,
+    }
+
+
+def _participant_order_or_404(request, account_id: int) -> EscrowTransaction:
+    """Escrow order iff the user is its buyer or seller (else 404, IDOR-safe)."""
+    order = (
+        EscrowTransaction.objects.select_related("account")
+        .filter(account_id=account_id)
+        .first()
+    )
+    if order is None or request.user.pk not in (order.buyer_id, order.seller_id):
+        raise _fail(404, "Order not found.")
+    return order
+
+
+def _broadcast_escrow_updated(order: EscrowTransaction) -> None:
+    """Notify open chat threads about this listing that escrow moved."""
+    try:
+        conversation_ids = list(
+            Conversation.objects.filter(account_id=order.account_id)
+            .filter(participants__user_id=order.buyer_id)
+            .filter(participants__user_id=order.seller_id)
+            .values_list("id", flat=True)
+            .distinct(),
+        )
+    except Exception:
+        logger.exception("Escrow broadcast lookup failed")
+        return
+    payload = {
+        "order_id": order.pk,
+        "account_id": order.account_id,
+        "amount": float(order.amount),
+        "status": order.status,
+    }
+    try:
+        channel_layer = get_channel_layer()
+        for conversation_id in conversation_ids:
+            async_to_sync(channel_layer.group_send)(
+                f"chat_{conversation_id}",
+                {"type": "escrow.updated", "order": payload},
+            )
+    except Exception:
+        logger.exception("Escrow broadcast to chat failed")
+
+
+@router.get(
+    "/{account_id}/order/",
+    response=EscrowStatusSchema,
+    description="Escrow status of a listing (buyer and seller only).",
+)
+def get_order(request, account_id: int):
+    order = _participant_order_or_404(request, account_id)
+    return _escrow_payload(request, order)
+
+
+@router.post(
+    "/{account_id}/confirm/",
+    response=EscrowStatusSchema,
+    description="Buyer confirms the account is correct; held money moves to the seller.",
+)
+def confirm_receipt(request, account_id: int):
+    order = _participant_order_or_404(request, account_id)
+    if request.user.pk != order.buyer_id:
+        raise _fail(403, "Only the buyer can confirm receipt.")
+    try:
+        order = release_escrow(account_id, request.user)
+    except OrderNotFoundError as exc:
+        raise _fail(404, str(exc)) from exc
+    except NotBuyerError as exc:
+        raise _fail(403, str(exc)) from exc
+    except OrderStateError as exc:
+        raise _fail(422, str(exc)) from exc
+    _broadcast_escrow_updated(order)
+    return _escrow_payload(request, order)
+
+
 @router.post("/", response=AccountSchema)
 def create_account(  # noqa: PLR0913, PLR0917
     request,
@@ -305,7 +402,7 @@ def create_account(  # noqa: PLR0913, PLR0917
         raise
 
     return _account_payload(
-        request, _load_account(account.pk), _my_wishlist_ids(request)
+        request, _load_account(account.pk), _my_wishlist_ids(request),
     )
 
 

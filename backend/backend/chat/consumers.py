@@ -160,6 +160,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             },
         )
 
+    async def escrow_updated(self, event: dict):
+        await self.send_json(
+            {
+                "type": "escrow.updated",
+                "order": event["order"],
+            },
+        )
+
     async def typing_started(self, event: dict):
         await self.send_json({"type": "typing.started", "user_id": event["user_id"]})
 

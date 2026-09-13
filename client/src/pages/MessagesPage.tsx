@@ -4,7 +4,7 @@ import { ChatBubbleIcon, SearchIcon, SendIcon } from '../components/icons/Icons'
 import { OfferCard } from '../components/chat/OfferCard';
 import { useAuth } from '../context/AuthContext';
 import { useChatSocket } from '../hooks/useChatSocket';
-import { fetchAccount } from '../services/accounts';
+import { confirmReceipt, fetchAccount, fetchOrder } from '../services/accounts';
 import {
   acceptOffer,
   cancelOffer,
@@ -21,6 +21,7 @@ import type {
   ChatMessage,
   ChatServerEvent,
   ConversationListItem,
+  EscrowOrder,
   MarketAccount,
   Offer,
 } from '../types';
@@ -62,6 +63,9 @@ export function MessagesPage() {
   const [typingName, setTypingName] = useState<string | null>(null);
   const [listing, setListing] = useState<MarketAccount | null>(null);
   const [offerBusy, setOfferBusy] = useState<number | null>(null);
+  const [order, setOrder] = useState<EscrowOrder | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [confirmArmed, setConfirmArmed] = useState(false);
 
   const typingTimer = useRef<number | null>(null);
   const typingSentAt = useRef(0);
@@ -81,6 +85,8 @@ export function MessagesPage() {
       setTypingName(null);
       setSendError(null);
       setListing(null);
+      setOrder(null);
+      setConfirmArmed(false);
       setThreadLoading(id !== null);
       if (id === null) {
         setSearchParams({}, { replace: true });
@@ -178,6 +184,9 @@ export function MessagesPage() {
     fetchAccount(selectedAccountId).then(setListing, () => {
       setListing(null);
     });
+    fetchOrder(selectedAccountId).then(setOrder, () => {
+      setOrder(null);
+    });
   }, [selectedAccountId]);
 
   useEffect(() => {
@@ -191,6 +200,15 @@ export function MessagesPage() {
       },
       () => {
         if (!cancelled) setListing(null);
+      },
+    );
+    // Escrow state: only buyer/seller get an order; others get 404 → null.
+    fetchOrder(selectedAccountId).then(
+      (escrow) => {
+        if (!cancelled) setOrder(escrow);
+      },
+      () => {
+        if (!cancelled) setOrder(null);
       },
     );
     return () => {
@@ -303,6 +321,14 @@ export function MessagesPage() {
         if (event.offer.status === 'accepted') {
           refreshListing();
         }
+      } else if (event.type === 'escrow.updated') {
+        // Live escrow move (e.g. the other side confirmed): same listing only.
+        const openConv = conversations.find((c) => c.conversation_id === openId);
+        if (openConv && openConv.account_id === event.order.account_id) {
+          setOrder(event.order);
+          setConfirmArmed(false);
+          refreshListing();
+        }
       } else if (event.type === 'typing.started' || event.type === 'typing.stopped') {
         if (user && event.user_id !== user.id) {
           if (typingTimer.current !== null) window.clearTimeout(typingTimer.current);
@@ -389,6 +415,29 @@ export function MessagesPage() {
     },
     [applyOffer, refreshListing],
   );
+
+  // --- Escrow confirm --------------------------------------------------------
+  // Two-click arm: releasing money is irreversible, so the first click only arms.
+  const confirmEscrow = useCallback(() => {
+    if (selectedAccountId === null || confirmBusy) return;
+    if (!confirmArmed) {
+      setConfirmArmed(true);
+      return;
+    }
+    setConfirmBusy(true);
+    setSendError(null);
+    confirmReceipt(selectedAccountId).then(
+      (updated) => {
+        setOrder(updated);
+        setConfirmArmed(false);
+      },
+      (err: unknown) => {
+        setSendError(err instanceof Error ? err.message : 'Баталгаажуулж чадсангүй.');
+      },
+    ).finally(() => {
+      setConfirmBusy(false);
+    });
+  }, [selectedAccountId, confirmBusy, confirmArmed]);
 
   // --- Auto-scroll ----------------------------------------------------------
   useEffect(() => {
@@ -549,6 +598,40 @@ export function MessagesPage() {
                   {listing.status === 'sold' ? 'Үзэх' : 'Buy now'}
                 </button>
               </div>
+            )}
+
+            {order?.status === 'held' && order.is_buyer && (
+              <div className={styles.escrowBanner} role="group" aria-label="Төлбөр баталгаажуулах">
+                <p className={styles.escrowText}>
+                  <strong>💰 Төлбөр дундын дансанд байна ({formatPrice(order.amount)}).</strong>
+                  <span> Account шалгаад зөв бол доорх товчийг дарна уу — мөнгө зарагч руу шилжинэ.</span>
+                </p>
+                <button
+                  type="button"
+                  className={`${styles.confirmBtn} ${confirmArmed ? styles.confirmArmed : ''}`}
+                  onClick={confirmEscrow}
+                  disabled={confirmBusy}
+                >
+                  {confirmBusy
+                    ? 'Илгээж байна…'
+                    : confirmArmed
+                      ? '⚠ Дахин дарж баталгаажуулна уу'
+                      : '✓ Account зөв байна'}
+                </button>
+              </div>
+            )}
+
+            {order?.status === 'held' && order.is_seller && (
+              <p className={styles.escrowNote} role="status">
+                💰 Төлбөр ({formatPrice(order.amount)}) дундын дансанд байна. Худалдан авагч
+                account шалгаад баталгаажуулахыг хүлээж байна.
+              </p>
+            )}
+
+            {order?.status === 'released' && (
+              <p className={styles.escrowDone} role="status">
+                ✓ Төлбөр ({formatPrice(order.amount)}) зарагч руу шилжсэн. Арилжаа дууслаа.
+              </p>
             )}
 
             <div className={styles.messages} ref={scrollRef} aria-live="polite">

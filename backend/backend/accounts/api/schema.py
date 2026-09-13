@@ -45,3 +45,13 @@ class OrderSchema(Schema):
     amount: float
     status: str
     sold_at: str
+
+
+class EscrowStatusSchema(Schema):
+    order_id: int
+    account_id: int
+    amount: float
+    status: str
+    sold_at: str
+    is_buyer: bool = False
+    is_seller: bool = False

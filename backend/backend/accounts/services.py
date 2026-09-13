@@ -44,6 +44,18 @@ class SelfPurchaseError(BuyError):
     """Raised when the seller tries to buy their own listing."""
 
 
+class OrderNotFoundError(BuyError):
+    """Raised when there is no escrow payment for the listing."""
+
+
+class NotBuyerError(BuyError):
+    """Raised when someone other than the buyer confirms receipt."""
+
+
+class OrderStateError(BuyError):
+    """Raised when escrow is not in a state that allows the action."""
+
+
 def agreed_price_for(account: Account, buyer) -> Decimal | None:
     """Accepted offer amount still inside its 24h hold, if the buyer has one."""
     cutoff = timezone.now() - timedelta(hours=OFFER_HOLD_HOURS)
@@ -137,3 +149,42 @@ def buy_account(account_id: int, buyer) -> EscrowTransaction:
             if existing is not None and existing.buyer_id == buyer.pk:
                 return existing
             raise _already_sold(account.pk, buyer) from exc
+
+
+def release_escrow(account_id: int, user) -> EscrowTransaction:
+    """Buyer confirms the account is correct; held money moves to the seller.
+
+    Only the buyer can release, and only while escrow is ``held``.
+    Re-confirming an already-released order by the same buyer is idempotent.
+    The conditional UPDATE keeps concurrent confirms race-safe.
+    """
+    with transaction.atomic():
+        try:
+            order = (
+                EscrowTransaction.objects.select_for_update()
+                .select_related("account")
+                .get(account_id=account_id)
+            )
+        except EscrowTransaction.DoesNotExist as exc:
+            msg = "No payment found for this listing."
+            raise OrderNotFoundError(msg) from exc
+        if user.pk != order.buyer_id:
+            msg = "Only the buyer can confirm receipt."
+            raise NotBuyerError(msg)
+        if order.status == EscrowTransaction.RELEASED:
+            return order
+        if order.status != EscrowTransaction.HELD:
+            msg = f"Payment is already {order.status}."
+            raise OrderStateError(msg)
+        claimed = EscrowTransaction.objects.filter(
+            pk=order.pk,
+            status=EscrowTransaction.HELD,
+        ).update(status=EscrowTransaction.RELEASED)
+        if claimed == 0:
+            order.refresh_from_db()
+            if order.status == EscrowTransaction.RELEASED:
+                return order
+            msg = f"Payment is already {order.status}."
+            raise OrderStateError(msg)
+        order.status = EscrowTransaction.RELEASED
+        return order
