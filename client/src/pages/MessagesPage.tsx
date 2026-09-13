@@ -604,7 +604,7 @@ export function MessagesPage() {
               <div className={styles.escrowBanner} role="group" aria-label="Төлбөр баталгаажуулах">
                 <p className={styles.escrowText}>
                   <strong>💰 Төлбөр дундын дансанд байна ({formatPrice(order.amount)}).</strong>
-                  <span> Account шалгаад зөв бол доорх товчийг дарна уу — мөнгө зарагч руу шилжинэ.</span>
+                  <span>Акаунтын мэдээллийг шалгаад зөв бол доорх товчийг дарна уу. Таны төлбөр зарагч руу шилжих болно.</span>
                 </p>
                 <button
                   type="button"
@@ -743,7 +743,7 @@ export function MessagesPage() {
             </div>
           </div>
 
-          <div className={styles.statRow}>
+          {/* <div className={styles.statRow}>
             <div className={styles.stat}>
               <strong>—</strong>
               <span>Rating</span>
@@ -756,7 +756,7 @@ export function MessagesPage() {
               <strong>0</strong>
               <span>Disputes</span>
             </div>
-          </div>
+          </div> */}
 
           <div className={styles.infoBlock}>
             <p className={styles.infoKicker}>How payment works</p>
@@ -767,11 +767,11 @@ export function MessagesPage() {
           </div>
 
           <div className={styles.infoBlock}>
-            <p className={styles.infoKicker}>Stay safe</p>
+            <p className={styles.infoKicker}>Аюулгүй байдлын зөвлөмж</p>
             <ul className={styles.safeList}>
-              <li>OTP болон 2FA кодыг чатаас гадуур хэзээ ч бүү хуваалцаарай.</li>
-              <li> өмнө нэвтрэлтийг шалгаарай.</li>
-              <li>Зөвхөн платформоор дамжуулан төлбөрөө төлөөрэй.</li>
+              <li>OTP болон 2FA нууц кодыг чатаас гадуур хэзээ ч бүү хуваалцаарай.</li>
+              <li>Төлбөрөө баталгаажуулахаас өмнө нэвтрэх мэдээллийг заавал шалгаарай.</li>
+              <li>Зөвхөн платформоор дамжуулан аюулгүй төлбөрөө хийгээрэй.</li>
             </ul>
           </div>
         </aside>

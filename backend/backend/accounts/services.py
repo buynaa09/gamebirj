@@ -17,6 +17,8 @@ from django.utils import timezone
 
 from backend.accounts.models import Account
 from backend.accounts.models import EscrowTransaction
+from backend.chat import services as chat_services
+from backend.chat.api.views import broadcast_message_created
 from backend.chat.models import Offer
 
 if TYPE_CHECKING:
@@ -88,9 +90,6 @@ def _notify_seller_of_sale(order_id: int) -> None:
     the purchase itself. Never raises.
     """
     try:
-        from backend.chat import services as chat_services
-        from backend.chat.api.views import broadcast_message_created
-
         order = (
             EscrowTransaction.objects.select_related("account", "buyer", "seller").get(
                 pk=order_id,
@@ -104,9 +103,9 @@ def _notify_seller_of_sale(order_id: int) -> None:
         message = chat_services.send_message(
             conversation,
             order.buyer,
-            f"🔔 «{order.account.title}» зарагдлаа! {order.amount}₮ дундын "
-            "дансанд хадгалагдлаа. Худалдан авагч account шалгаад "
-            "«Account зөв байна» дарсны дараа мөнгө танд шилжинэ.",
+            f"🔔 «{order.account.title}» зарагдлаа! {order.amount}₮ дундын баталгаат "
+            "дансанд хадгалагдлаа. Худалдан авагч акаунтыг шалгаад "
+            "«Акаунт зөв байна» товчийг дарсны дараа төлбөр танд шилжинэ.",
         )
         message.sender = order.buyer
         broadcast_message_created(message)
@@ -171,7 +170,7 @@ def buy_account(account_id: int, buyer) -> EscrowTransaction:
         account.sold_price = amount
         account.sold_at = now
         try:
-            return EscrowTransaction.objects.create(
+            order = EscrowTransaction.objects.create(
                 account=account,
                 buyer=buyer,
                 seller=account.user,
@@ -185,6 +184,10 @@ def buy_account(account_id: int, buyer) -> EscrowTransaction:
             if existing is not None and existing.buyer_id == buyer.pk:
                 return existing
             raise _already_sold(account.pk, buyer) from exc
+        # Fresh win only: retries return above, losers raise. Fires after the
+        # purchase commits, so the seller is notified exactly once.
+        transaction.on_commit(lambda: _notify_seller_of_sale(order.pk))
+        return order
 
 
 def release_escrow(account_id: int, user) -> EscrowTransaction:

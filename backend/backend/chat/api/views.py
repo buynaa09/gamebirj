@@ -92,7 +92,8 @@ def _broadcast(group: str, event: dict) -> None:
 
 
 def _broadcast_message_created(message: Message) -> None:
-    sender = message.sender    offer = getattr(message, "offer", None)
+    sender = message.sender
+    offer = getattr(message, "offer", None)
     offer_event = None
     if offer is not None:
         payload = _offer_payload(offer)
