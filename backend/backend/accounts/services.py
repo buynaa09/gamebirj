@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from django.db import IntegrityError
 from django.db import transaction
 from django.utils import timezone
 
@@ -59,11 +60,24 @@ def agreed_price_for(account: Account, buyer) -> Decimal | None:
     return offer.amount if offer is not None else None
 
 
+def _already_sold(account_id: int, buyer) -> AlreadySoldError:
+    existing = EscrowTransaction.objects.filter(account_id=account_id).first()
+    order_id = existing.pk if existing is not None else None
+    return AlreadySoldError("Listing is already sold.", order_id=order_id)
+
+
 def buy_account(account_id: int, buyer) -> EscrowTransaction:
     """Buy a listing instantly under simulated escrow.
 
     Idempotent for the winner (retry returns the same order); losers and
     latecomers get AlreadySoldError.
+
+    Concurrency defense in depth (Postgres + SQLite):
+    1. ``SELECT ... FOR UPDATE`` serializes concurrent buyers on Postgres.
+    2. A conditional ``UPDATE ... WHERE status=available`` claims the row
+       atomically, so even where row locks are no-ops exactly one wins.
+    3. ``EscrowTransaction.account`` is OneToOne, so a duplicate insert
+       raises IntegrityError which we convert to AlreadySoldError.
     """
     with transaction.atomic():
         try:
@@ -87,16 +101,39 @@ def buy_account(account_id: int, buyer) -> EscrowTransaction:
             raise AlreadySoldError(msg, order_id=order_id)
         amount = agreed_price_for(account, buyer) or account.price
         now = timezone.now()
+        claimed = Account.objects.filter(
+            pk=account.pk,
+            status=Account.AVAILABLE,
+        ).update(
+            status=Account.SOLD,
+            buyer_id=buyer.pk,
+            sold_price=amount,
+            sold_at=now,
+        )
+        if claimed == 0:
+            # Lost the race between the SELECT and the UPDATE.
+            existing = EscrowTransaction.objects.filter(
+                account_id=account.pk,
+            ).first()
+            if existing is not None and existing.buyer_id == buyer.pk:
+                return existing
+            raise _already_sold(account.pk, buyer)
         account.status = Account.SOLD
-        account.buyer = buyer
+        account.buyer_id = buyer.pk
         account.sold_price = amount
         account.sold_at = now
-        account.save(
-            update_fields=["status", "buyer", "sold_price", "sold_at"],
-        )
-        return EscrowTransaction.objects.create(
-            account=account,
-            buyer=buyer,
-            seller=account.user,
-            amount=amount,
-        )
+        try:
+            return EscrowTransaction.objects.create(
+                account=account,
+                buyer=buyer,
+                seller=account.user,
+                amount=amount,
+            )
+        except IntegrityError as exc:
+            # Lost the race at the escrow insert (unique OneToOne guard).
+            existing = EscrowTransaction.objects.filter(
+                account_id=account.pk,
+            ).first()
+            if existing is not None and existing.buyer_id == buyer.pk:
+                return existing
+            raise _already_sold(account.pk, buyer) from exc

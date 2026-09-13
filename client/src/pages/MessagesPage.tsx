@@ -687,7 +687,7 @@ export function MessagesPage() {
             <p className={styles.infoKicker}>Stay safe</p>
             <ul className={styles.safeList}>
               <li>OTP болон 2FA кодыг чатаас гадуур хэзээ ч бүү хуваалцаарай.</li>
-              <li>Төлбөрөө суллахаасаа өмнө нэвтрэлтийг шалгаарай.</li>
+              <li> өмнө нэвтрэлтийг шалгаарай.</li>
               <li>Зөвхөн платформоор дамжуулан төлбөрөө төлөөрэй.</li>
             </ul>
           </div>

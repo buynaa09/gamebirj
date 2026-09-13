@@ -117,7 +117,7 @@ def _base_queryset():
 
 @router.get("/", response=list[AccountSchema], auth=None)
 def list_accounts(request, game: int | None = None, q: str | None = None):
-    accounts = _base_queryset().order_by("-created_at", "-id")
+    accounts = _base_queryset().filter(status=Account.AVAILABLE).order_by("-created_at", "-id")
     if game is not None:
         accounts = accounts.filter(game_id=game)
     if q:
