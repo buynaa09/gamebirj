@@ -3,6 +3,22 @@ export function formatPrice(value: number): string {
   return `${grouped}₮`;
 }
 
+export function rentalUnitLabel(unit: string | null | undefined): string {
+  switch (unit) {
+    case 'hour':
+      return 'цаг';
+    case 'month':
+      return 'сар';
+    case 'day':
+    default:
+      return 'өдөр';
+  }
+}
+
+export function formatRentalPrice(price: number, unit: string | null | undefined): string {
+  return `${formatPrice(price)}/${rentalUnitLabel(unit)}`;
+}
+
 export function timeAgo(iso: string): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';

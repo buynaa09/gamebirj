@@ -37,6 +37,8 @@ export interface PublishListingInput {
   acceptOffers: boolean;
   details: PublishDetail[];
   images: File[];
+  kind?: 'sale' | 'rent';
+  rentalUnit?: 'hour' | 'day' | 'month';
 }
 
 export interface CreatedAccount {
@@ -84,6 +86,8 @@ export interface MarketAccount {
   accept_offers: boolean;
   seller: string;
   status: string;
+  kind: 'sale' | 'rent';
+  rental_unit: 'hour' | 'day' | 'month' | null;
   sold_price: number | null;
   created_at: string;
   wishlisted: boolean;
@@ -98,6 +102,22 @@ export interface PurchaseOrder {
   amount: number;
   status: string;
   sold_at: string;
+}
+
+export type RentalUnit = 'hour' | 'day' | 'month';
+
+export interface RentalOrder {
+  order_id: number;
+  account_id: number;
+  unit: RentalUnit;
+  duration: number;
+  unit_price: number;
+  total: number;
+  status: string;
+  start_at: string;
+  end_at: string;
+  is_renter: boolean;
+  is_owner: boolean;
 }
 
 export interface EscrowOrder {

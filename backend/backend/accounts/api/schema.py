@@ -31,6 +31,8 @@ class AccountSchema(Schema):
     accept_offers: bool = True
     seller: str = ""
     status: str = "available"
+    kind: str = "sale"
+    rental_unit: str | None = None
     sold_price: float | None = None
     created_at: str = ""
     wishlisted: bool = False
@@ -55,3 +57,21 @@ class EscrowStatusSchema(Schema):
     sold_at: str
     is_buyer: bool = False
     is_seller: bool = False
+
+
+class RentRequestSchema(Schema):
+    duration: int = 1
+
+
+class RentalOrderSchema(Schema):
+    order_id: int
+    account_id: int
+    unit: str
+    duration: int
+    unit_price: float
+    total: float
+    status: str
+    start_at: str
+    end_at: str
+    is_renter: bool = False
+    is_owner: bool = False

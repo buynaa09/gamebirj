@@ -5,14 +5,24 @@ import type {
   MarketAccount,
   PublishListingInput,
   PurchaseOrder,
+  RentalOrder,
 } from '../types';
 
-export function fetchAccounts(params?: { game?: number; q?: string }): Promise<MarketAccount[]> {
+export function fetchAccounts(params?: {
+  game?: number;
+  q?: string;
+  kind?: 'sale' | 'rent';
+}): Promise<MarketAccount[]> {
   const search = new URLSearchParams();
   if (params?.game !== undefined) search.set('game', String(params.game));
   if (params?.q) search.set('q', params.q);
+  if (params?.kind) search.set('kind', params.kind);
   const suffix = search.size > 0 ? `?${search.toString()}` : '';
   return apiGet<MarketAccount[]>(`/accounts/${suffix}`);
+}
+
+export function fetchRentals(params?: { game?: number; q?: string }): Promise<MarketAccount[]> {
+  return fetchAccounts({ ...params, kind: 'rent' });
 }
 
 export function fetchAccount(id: number): Promise<MarketAccount> {
@@ -54,6 +64,14 @@ export function buyAccount(id: number): Promise<PurchaseOrder> {
   return apiPost<PurchaseOrder>(`/accounts/${id}/buy/`, {});
 }
 
+export function rentAccount(id: number, duration: number): Promise<RentalOrder> {
+  return apiPost<RentalOrder>(`/accounts/${id}/rent/`, { duration });
+}
+
+export function fetchRental(id: number): Promise<RentalOrder> {
+  return apiGet<RentalOrder>(`/accounts/${id}/rental/`);
+}
+
 export function fetchOrder(id: number): Promise<EscrowOrder> {
   return apiGet<EscrowOrder>(`/accounts/${id}/order/`);
 }
@@ -71,6 +89,8 @@ export function publishListing(input: PublishListingInput): Promise<CreatedAccou
   form.set('description', input.description);
   form.set('accept_offers', input.acceptOffers ? 'true' : 'false');
   form.set('details', JSON.stringify(input.details));
+  if (input.kind) form.set('kind', input.kind);
+  if (input.rentalUnit) form.set('rental_unit', input.rentalUnit);
   for (const image of input.images) {
     form.append('images', image);
   }

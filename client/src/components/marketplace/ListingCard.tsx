@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import type { MarketAccount } from '../../types';
-import { formatPrice, timeAgo } from '../../utils/format';
+import { formatPrice, formatRentalPrice, timeAgo } from '../../utils/format';
 import styles from './ListingCard.module.css';
 
 const CARD_COLORS = ['#e5344a', '#3a6ee5', '#33a17a', '#c78b1f', '#8b5ce5'];
@@ -18,6 +18,10 @@ export function ListingCard({ listing, index }: ListingCardProps) {
   const color = CARD_COLORS[index % CARD_COLORS.length];
   const cover = listing.images.find((img) => img.image)?.image ?? null;
   const sellerInitial = listing.seller.charAt(0).toUpperCase() || '?';
+  const isRent = listing.kind === 'rent';
+  const priceLabel = isRent
+    ? formatRentalPrice(listing.price, listing.rental_unit)
+    : formatPrice(listing.price);
 
   return (
     <article className={styles.card} onClick={() => navigate(`/listing/${listing.id}`)}>
@@ -27,6 +31,7 @@ export function ListingCard({ listing, index }: ListingCardProps) {
       >
         {cover && <img src={cover} alt="" className={styles.cover} loading="lazy" />}
         {listing.status === 'sold' && <span className={styles.soldRibbon}>Зарагдсан</span>}
+        {listing.status === 'rented' && <span className={styles.soldRibbon}>Түрээслэгдсэн</span>}
         <button
           className={`${styles.favBtn} ${saved ? styles.favActive : ''}`}
           aria-label={saved ? 'Remove from wishlist' : 'Хадгалах хэсэгт нэмэх'}
@@ -47,7 +52,7 @@ export function ListingCard({ listing, index }: ListingCardProps) {
         <p className={styles.cardTitle}>{listing.title}</p>
         <div className={styles.cardMeta}>{timeAgo(listing.created_at)}</div>
         <div className={styles.cardFoot}>
-          <span className={styles.cardPrice}>{formatPrice(listing.price)}</span>
+          <span className={styles.cardPrice}>{priceLabel}</span>
           <span className={styles.sellerDot}>{sellerInitial}</span>
         </div>
       </div>

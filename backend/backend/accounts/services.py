@@ -17,6 +17,7 @@ from django.utils import timezone
 
 from backend.accounts.models import Account
 from backend.accounts.models import EscrowTransaction
+from backend.accounts.models import RentalTransaction
 from backend.chat import services as chat_services
 from backend.chat.api.views import broadcast_message_created
 from backend.chat.models import Offer
@@ -61,6 +62,35 @@ class OrderStateError(BuyError):
     """Raised when escrow is not in a state that allows the action."""
 
 
+class RentError(Exception):
+    """Base error for rental failures."""
+
+
+class NotRentalError(RentError):
+    """Raised when the listing is not a rental listing."""
+
+
+class AlreadyRentedError(RentError):
+    """Raised when the listing is already rented (or sold)."""
+
+
+class SelfRentalError(RentError):
+    """Raised when the owner tries to rent their own listing."""
+
+
+class InvalidDurationError(RentError):
+    """Raised when the requested rental duration is invalid."""
+
+
+MAX_RENTAL_DURATION = 365
+
+RENTAL_UNIT_LABELS = {
+    Account.HOUR: "цаг",
+    Account.DAY: "өдөр",
+    Account.MONTH: "сар",  # noqa: RUF001 — Mongolian word for "month"
+}
+
+
 def agreed_price_for(account: Account, buyer) -> Decimal | None:
     """Accepted offer amount still inside its 24h hold, if the buyer has one."""
     cutoff = timezone.now() - timedelta(hours=OFFER_HOLD_HOURS)
@@ -90,10 +120,10 @@ def _notify_seller_of_sale(order_id: int) -> None:
     the purchase itself. Never raises.
     """
     try:
-        order = (
-            EscrowTransaction.objects.select_related("account", "buyer", "seller").get(
-                pk=order_id,
-            )
+        order = EscrowTransaction.objects.select_related(
+            "account", "buyer", "seller"
+        ).get(
+            pk=order_id,
         )
         conversation, _ = chat_services.get_or_create_private_conversation(
             order.buyer,
@@ -227,3 +257,103 @@ def release_escrow(account_id: int, user) -> EscrowTransaction:
             raise OrderStateError(msg)
         order.status = EscrowTransaction.RELEASED
         return order
+
+
+def _rental_delta(unit: str, duration: int) -> timedelta:
+    if unit == Account.HOUR:
+        return timedelta(hours=duration)
+    if unit == Account.MONTH:
+        return timedelta(days=30 * duration)
+    return timedelta(days=duration)
+
+
+def _notify_owner_of_rental(rental_id: int) -> None:
+    """Best-effort rental alert, mirroring the sale notification.
+
+    Runs via ``on_commit`` so a notification failure can never roll back
+    the rental itself. Never raises.
+    """
+    try:
+        rental = RentalTransaction.objects.select_related(
+            "account", "renter", "owner"
+        ).get(
+            pk=rental_id,
+        )
+        unit_label = RENTAL_UNIT_LABELS.get(rental.unit, rental.unit)
+        conversation, _ = chat_services.get_or_create_private_conversation(
+            rental.renter,
+            rental.owner,
+            account=rental.account,
+        )
+        message = chat_services.send_message(
+            conversation,
+            rental.renter,
+            f"🔑 «{rental.account.title}» түрээслэгдлээ! "
+            f"{rental.duration} {unit_label} × {rental.unit_price}₮ = "  # noqa: RUF001
+            f"{rental.total}₮ дундын баталгаат "
+            "дансанд хадгалагдлаа. Түрээс дуусахад акаунтыг буцааж хүлээлгэн өгнө.",
+        )
+        message.sender = rental.renter
+        broadcast_message_created(message)
+    except Exception:
+        logger.exception("Rental notification for rental %s failed", rental_id)
+
+
+def rent_account(account_id: int, renter, duration: int) -> RentalTransaction:
+    """Rent a ``kind=rent`` listing directly (buy-style instant flow).
+
+    Claims the account row under lock, marks it ``rented`` and records a
+    ``RentalTransaction`` with ``total = price * duration``. Concurrent
+    renters are serialized; exactly one wins.
+    """
+    try:
+        duration = int(duration)
+    except (TypeError, ValueError) as exc:
+        msg = "Duration must be a positive number."
+        raise InvalidDurationError(msg) from exc
+    if duration < 1 or duration > MAX_RENTAL_DURATION:
+        msg = f"Duration must be between 1 and {MAX_RENTAL_DURATION}."
+        raise InvalidDurationError(msg)
+    with transaction.atomic():
+        try:
+            account = (
+                Account.objects.select_for_update()
+                .select_related("user")
+                .get(pk=account_id)
+            )
+        except Account.DoesNotExist as exc:
+            msg = "Listing not found."
+            raise ListingNotFoundError(msg) from exc
+        if account.kind != Account.RENT:
+            msg = "This listing is not for rent."
+            raise NotRentalError(msg)
+        if account.user_id == renter.pk:
+            msg = "You cannot rent your own listing."
+            raise SelfRentalError(msg)
+        if account.status != Account.AVAILABLE:
+            msg = "Listing is already rented."
+            raise AlreadyRentedError(msg)
+        unit = account.rental_unit or Account.DAY
+        total = account.price * duration
+        now = timezone.now()
+        claimed = Account.objects.filter(
+            pk=account.pk,
+            status=Account.AVAILABLE,
+        ).update(status=Account.RENTED)
+        if claimed == 0:
+            msg = "Listing is already rented."
+            raise AlreadyRentedError(msg)
+        rental = RentalTransaction.objects.create(
+            account=account,
+            renter=renter,
+            owner=account.user,
+            unit=unit,
+            duration=duration,
+            unit_price=account.price,
+            total=total,
+            status=RentalTransaction.ACTIVE,
+            start_at=now,
+            end_at=now + _rental_delta(unit, duration),
+        )
+        transaction.on_commit(lambda: _notify_owner_of_rental(rental.pk))
+        return rental

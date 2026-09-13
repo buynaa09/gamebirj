@@ -7,9 +7,11 @@ import { BottomNav } from './components/layout/BottomNav';
 import { ChatBubble } from './components/layout/ChatBubble';
 import { HomePage } from './pages/HomePage';
 import { MarketplacePage } from './pages/MarketplacePage';
+import { RentalPage } from './pages/RentalPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { SellPage } from './pages/SellPage';
+import { RentCreatePage } from './pages/RentCreatePage';
 import { SellDashboardPage } from './pages/SellDashboardPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
 import { WishlistPage } from './pages/WishlistPage';
@@ -37,6 +39,8 @@ function AppShell() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/rent" element={<RentalPage />} />
+        <Route path="/rent/create" element={<RentCreatePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/sell" element={<SellDashboardPage />} />

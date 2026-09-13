@@ -124,6 +124,27 @@
   margin-top: 24px;
 }
 
+.unitRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.unitRow select {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
 .successBadge {
   width: 52px;
   height: 52px;

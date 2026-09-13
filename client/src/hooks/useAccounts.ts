@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchAccounts } from '../services/accounts';
 import type { MarketAccount } from '../types';
 
-export function useAccounts() {
+export function useAccounts(kind?: 'sale' | 'rent') {
   const [accounts, setAccounts] = useState<MarketAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -10,7 +10,7 @@ export function useAccounts() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchAccounts()
+    fetchAccounts(kind ? { kind } : undefined)
       .then((result) => {
         if (!cancelled) setAccounts(result);
       })
@@ -25,7 +25,7 @@ export function useAccounts() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, kind]);
 
   const reload = () => {
     setLoading(true);

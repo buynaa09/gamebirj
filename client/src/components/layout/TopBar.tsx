@@ -80,7 +80,9 @@ function TopBarInner() {
           <NavLink to="/sell" className={({ isActive }) => (isActive ? styles.active : '')}>
             Зарах
           </NavLink>
-          <a href="#">Түрээс ▾</a>
+          <NavLink to="/rent" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Түрээс
+          </NavLink>
           <a href="#">Бусад ▾</a>
         </nav>
 
@@ -220,6 +222,13 @@ function MobileMenu({
         className={`${styles.mobileLink} ${currentPath === '/sell/processing' ? styles.mobileActive : ''}`}
       >
         Зарах
+      </NavLink>
+      <NavLink
+        to="/rent"
+        onClick={onNavigate}
+        className={`${styles.mobileLink} ${currentPath === '/rent' ? styles.mobileActive : ''}`}
+      >
+        Түрээс
       </NavLink>
       <a href="#" className={styles.mobileLink}>
         Гүйлгээнүүд

@@ -17,16 +17,24 @@ from backend.accounts.api.schema import AccountSchema
 from backend.accounts.api.schema import AccountUpdateSchema
 from backend.accounts.api.schema import EscrowStatusSchema
 from backend.accounts.api.schema import OrderSchema
+from backend.accounts.api.schema import RentalOrderSchema
+from backend.accounts.api.schema import RentRequestSchema
 from backend.accounts.models import Account
 from backend.accounts.models import EscrowTransaction
+from backend.accounts.models import RentalTransaction
+from backend.accounts.services import AlreadyRentedError
 from backend.accounts.services import AlreadySoldError
+from backend.accounts.services import InvalidDurationError
 from backend.accounts.services import ListingNotFoundError
 from backend.accounts.services import NotBuyerError
+from backend.accounts.services import NotRentalError
 from backend.accounts.services import OrderNotFoundError
 from backend.accounts.services import OrderStateError
 from backend.accounts.services import SelfPurchaseError
+from backend.accounts.services import SelfRentalError
 from backend.accounts.services import buy_account
 from backend.accounts.services import release_escrow
+from backend.accounts.services import rent_account
 from backend.chat.models import Conversation
 from backend.games.models import Game
 from backend.games.models import Listing
@@ -88,12 +96,16 @@ def _account_payload(request, account: Account, wishlist_ids: set[int]) -> dict:
         "accept_offers": account.accept_offers,
         "seller": account.user.username,
         "status": account.status,
+        "kind": account.kind,
+        "rental_unit": account.rental_unit,
         "sold_price": (
             float(account.sold_price)
             if account.sold_price is not None
             and (
                 request.user.pk == account.user_id
-                or (account.buyer_id is not None and request.user.pk == account.buyer_id)
+                or (
+                    account.buyer_id is not None and request.user.pk == account.buyer_id
+                )
             )
             else None
         ),
@@ -128,10 +140,16 @@ def _base_queryset():
 
 
 @router.get("/", response=list[AccountSchema], auth=None)
-def list_accounts(request, game: int | None = None, q: str | None = None):
-    accounts = _base_queryset().filter(status=Account.AVAILABLE).order_by("-created_at", "-id")
+def list_accounts(
+    request, game: int | None = None, q: str | None = None, kind: str | None = None
+):
+    accounts = (
+        _base_queryset().filter(status=Account.AVAILABLE).order_by("-created_at", "-id")
+    )
     if game is not None:
         accounts = accounts.filter(game_id=game)
+    if kind in (Account.SALE, Account.RENT):
+        accounts = accounts.filter(kind=kind)
     if q:
         accounts = accounts.filter(
             Q(title__icontains=q)
@@ -189,7 +207,8 @@ def remove_wishlist(request, account_id: int):
 def _own_account_or_404(request, account_id: int) -> Account:
     try:
         return Account.objects.select_related("game").get(
-            pk=account_id, user=request.user,
+            pk=account_id,
+            user=request.user,
         )
     except Account.DoesNotExist as exc:
         raise _fail(404, "Listing not found.") from exc
@@ -352,6 +371,59 @@ def confirm_receipt(request, account_id: int):
     return _escrow_payload(request, order)
 
 
+def _rental_payload(request, rental: RentalTransaction) -> dict:
+    return {
+        "order_id": rental.pk,
+        "account_id": rental.account_id,
+        "unit": rental.unit,
+        "duration": rental.duration,
+        "unit_price": float(rental.unit_price),
+        "total": float(rental.total),
+        "status": rental.status,
+        "start_at": rental.start_at.isoformat(),
+        "end_at": rental.end_at.isoformat(),
+        "is_renter": request.user.pk == rental.renter_id,
+        "is_owner": request.user.pk == rental.owner_id,
+    }
+
+
+@router.post(
+    "/{account_id}/rent/",
+    response=RentalOrderSchema,
+    description="Rent a rental listing directly under simulated escrow.",
+)
+def rent_listing(request, account_id: int, data: RentRequestSchema):
+    try:
+        rental = rent_account(account_id, request.user, data.duration)
+    except ListingNotFoundError as exc:
+        raise _fail(404, str(exc)) from exc
+    except NotRentalError as exc:
+        raise _fail(422, str(exc)) from exc
+    except SelfRentalError as exc:
+        raise _fail(422, str(exc)) from exc
+    except InvalidDurationError as exc:
+        raise _fail(422, str(exc)) from exc
+    except AlreadyRentedError as exc:
+        raise HttpError(409, str(exc)) from exc
+    return _rental_payload(request, rental)
+
+
+@router.get(
+    "/{account_id}/rental/",
+    response=RentalOrderSchema,
+    description="Latest rental of a listing (renter and owner only).",
+)
+def get_rental(request, account_id: int):
+    rental = (
+        RentalTransaction.objects.filter(account_id=account_id)
+        .order_by("-created_at", "-id")
+        .first()
+    )
+    if rental is None or request.user.pk not in (rental.renter_id, rental.owner_id):
+        raise _fail(404, "Rental not found.")
+    return _rental_payload(request, rental)
+
+
 @router.post("/", response=AccountSchema)
 def create_account(  # noqa: PLR0913, PLR0917
     request,
@@ -362,6 +434,8 @@ def create_account(  # noqa: PLR0913, PLR0917
     description: str = Form(""),
     accept_offers: bool = Form(True),  # noqa: FBT001, FBT003
     details: str = Form("[]"),
+    kind: str = Form(Account.SALE),
+    rental_unit: str = Form(""),
 ):
     try:
         game_obj = Game.objects.get(pk=game)
@@ -384,6 +458,16 @@ def create_account(  # noqa: PLR0913, PLR0917
 
     headline = title.strip() or rank_name or game_obj.name
 
+    kind_value = (kind or Account.SALE).strip().lower()
+    if kind_value not in (Account.SALE, Account.RENT):
+        raise _fail(422, "Kind must be 'sale' or 'rent'.")
+    unit_value = (rental_unit or "").strip().lower() or None
+    if kind_value == Account.RENT:
+        if unit_value not in (Account.HOUR, Account.DAY, Account.MONTH):
+            raise _fail(422, "Rental unit must be 'hour', 'day' or 'month'.")
+    else:
+        unit_value = None
+
     account = Account.objects.create(
         user=request.user,
         title=headline[:100],
@@ -392,6 +476,8 @@ def create_account(  # noqa: PLR0913, PLR0917
         price=amount,
         description=description,
         accept_offers=accept_offers,
+        kind=kind_value,
+        rental_unit=unit_value,
     )
 
     try:
@@ -402,7 +488,9 @@ def create_account(  # noqa: PLR0913, PLR0917
         raise
 
     return _account_payload(
-        request, _load_account(account.pk), _my_wishlist_ids(request),
+        request,
+        _load_account(account.pk),
+        _my_wishlist_ids(request),
     )
 
 

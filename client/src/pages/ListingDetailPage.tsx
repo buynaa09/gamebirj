@@ -7,11 +7,12 @@ import { useWishlist } from '../context/WishlistContext';
 import { ListingCard } from '../components/marketplace/ListingCard';
 import { Lightbox } from '../components/marketplace/Lightbox';
 import { BuyModal } from '../components/marketplace/BuyModal';
+import { RentModal } from '../components/marketplace/RentModal';
 import { OfferModal } from '../components/chat/OfferModal';
-import { buyAccount } from '../services/accounts';
+import { buyAccount, rentAccount } from '../services/accounts';
 import { createOffer, openSellerThread } from '../services/chat';
-import type { PurchaseOrder } from '../types';
-import { formatPrice, timeAgo } from '../utils/format';
+import type { PurchaseOrder, RentalOrder } from '../types';
+import { formatPrice, formatRentalPrice, rentalUnitLabel, timeAgo } from '../utils/format';
 import styles from './ListingDetailPage.module.css';
 
 const FALLBACK_COLORS = ['#e5344a', '#3a6ee5', '#33a17a', '#c78b1f', '#8b5ce5'];
@@ -30,7 +31,9 @@ export function ListingDetailPage({ id }: { id: number }) {
   const [chatError, setChatError] = useState<string | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
+  const [rentOpen, setRentOpen] = useState(false);
   const [order, setOrder] = useState<PurchaseOrder | null>(null);
+  const [rental, setRental] = useState<RentalOrder | null>(null);
 
   if (loading) {
     return (
@@ -53,13 +56,15 @@ export function ListingDetailPage({ id }: { id: number }) {
 
   const photos = account.images.map((img) => img.image).filter((src): src is string => src !== null);
   const shown = Math.min(activePhoto, Math.max(photos.length - 1, 0));  const color = FALLBACK_COLORS[account.id % FALLBACK_COLORS.length];
+  const isRent = account.kind === 'rent';
   const similar = accounts
-    .filter((a) => a.id !== account.id && account.game !== null && a.game === account.game)
+    .filter((a) => a.id !== account.id && a.kind === account.kind && account.game !== null && a.game === account.game)
     .slice(0, 4);
   const sellerInitial = account.seller.charAt(0).toUpperCase() || '?';
   const isOwner = user?.username === account.seller;
-  const sold = account.status === 'sold' || order !== null;
-  const paidPrice = account.sold_price ?? order?.amount ?? null;
+  const sold = account.status === 'sold' || account.status === 'rented' || order !== null || rental !== null;
+  const soldLabel = account.status === 'rented' || rental !== null ? 'Түрээслэгдсэн' : 'Зарагдсан';
+  const paidPrice = account.sold_price ?? order?.amount ?? rental?.total ?? null;
   const isBuyer = order !== null || (account.sold_price !== null && !isOwner);
   const longDescription = account.description.length > 280;
 
@@ -77,7 +82,8 @@ export function ListingDetailPage({ id }: { id: number }) {
         ← Буцах
       </button>
       <div className={styles.crumbs}>
-        <Link to="/">Нүүр</Link> &nbsp;›&nbsp; <Link to="/marketplace">Зарын хэсэг</Link> &nbsp;›&nbsp;{' '}
+        <Link to="/">Нүүр</Link> &nbsp;›&nbsp;{' '}
+        {isRent ? <Link to="/rent">Түрээс</Link> : <Link to="/marketplace">Зарын хэсэг</Link>} &nbsp;›&nbsp;{' '}
         <span className={styles.cur}>{account.title.length > 28 ? `${account.title.slice(0, 28)}…` : account.title}</span>
       </div>
 
@@ -159,7 +165,7 @@ export function ListingDetailPage({ id }: { id: number }) {
             </div>
           ) : sold ? (
             <>
-              <div className={styles.soldBadge}>Зарагдсан</div>
+              <div className={styles.soldBadge}>{soldLabel}</div>
               {paidPrice !== null && (
                 <p className={styles.tos}>
                   Төлсөн үнэ: {formatPrice(paidPrice)}
@@ -203,10 +209,14 @@ export function ListingDetailPage({ id }: { id: number }) {
                     navigate('/login');
                     return;
                   }
-                  setBuyOpen(true);
+                  if (isRent) {
+                    setRentOpen(true);
+                  } else {
+                    setBuyOpen(true);
+                  }
                 }}
               >
-                🛒 Баталгаатай худалдан авах
+                {isRent ? '🔑 Баталгаатай түрээслэх' : '🛒 Баталгаатай худалдан авах'}
               </button>
               <div className={styles.sideRow}>
                 <button
@@ -274,8 +284,18 @@ export function ListingDetailPage({ id }: { id: number }) {
           <h1 className={styles.title}>{account.title}</h1>
         </div>
         <div className={styles.priceBlock}>
-          <div className={styles.price}>{formatPrice(account.price)}</div>
-          <div className={styles.meta}>{timeAgo(account.created_at)}</div>
+          <div className={styles.price}>
+            {isRent ? formatRentalPrice(account.price, account.rental_unit) : formatPrice(account.price)}
+          </div>
+          <div className={styles.meta}>
+            {timeAgo(account.created_at)}
+            {isRent && rental && (
+              <>
+                {' '}
+                · {rental.duration} {rentalUnitLabel(rental.unit)} түрээслэв
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -311,7 +331,7 @@ export function ListingDetailPage({ id }: { id: number }) {
 
       {similar.length > 0 && (
         <section>
-          <h2 className={styles.sectionTitle}>Төстэй зарууд</h2>
+          <h2 className={styles.sectionTitle}>{isRent ? 'Төстэй түрээсүүд' : 'Төстэй зарууд'}</h2>
           <div className={styles.similarGrid}>
             {similar.map((item, i) => (
               <ListingCard key={item.id} listing={item} index={i} />
@@ -368,7 +388,7 @@ export function ListingDetailPage({ id }: { id: number }) {
         />
       )}
 
-      {buyOpen && (
+      {buyOpen && !isRent && (
         <BuyModal
           price={account.price}
           onClose={() => setBuyOpen(false)}
@@ -376,6 +396,19 @@ export function ListingDetailPage({ id }: { id: number }) {
           onDone={(purchase) => {
             setBuyOpen(false);
             setOrder(purchase);
+          }}
+        />
+      )}
+
+      {rentOpen && isRent && account.rental_unit && (
+        <RentModal
+          price={account.price}
+          unit={account.rental_unit}
+          onClose={() => setRentOpen(false)}
+          onConfirm={(duration) => rentAccount(account.id, duration)}
+          onDone={(rentalOrder) => {
+            setRentOpen(false);
+            setRental(rentalOrder);
           }}
         />
       )}

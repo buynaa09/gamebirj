@@ -6,10 +6,10 @@ import styles from './BottomNav.module.css';
 const routeLinks = [
   { to: '/', label: 'Нүүр', icon: HomeIcon },
   { to: '/marketplace', label: 'Зарууд', icon: ShopIcon },
+  { to: '/messages', label: 'Зурвас', icon: ChatBubbleIcon },
   { to: '/sell', label: 'Зарах', icon: ClockIcon },
+  { to: '/rent', label: 'Түрээс', icon: CheckIcon },
 ];
-
-const placeholderLinks = [{ label: 'Арилжаа', icon: CheckIcon }];
 
 export function BottomNav() {
   const unreadMessages = useUnreadMessages();
@@ -25,20 +25,6 @@ export function BottomNav() {
           <Icon />
           {label}
         </NavLink>
-      ))}
-      <NavLink
-        to="/messages"
-        className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
-      >
-        <ChatBubbleIcon />
-        Зурвас
-        {unreadMessages > 0 && <span className={styles.dot} aria-hidden="true" />}
-      </NavLink>
-      {placeholderLinks.map(({ label, icon: Icon }) => (
-        <a key={label} href="#" className={styles.link}>
-          <Icon />
-          {label}
-        </a>
       ))}
     </nav>
   );

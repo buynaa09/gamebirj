@@ -9,9 +9,27 @@ from backend.games.models import Game, GameRank, Listing, ListingChoice
 class Account(models.Model):
     AVAILABLE = "available"
     SOLD = "sold"
+    RENTED = "rented"
     STATUS_CHOICES = [
         (AVAILABLE, "Available"),
         (SOLD, "Sold"),
+        (RENTED, "Rented"),
+    ]
+
+    SALE = "sale"
+    RENT = "rent"
+    KIND_CHOICES = [
+        (SALE, "Sale"),
+        (RENT, "Rent"),
+    ]
+
+    HOUR = "hour"
+    DAY = "day"
+    MONTH = "month"
+    RENTAL_UNIT_CHOICES = [
+        (HOUR, "Hour"),
+        (DAY, "Day"),
+        (MONTH, "Month"),
     ]
 
     user = models.ForeignKey(
@@ -19,7 +37,9 @@ class Account(models.Model):
     )
     title = models.CharField(max_length=100)
     game = models.ForeignKey(Game, on_delete=models.SET_NULL, null=True, blank=True)
-    game_rank = models.ForeignKey(GameRank, on_delete=models.SET_NULL, null=True, blank=True)
+    game_rank = models.ForeignKey(
+        GameRank, on_delete=models.SET_NULL, null=True, blank=True
+    )
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(blank=True, default="")
     accept_offers = models.BooleanField(default=True)
@@ -28,6 +48,19 @@ class Account(models.Model):
         choices=STATUS_CHOICES,
         default=AVAILABLE,
         db_index=True,
+    )
+    kind = models.CharField(
+        max_length=16,
+        choices=KIND_CHOICES,
+        default=SALE,
+        db_index=True,
+    )
+    rental_unit = models.CharField(  # noqa: DJ001 — sale listings have no unit (not "")
+        max_length=16,
+        choices=RENTAL_UNIT_CHOICES,
+        null=True,
+        blank=True,
+        default=None,
     )
     buyer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -43,7 +76,7 @@ class Account(models.Model):
         blank=True,
     )
     sold_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True,null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -54,6 +87,10 @@ class Account(models.Model):
     @property
     def is_sold(self) -> bool:
         return self.status == self.SOLD
+
+    @property
+    def is_rented(self) -> bool:
+        return self.status == self.RENTED
 
 
 class AccountListing(models.Model):
@@ -94,7 +131,9 @@ class Wishlist(models.Model):
     class Meta:
         ordering = ["-created_at"]
         constraints = [
-            models.UniqueConstraint(fields=["user", "account"], name="unique_wishlist_entry")
+            models.UniqueConstraint(
+                fields=["user", "account"], name="unique_wishlist_entry"
+            )
         ]
 
     def __str__(self):
@@ -118,7 +157,9 @@ class EscrowTransaction(models.Model):
     ]
 
     account = models.OneToOneField(
-        Account, on_delete=models.CASCADE, related_name="escrow",
+        Account,
+        on_delete=models.CASCADE,
+        related_name="escrow",
     )
     buyer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -140,3 +181,52 @@ class EscrowTransaction(models.Model):
 
     def __str__(self):
         return f"Escrow {self.pk} ({self.amount} — {self.status})"
+
+
+class RentalTransaction(models.Model):
+    """A direct rental of a ``kind=rent`` listing.
+
+    One account can be rented many times over its life (unlike escrow,
+    which is one-shot), so this is a plain FK with at most one ``active``
+    row at a time — enforced in ``rent_account`` under row lock.
+    """
+
+    ACTIVE = "active"
+    RETURNED = "returned"
+    CANCELLED = "cancelled"
+    STATUS_CHOICES = [
+        (ACTIVE, "Active"),
+        (RETURNED, "Returned"),
+        (CANCELLED, "Cancelled"),
+    ]
+
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        related_name="rentals",
+    )
+    renter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="rentals_as_renter",
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="rentals_as_owner",
+    )
+    unit = models.CharField(max_length=16, choices=Account.RENTAL_UNIT_CHOICES)
+    duration = models.PositiveIntegerField()
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=ACTIVE)
+    start_at = models.DateTimeField()
+    end_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Rental {self.pk} ({self.total} — {self.status})"
