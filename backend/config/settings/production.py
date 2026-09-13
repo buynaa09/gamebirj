@@ -10,7 +10,7 @@ from .base import env
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["gamebirj.com"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["api.gamebirj.com"])
 
 # DATABASES
 # ------------------------------------------------------------------------------
@@ -163,3 +163,21 @@ sentry_sdk.init(
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Split deployment: API on api.gamebirj.com (Oracle), SPA on gamebirj.com
+# (Vercel). Cookies are scoped to the parent domain so the SPA's JS can read
+# the CSRF cookie and the browser sends the session cookie to the API.
+# Same-site (shared eTLD+1) keeps Lax sufficient — no SameSite=None needed.
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=["https://gamebirj.com", "https://www.gamebirj.com"],
+)
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS",
+    default=[
+        "https://gamebirj.com",
+        "https://www.gamebirj.com",
+        "https://api.gamebirj.com",
+    ],
+)
+SESSION_COOKIE_DOMAIN = env("SESSION_COOKIE_DOMAIN", default=".gamebirj.com")
+CSRF_COOKIE_DOMAIN = env("CSRF_COOKIE_DOMAIN", default=".gamebirj.com")

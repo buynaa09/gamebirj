@@ -24,6 +24,9 @@ export function BottomNav() {
         >
           <Icon />
           {label}
+          {to === '/messages' && unreadMessages > 0 && (
+            <span className={styles.dot} aria-hidden="true" />
+          )}
         </NavLink>
       ))}
     </nav>
