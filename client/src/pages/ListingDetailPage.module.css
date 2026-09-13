@@ -204,6 +204,19 @@
   justify-content: center;
 }
 
+.soldBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+
 .sideRow {
   display: grid;
   grid-template-columns: 1fr 1fr;

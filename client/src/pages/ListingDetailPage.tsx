@@ -6,8 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { ListingCard } from '../components/marketplace/ListingCard';
 import { Lightbox } from '../components/marketplace/Lightbox';
+import { BuyModal } from '../components/marketplace/BuyModal';
 import { OfferModal } from '../components/chat/OfferModal';
+import { buyAccount } from '../services/accounts';
 import { createOffer, openSellerThread } from '../services/chat';
+import type { PurchaseOrder } from '../types';
 import { formatPrice, timeAgo } from '../utils/format';
 import styles from './ListingDetailPage.module.css';
 
@@ -26,6 +29,8 @@ export function ListingDetailPage({ id }: { id: number }) {
   const [chatStarting, setChatStarting] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [order, setOrder] = useState<PurchaseOrder | null>(null);
 
   if (loading) {
     return (
@@ -53,6 +58,9 @@ export function ListingDetailPage({ id }: { id: number }) {
     .slice(0, 4);
   const sellerInitial = account.seller.charAt(0).toUpperCase() || '?';
   const isOwner = user?.username === account.seller;
+  const sold = account.status === 'sold' || order !== null;
+  const paidPrice = account.sold_price ?? order?.amount ?? null;
+  const isBuyer = order !== null || (account.sold_price !== null && !isOwner);
   const longDescription = account.description.length > 280;
 
   const share = () => {
@@ -149,9 +157,55 @@ export function ListingDetailPage({ id }: { id: number }) {
                 Миний зарууд
               </button>
             </div>
+          ) : sold ? (
+            <>
+              <div className={styles.soldBadge}>Зарагдсан</div>
+              {paidPrice !== null && (
+                <p className={styles.tos}>
+                  Төлсөн үнэ: {formatPrice(paidPrice)}
+                  {isBuyer ? ' (таны худалдан авалт)' : ''}
+                </p>
+              )}
+              <div className={styles.sideRow}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={chatStarting}
+                  onClick={() => {
+                    if (!user) {
+                      navigate('/login');
+                      return;
+                    }
+                    setChatStarting(true);
+                    setChatError(null);
+                    openSellerThread(account.seller, account.id).then(
+                      (conversationId) => {
+                        navigate(`/messages?conversation=${conversationId}`);
+                      },
+                      (err: unknown) => {
+                        setChatStarting(false);
+                        setChatError(err instanceof Error ? err.message : 'Чат нээж чадсангүй.');
+                      },
+                    );
+                  }}
+                >
+                  {chatStarting ? 'Нээж байна…' : '💬 Асуулт асуух'}
+                </button>
+              </div>
+            </>
           ) : (
             <>
-              <button type="button" className={`btn btn-primary ${styles.buyBtn}`}>
+              <button
+                type="button"
+                className={`btn btn-primary ${styles.buyBtn}`}
+                onClick={() => {
+                  if (!user) {
+                    navigate('/login');
+                    return;
+                  }
+                  setBuyOpen(true);
+                }}
+              >
                 🛒 Баталгаатай худалдан авах
               </button>
               <div className={styles.sideRow}>
@@ -311,6 +365,18 @@ export function ListingDetailPage({ id }: { id: number }) {
               }),
             )
           }
+        />
+      )}
+
+      {buyOpen && (
+        <BuyModal
+          price={account.price}
+          onClose={() => setBuyOpen(false)}
+          onConfirm={() => buyAccount(account.id)}
+          onDone={(purchase) => {
+            setBuyOpen(false);
+            setOrder(purchase);
+          }}
         />
       )}
     </main>

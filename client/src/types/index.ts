@@ -83,11 +83,21 @@ export interface MarketAccount {
   description: string;
   accept_offers: boolean;
   seller: string;
+  status: string;
+  sold_price: number | null;
   created_at: string;
   wishlisted: boolean;
   wishlist_count: number;
   images: MarketImage[];
   listings: MarketAccountDetail[];
+}
+
+export interface PurchaseOrder {
+  order_id: number;
+  account_id: number;
+  amount: number;
+  status: string;
+  sold_at: string;
 }
 
 export type SortKey = 'newest' | 'oldest' | 'price-asc' | 'price-desc';

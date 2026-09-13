@@ -537,13 +537,16 @@ export function MessagesPage() {
                   <p className={styles.tradeNote}>
                     Та баталгаажуултал мөнгө дундын дансанд хадгалагдана.
                   </p>
+                  {listing.status === 'sold' && (
+                    <p className={styles.tradeNote}>Энэ зар зарагдсан.</p>
+                  )}
                 </div>
                 <button
                   type="button"
                   className={styles.buyNow}
                   onClick={() => navigate(`/listing/${listing.id}`)}
                 >
-                  Buy now
+                  {listing.status === 'sold' ? 'Үзэх' : 'Buy now'}
                 </button>
               </div>
             )}

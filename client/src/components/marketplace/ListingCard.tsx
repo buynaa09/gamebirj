@@ -26,6 +26,7 @@ export function ListingCard({ listing, index }: ListingCardProps) {
         style={cover ? undefined : { background: `linear-gradient(135deg, ${color}22, ${color}44)` }}
       >
         {cover && <img src={cover} alt="" className={styles.cover} loading="lazy" />}
+        {listing.status === 'sold' && <span className={styles.soldRibbon}>Зарагдсан</span>}
         <button
           className={`${styles.favBtn} ${saved ? styles.favActive : ''}`}
           aria-label={saved ? 'Remove from wishlist' : 'Хадгалах хэсэгт нэмэх'}

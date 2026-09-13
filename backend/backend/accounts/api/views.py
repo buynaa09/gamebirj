@@ -12,7 +12,12 @@ from ninja.errors import HttpError
 
 from backend.accounts.api.schema import AccountSchema
 from backend.accounts.api.schema import AccountUpdateSchema
+from backend.accounts.api.schema import OrderSchema
 from backend.accounts.models import Account
+from backend.accounts.services import AlreadySoldError
+from backend.accounts.services import buy_account
+from backend.accounts.services import ListingNotFoundError
+from backend.accounts.services import SelfPurchaseError
 from backend.games.models import Game
 from backend.games.models import Listing
 
@@ -70,6 +75,16 @@ def _account_payload(request, account: Account, wishlist_ids: set[int]) -> dict:
         "description": account.description,
         "accept_offers": account.accept_offers,
         "seller": account.user.username,
+        "status": account.status,
+        "sold_price": (
+            float(account.sold_price)
+            if account.sold_price is not None
+            and (
+                request.user.pk == account.user_id
+                or (account.buyer_id is not None and request.user.pk == account.buyer_id)
+            )
+            else None
+        ),
         "created_at": account.created_at.isoformat() if account.created_at else "",
         "wishlisted": account.id in wishlist_ids,
         "wishlist_count": account.wishlist_count,
@@ -215,6 +230,29 @@ def delete_account(request, account_id: int):
     account = _own_account_or_404(request, account_id)
     account.delete()
     return {"deleted": True}
+
+
+@router.post(
+    "/{account_id}/buy/",
+    response=OrderSchema,
+    description="Buy a listing instantly under simulated escrow.",
+)
+def buy_listing(request, account_id: int):
+    try:
+        order = buy_account(account_id, request.user)
+    except ListingNotFoundError as exc:
+        raise _fail(404, str(exc)) from exc
+    except SelfPurchaseError as exc:
+        raise _fail(422, str(exc)) from exc
+    except AlreadySoldError as exc:
+        raise HttpError(409, str(exc)) from exc
+    return {
+        "order_id": order.pk,
+        "account_id": order.account_id,
+        "amount": float(order.amount),
+        "status": order.status,
+        "sold_at": order.created_at.isoformat(),
+    }
 
 
 @router.post("/", response=AccountSchema)

@@ -30,8 +30,18 @@ class AccountSchema(Schema):
     description: str = ""
     accept_offers: bool = True
     seller: str = ""
+    status: str = "available"
+    sold_price: float | None = None
     created_at: str = ""
     wishlisted: bool = False
     wishlist_count: int = 0
     listings: list[AccountListingSchema] = []
     images: list[AccountImageSchema] = []
+
+
+class OrderSchema(Schema):
+    order_id: int
+    account_id: int
+    amount: float
+    status: str
+    sold_at: str

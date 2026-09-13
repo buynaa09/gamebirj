@@ -48,6 +48,19 @@
   object-fit: cover;
 }
 
+.soldRibbon {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  background: rgba(15, 15, 18, 0.8);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.4px;
+}
+
 .favBtn {
   position: absolute;
   top: 8px;
