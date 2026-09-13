@@ -7,6 +7,7 @@ serialized by PostgreSQL and exactly one of them wins.
 
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
@@ -20,6 +21,8 @@ from backend.chat.models import Offer
 
 if TYPE_CHECKING:
     from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 OFFER_HOLD_HOURS = 24
 
@@ -76,6 +79,39 @@ def _already_sold(account_id: int, buyer) -> AlreadySoldError:
     existing = EscrowTransaction.objects.filter(account_id=account_id).first()
     order_id = existing.pk if existing is not None else None
     return AlreadySoldError("Listing is already sold.", order_id=order_id)
+
+
+def _notify_seller_of_sale(order_id: int) -> None:
+    """Best-effort sale alert: posts a message in the buyer-seller thread.
+
+    Runs via ``on_commit`` so a notification failure can never roll back
+    the purchase itself. Never raises.
+    """
+    try:
+        from backend.chat import services as chat_services
+        from backend.chat.api.views import broadcast_message_created
+
+        order = (
+            EscrowTransaction.objects.select_related("account", "buyer", "seller").get(
+                pk=order_id,
+            )
+        )
+        conversation, _ = chat_services.get_or_create_private_conversation(
+            order.buyer,
+            order.seller,
+            account=order.account,
+        )
+        message = chat_services.send_message(
+            conversation,
+            order.buyer,
+            f"🔔 «{order.account.title}» зарагдлаа! {order.amount}₮ дундын "
+            "дансанд хадгалагдлаа. Худалдан авагч account шалгаад "
+            "«Account зөв байна» дарсны дараа мөнгө танд шилжинэ.",
+        )
+        message.sender = order.buyer
+        broadcast_message_created(message)
+    except Exception:
+        logger.exception("Sale notification for order %s failed", order_id)
 
 
 def buy_account(account_id: int, buyer) -> EscrowTransaction:

@@ -52,6 +52,17 @@ export function SellPage() {
     setStep((s) => Math.max(s - 1, 0));
   };
 
+  // Detail values are keyed by listing id, which differs per game — keeping
+  // the old game's values would submit foreign ids and the API rejects them
+  // ("Listing X does not apply to ..."). Rank ladders differ per game too.
+  const selectGame = (gameName: string) => {
+    if (gameName !== draft.gameName) {
+      update({ gameName, rank: '', detailValues: {} });
+    } else {
+      update({ gameName });
+    }
+  };
+
   const publish = () => {
     for (let s = 0; s <= 2; s++) {
       const problem = validate(s);
@@ -66,10 +77,13 @@ export function SellPage() {
       setError('Сервертэй холбогдож чадсангүй. Сүлжээгээ шалгаад дахин оролдоно уу.');
       return;
     }
+    const validListingIds = new Set(game.listings.map((l) => l.id));
     const details = Object.entries(draft.detailValues)
       .filter(([, value]) => value.trim() !== '')
       .map(([key, value]) => ({ listing: Number(key.replace('listing:', '')), value: value.trim() }))
-      .filter((d) => Number.isFinite(d.listing));
+      // Drop stale ids (e.g. a draft saved before switching games or against
+      // an older DB seed) — the API only accepts this game's listings.
+      .filter((d) => Number.isFinite(d.listing) && validListingIds.has(d.listing));
     setError(null);
     setPublishing(true);
     publishListing({
@@ -166,7 +180,7 @@ export function SellPage() {
       <StepIndicator current={step} />
 
       <div className={styles.card}>
-        {step === 0 && <GameStep selected={draft.gameName} onSelect={(gameName) => update({ gameName })} />}
+        {step === 0 && <GameStep selected={draft.gameName} onSelect={selectGame} />}
         {step === 1 && <DetailsStep game={game} draft={draft} onChange={update} />}
         {step === 2 && <MediaStep images={images} onChange={setImages} />}
         {step === 3 && <ReviewStep draft={draft} images={images} game={game} />}
