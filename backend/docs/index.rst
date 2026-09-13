@@ -1,9 +1,9 @@
-.. Soliltsoo documentation master file, created by
+.. GameBirj documentation master file, created by
    sphinx-quickstart.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Soliltsoo's documentation!
+Welcome to GameBirj's documentation!
 ======================================================================
 
 .. toctree::

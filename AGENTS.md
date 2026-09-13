@@ -1,4 +1,4 @@
-# Repository: Soliltsoo
+# Repository: GameBirj
 
 Gaming account marketplace — two-package repo: Django backend + React/Vite client.
 

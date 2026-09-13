@@ -28,7 +28,7 @@ certificatesResolvers:
 http:
   routers:
     web-secure-router:
-      rule: 'Host(`soliltsoo.com`) || Host(`www.soliltsoo.com`)'
+      rule: 'Host(`gamebirj.com`) || Host(`www.gamebirj.com`)'
       entryPoints:
         - web-secure
       middlewares:
@@ -39,7 +39,7 @@ http:
         certResolver: letsencrypt
 
     web-media-router:
-      rule: '(Host(`soliltsoo.com`) || Host(`www.soliltsoo.com`)) && PathPrefix(`/media/`)'
+      rule: '(Host(`gamebirj.com`) || Host(`www.gamebirj.com`)) && PathPrefix(`/media/`)'
       entryPoints:
         - web-secure
       middlewares:

@@ -65,8 +65,8 @@ function TopBarInner() {
     <>
       <header className={styles.topbar}>
         <NavLink to="/" className={styles.brand} onClick={handleBrandClick}>
-          <img src={theme === 'dark' ? darkLogo : lightLogo} alt="Soliltsoo" className={styles.brandLogo} />
-          <span className={styles.brandWord}>Soliltsoo</span>
+          <img src={theme === 'dark' ? darkLogo : lightLogo} alt="GameBirj" className={styles.brandLogo} />
+          <span className={styles.brandWord}>GameBirj</span>
         </NavLink>
 
         <nav className={styles.navLinks} aria-label="Үндсэн цэс">

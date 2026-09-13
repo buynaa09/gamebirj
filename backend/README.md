@@ -1,4 +1,4 @@
-# Soliltsoo
+# GameBirj
 
 Behold My Awesome Project!
 

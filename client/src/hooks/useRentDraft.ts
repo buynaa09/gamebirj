@@ -12,7 +12,7 @@ export const emptyRentDraft: RentDraft = {
   rentalUnit: 'day',
 };
 
-const STORAGE_KEY = 'soliltsoo-rent-draft-v1';
+const STORAGE_KEY = 'gamebirj-rent-draft-v2';
 
 function loadDraft(): { draft: RentDraft; restored: boolean } {
   try {

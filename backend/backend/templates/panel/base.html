@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      {% block title %}Админ{% endblock title %} · Soliltsoo Panel
+      {% block title %}Админ{% endblock title %} · GameBirj Panel
     </title>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
@@ -18,7 +18,7 @@
   <body>
     <div class="panel-shell">
       <aside class="panel-sidebar">
-        <a class="panel-brand" href="{% url 'panel:dashboard' %}">Soliltsoo Panel</a>
+        <a class="panel-brand" href="{% url 'panel:dashboard' %}">GameBirj Panel</a>
         <nav class="panel-nav">
           <a href="{% url 'panel:dashboard' %}"
              class="{% if request.resolver_match.url_name == 'dashboard' %}on{% endif %}">Хянах самбар</a>

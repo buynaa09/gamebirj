@@ -42,7 +42,7 @@ export function SignupPage() {
   return (
     <main className={styles.page}>
       <div className={styles.card}>
-        <div className={styles.eyebrow}>Join Soliltsoo</div>
+        <div className={styles.eyebrow}>Join GameBirj</div>
         <h1 className={styles.title}>Create your account</h1>
         <p className={styles.subtitle}>Free to list. Escrow-protected trades across 40+ games.</p>
         <form className={styles.form} onSubmit={handleSubmit}>

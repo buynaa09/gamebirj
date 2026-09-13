@@ -13,7 +13,7 @@ export function RentalHeader() {
           <div className={styles.eyebrowRed}>Mongolian marketplace</div>
           <h2>Аккаунт түрээслэх бүр 100% аюулгүй</h2>
           <p>
-            Таны төлбөрийг түрээслүүлэгчид шууд шилжүүлэхгүй бөгөөд Soliltsoo system
+            Таны төлбөрийг түрээслүүлэгчид шууд шилжүүлэхгүй бөгөөд GameBirj system
             дээр найдвартай хадгалагдана. Түрээс дуусахад аккаунтыг буцааж хүлээлгэн өгнө.
           </p>
         </div>

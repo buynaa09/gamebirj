@@ -37,7 +37,7 @@ export function LoginPage() {
     <main className={styles.page}>
       <div className={styles.card}>
         <div className={styles.eyebrow}>Welcome back</div>
-        <h1 className={styles.title}>Log in to Soliltsoo</h1>
+        <h1 className={styles.title}>Log in to GameBirj</h1>
         <p className={styles.subtitle}>Buy and sell gaming accounts with escrow protection.</p>
         <form className={styles.form} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}

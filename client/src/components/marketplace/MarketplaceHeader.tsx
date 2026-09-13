@@ -15,7 +15,7 @@ export function MarketplaceHeader() {
           <h2>Борлуулалт,Худалдан авалт бүр 100% аюулгүй</h2>
           <p>
             Таны төлбөрийг худалдагчид шууд шилжүүлэхгүй бөгөөд 
-            Soliltsoo system дээр найдвартай хадгалагдана.
+            GameBirj system дээр найдвартай хадгалагдана.
           </p>
         </div>
         <div className={styles.headerActions}>

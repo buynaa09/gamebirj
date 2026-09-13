@@ -15,8 +15,8 @@ export function Hero() {
             accounts, <em>safely.</em>
           </h1>
           <p className={styles.lead}>
-      Soliltsoo — тоглоомын аккаунт худалдах, худалдан авах найдвартай marketplace.
-🛡️Midman Escrow: Худалдан авагчийн мөнгийг Soliltsoo хүлээн авч, account-ыг баталгаажуулах хүртэл найдвартай хадгална. Амжилттай баталгаажсаны дараа мөнгө худалдагчид шилжинэ.
+      GameBirj — тоглоомын аккаунт худалдах, худалдан авах найдвартай marketplace.
+🛡️Midman Escrow: Худалдан авагчийн мөнгийг GameBirj хүлээн авч, account-ыг баталгаажуулах хүртэл найдвартай хадгална. Амжилттай баталгаажсаны дараа мөнгө худалдагчид шилжинэ.
           </p>
           <div className={styles.heroCtas}>
             <button
