@@ -38,6 +38,7 @@ from backend.accounts.services import rent_account
 from backend.chat.models import Conversation
 from backend.games.models import Game
 from backend.games.models import Listing
+from backend.media import absolute_media_url
 
 router = Router(tags=["accounts"])
 
@@ -80,10 +81,7 @@ def _my_wishlist_ids(request) -> set[int]:
 
 def _account_payload(request, account: Account, wishlist_ids: set[int]) -> dict:
     images = [
-        {
-            "id": img.id,
-            "image": request.build_absolute_uri(img.image.url) if img.image else None,
-        }
+        {"id": img.id, "image": absolute_media_url(request, img.image)}
         for img in account.images.all()
     ]
     return {

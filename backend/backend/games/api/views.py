@@ -6,6 +6,7 @@ from ninja import Router
 from backend.games.api.schema import GameSchema
 from backend.games.models import Game
 from backend.games.models import Listing
+from backend.media import absolute_media_url
 
 router = Router(tags=["games"])
 
@@ -37,7 +38,7 @@ def _game_payload(request, game: Game, global_listings: list[Listing]) -> dict:
         listing for listing in applicable if listing.title.lower() != RANK_TITLE
     ]
     listings.sort(key=lambda item: (item.game_id is None, item.id))
-    image = request.build_absolute_uri(game.image.url) if game.image else None
+    image = absolute_media_url(request, game.image if game.image else None)
     return {
         "id": game.id,
         "name": game.name,

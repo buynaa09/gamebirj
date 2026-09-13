@@ -183,6 +183,11 @@ STATICFILES_FINDERS = [
 MEDIA_ROOT = str(APPS_DIR / "media")
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = "/media/"
+# Cloudflare R2 (S3-compatible) object storage for all user-uploaded media
+# (account images, chat images, game images). Disabled by default; enabled in
+# production (USE_R2=True) where STORAGES["default"] switches to S3Storage.
+# Local/test keep the filesystem backend above.
+USE_R2 = env.bool("USE_R2", default=False)
 
 # TEMPLATES
 # ------------------------------------------------------------------------------

@@ -1,4 +1,11 @@
 # ruff: noqa: E501
+import logging
+
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
+
 from .base import *  # noqa: F403
 from .base import DATABASES
 from .base import INSTALLED_APPS
@@ -64,14 +71,48 @@ SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
 
 # STATIC & MEDIA
 # ------------------------
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# Static files stay on Whitenoise. User-uploaded media goes to Cloudflare R2
+# (S3-compatible, public bucket). Credentials live in .envs/.production/.cloudflare.
+# Set USE_R2=False to fall back to local filesystem storage.
+USE_R2 = env.bool("USE_R2", default=True)
+if USE_R2:
+    R2_PUBLIC_URL = env("CLOUDFLARE_R2_PUBLIC_URL").rstrip("/")
+    R2_PUBLIC_DOMAIN = R2_PUBLIC_URL.removeprefix("https://").removeprefix("http://")
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": env("CLOUDFLARE_R2_BUCKET"),
+                "endpoint_url": env("CLOUDFLARE_R2_ENDPOINT_URL"),
+                "access_key": env("CLOUDFLARE_R2_ACCESS_KEY_ID"),
+                "secret_key": env("CLOUDFLARE_R2_SECRET_ACCESS_KEY"),
+                "region_name": env("CLOUDFLARE_R2_REGION", default="auto"),
+                # Public bucket: serve via the custom domain / r2.dev URL,
+                # no signed querystrings.
+                "custom_domain": R2_PUBLIC_DOMAIN,
+                "url_protocol": "https:",
+                "querystring_auth": False,
+                # R2 has no ACL support; sending one fails the upload.
+                "default_acl": None,
+                # Never silently overwrite an existing key.
+                "file_overwrite": False,
+                "signature_version": "s3v4",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    MEDIA_URL = R2_PUBLIC_URL + "/"
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 # EMAIL
 # ------------------------------------------------------------------------------

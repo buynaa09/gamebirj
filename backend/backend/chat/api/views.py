@@ -20,6 +20,7 @@ from backend.chat.api.schema import MarkReadResponse
 from backend.chat.api.schema import MessageSchema
 from backend.chat.api.schema import OfferSchema
 from backend.chat.api.schema import PaginatedMessages
+from backend.media import absolute_media_url
 
 if TYPE_CHECKING:
     from backend.chat.models import Message
@@ -51,9 +52,7 @@ def _offer_payload(offer) -> dict:
 
 def _message_payload(request, message: Message) -> dict:
     offer = getattr(message, "offer", None)
-    image_url = None
-    if message.image:
-        image_url = request.build_absolute_uri(message.image.url)
+    image_url = absolute_media_url(request, message.image if message.image else None)
     return {
         "id": message.id,
         "conversation_id": message.conversation_id,
@@ -115,8 +114,9 @@ def _broadcast_message_created(message: Message) -> None:
             "conversation_id": message.conversation_id,
             "sender": _user_summary(sender),
             "content": message.content,
-            # Relative media URL (no request here); clients resolve it
-            # against the API origin. REST payloads carry absolute URLs.
+            # R2 storage returns an absolute URL; local filesystem storage
+            # returns a relative one that clients resolve against the API
+            # origin. REST payloads always carry absolute URLs.
             "image": image.url if image else None,
             "created_at": message.created_at.isoformat(),
             "is_read": message.is_read,
