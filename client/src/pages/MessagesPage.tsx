@@ -634,6 +634,22 @@ export function MessagesPage() {
               </p>
             )}
 
+            {/* Mobile/tablet fallback for the sellerPanel "Stay safe" block,
+                which is hidden below 1180px. Collapsed by default. */}
+            <details className={styles.safetyFold}>
+              <summary className={styles.safetySummary}>
+                <span aria-hidden="true">🛡</span> Аюулгүй байдал
+                <span className={styles.safetyChevron} aria-hidden="true">
+                  ▾
+                </span>
+              </summary>
+              <ul className={styles.safeList}>
+                <li>OTP болон 2FA кодыг чатаас гадуур хэзээ ч бүү хуваалцаарай.</li>
+                <li>Төлбөрөө суллахаасаа өмнө нэвтрэлтийг шалгаарай.</li>
+                <li>Зөвхөн платформоор дамжуулан төлбөрөө төлөөрэй.</li>
+              </ul>
+            </details>
+
             <div className={styles.messages} ref={scrollRef} aria-live="polite">
               {hasOlder && (
                 <button

@@ -709,6 +709,54 @@ html[data-theme='light'] .avatar {
   gap: 6px;
 }
 
+/* Collapsible "Stay safe" fallback inside the thread. Hidden on desktop
+   where the sellerPanel shows the same content; shown below 1180px. */
+.safetyFold {
+  display: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.safetySummary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.safetySummary::-webkit-details-marker {
+  display: none;
+}
+
+.safetySummary::marker {
+  content: '';
+}
+
+.safetyChevron {
+  margin-left: auto;
+  color: var(--text-dim);
+  transition: transform 0.15s ease;
+}
+
+.safetyFold[open] .safetyChevron {
+  transform: rotate(180deg);
+}
+
+.safetyFold .safeList {
+  padding: 0 12px 12px 28px;
+  font-size: 12px;
+}
+
 @media (max-width: 1180px) {
   .page {
     max-width: 880px;
@@ -717,6 +765,10 @@ html[data-theme='light'] .avatar {
 
   .sellerPanel {
     display: none;
+  }
+
+  .safetyFold {
+    display: block;
   }
 }
 
