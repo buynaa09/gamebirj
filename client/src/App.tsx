@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
+import { Show, SignIn } from '@clerk/react';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeProvider';
 import { WishlistProvider } from './context/WishlistProvider';
 import { ClerkTokenBridge } from './components/auth/ClerkTokenBridge';
@@ -8,7 +9,6 @@ import { BottomNav } from './components/layout/BottomNav';
 import { HomePage } from './pages/HomePage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { RentalPage } from './pages/RentalPage';
-import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { SellPage } from './pages/SellPage';
 import { RentCreatePage } from './pages/RentCreatePage';
@@ -40,7 +40,21 @@ function AppShell() {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/rent" element={<RentalPage />} />
         <Route path="/rent/create" element={<RentCreatePage />} />
-        <Route path="/login/*" element={<LoginPage />} />
+        <Route
+          path="/login/*"
+          element={
+            <>
+              <Show when="signed-in">
+                <Navigate to="/" replace />
+              </Show>
+              <Show when="signed-out">
+                <main style={{ display: 'flex', justifyContent: 'center', padding: '4rem 1rem' }}>
+                  <SignIn signUpUrl="/signup" />
+                </main>
+              </Show>
+            </>
+          }
+        />
         <Route path="/signup/*" element={<SignupPage />} />
         <Route path="/sell" element={<SellDashboardPage />} />
         <Route path="/sell/processing" element={<SellPage />} />
