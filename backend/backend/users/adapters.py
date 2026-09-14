@@ -31,6 +31,12 @@ class AccountAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
 
+    def get_login_redirect_url(self, request: HttpRequest) -> str:
+        # TODO(remove after OAuth debug): temporary diagnostic.
+        url = super().get_login_redirect_url(request)
+        logger.error("Login redirect target: %s", url)
+        return url
+
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
     def is_open_for_signup(
@@ -65,6 +71,32 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
             params.get("error_reason"),
             "state" in params,
         )
+
+    def pre_social_login(
+        self,
+        request: HttpRequest,
+        sociallogin: SocialLogin,
+    ) -> None:
+        # TODO(remove after OAuth debug): temporary diagnostic bracketing of
+        # the post-exchange phase (exchange OK, final outcome unknown).
+        logger.error(
+            "Social pre-login: provider=%s email=%s",
+            getattr(getattr(sociallogin, "account", None), "provider", "?"),
+            getattr(getattr(sociallogin, "user", None), "email", "?"),
+        )
+        super().pre_social_login(request, sociallogin)
+
+    def save_user(
+        self,
+        request: HttpRequest,
+        sociallogin: SocialLogin,
+        form=None,
+    ):
+        # TODO(remove after OAuth debug): temporary diagnostic bracketing.
+        logger.error("Social save_user: enter")
+        user = super().save_user(request, sociallogin, form)
+        logger.error("Social save_user: exit user=%s", getattr(user, "username", "?"))
+        return user
 
     def get_requests_session(self):
         session = super().get_requests_session()
