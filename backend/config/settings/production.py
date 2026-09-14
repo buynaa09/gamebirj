@@ -38,6 +38,9 @@ CACHES = {
     },
 }
 
+# Absolute URLs (emails, OAuth) must use https behind the proxy.
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+
 # SECURITY
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-proxy-ssl-header

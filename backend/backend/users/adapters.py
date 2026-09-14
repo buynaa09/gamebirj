@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import logging
 import typing
+import uuid
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.apps import apps
 from django.conf import settings
 from django.utils.text import slugify
+
+logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from allauth.socialaccount.models import SocialLogin
@@ -51,7 +55,13 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
                 if last_name := data.get("last_name"):
                     user.name += f" {last_name}"
         if not user.username:
-            user.username = self._unique_username(data, sociallogin)
+            try:
+                user.username = self._unique_username(data, sociallogin)
+            except Exception:
+                # Never let username derivation 500 the OAuth callback —
+                # fall back to a random handle and log the real cause.
+                logger.exception("Failed to derive social username, using fallback")
+                user.username = f"user-{uuid.uuid4().hex[:12]}"
         return user
 
     def _unique_username(
@@ -62,7 +72,10 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         email = (data.get("email") or "").strip()
         base = slugify(email.split("@")[0]) if "@" in email else ""
         if not base:
-            base = slugify(f"{sociallogin.account.provider}-{sociallogin.account.uid}")
+            account = getattr(sociallogin, "account", None)
+            provider = getattr(account, "provider", "social") or "social"
+            uid = getattr(account, "uid", "") or uuid.uuid4().hex[:8]
+            base = slugify(f"{provider}-{uid}")
         base = base[:30] or "user"
         user_model = apps.get_model(settings.AUTH_USER_MODEL)
         username = base
