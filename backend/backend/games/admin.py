@@ -9,6 +9,7 @@ from .models import ListingChoice
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = ["name", "is_active"]
+    list_editable = ["is_active"]
     search_fields = ["name"]
     list_filter = ["is_active"]
 
