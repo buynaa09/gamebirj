@@ -5,9 +5,9 @@ import { dark } from '@clerk/themes';
 import App from './App';
 import './index.css';
 
-const publishableKey = import.meta.env.CLERK_PUBLISHABLE_KEY as string | undefined;
+const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 if (!publishableKey) {
-  throw new Error('Missing CLERK_PUBLISHABLE_KEY — run `clerk env pull` in client/.');
+  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY — run `clerk env pull` in client/.');
 }
 
 createRoot(document.getElementById('root')!).render(
