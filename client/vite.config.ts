@@ -7,4 +7,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  // Expose CLERK_* alongside VITE_* so the Clerk publishable key
+  // (CLERK_PUBLISHABLE_KEY) is available via import.meta.env.
+  envPrefix: ['VITE_', 'CLERK_'],
 })
