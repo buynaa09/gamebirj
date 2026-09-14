@@ -42,12 +42,20 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
     ) -> None:
         # allauth's default hook is a no-op and its error page hides the
         # cause, so log everything needed to diagnose silent 401s. No
-        # secrets are logged (exceptions carry error codes, not tokens).
+        # secrets are logged (exceptions carry error codes, not tokens;
+        # only the presence of single-use params is recorded, never values).
+        params = request.GET
         logger.error(
-            "Social login failed: provider=%s error=%s exception=%r",
+            "Social login failed: provider=%s error=%s exception=%r "
+            "provider_error=%s provider_error_description=%s "
+            "provider_error_reason=%s has_state_id=%s",
             getattr(provider, "id", provider),
             error,
             exception,
+            params.get("error"),
+            params.get("error_description"),
+            params.get("error_reason"),
+            "state" in params,
         )
 
     def populate_user(
