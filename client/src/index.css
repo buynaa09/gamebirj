@@ -47,6 +47,7 @@ body {
   -webkit-font-smoothing: antialiased;
   transition: background 0.25s ease, color 0.25s ease;
   padding-bottom: 80px;
+  overflow-x: clip;
 }
 
 @media (min-width: 900px) {

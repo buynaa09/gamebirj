@@ -5,7 +5,7 @@ export function ChatBubble() {
   return (
     <button className={styles.bubble} aria-label="Chat with us">
       <ChatIcon />
-      Chat with us
+      <span className={styles.bubbleText}>Chat with us</span>
     </button>
   );
 }

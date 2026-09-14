@@ -292,3 +292,22 @@ html[data-theme='light'] .avatar {
     display: none;
   }
 }
+
+/* Mobile: keep the bar to one row — auth actions live in the hamburger menu. */
+@media (max-width: 559px) {
+  .topbar {
+    padding: 10px 16px;
+  }
+
+  .brandLogo {
+    height: 40px;
+  }
+
+  .topActions {
+    gap: 8px;
+  }
+
+  .authBtns {
+    display: none;
+  }
+}

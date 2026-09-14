@@ -4,7 +4,7 @@ import { AuthProvider } from './context/AuthProvider';
 import { WishlistProvider } from './context/WishlistProvider';
 import { TopBar } from './components/layout/TopBar';
 import { BottomNav } from './components/layout/BottomNav';
-import { ChatBubble } from './components/layout/ChatBubble';
+// import { ChatBubble } from './components/layout/ChatBubble';
 import { HomePage } from './pages/HomePage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { RentalPage } from './pages/RentalPage';
