@@ -1,14 +1,22 @@
 from __future__ import annotations
 
 import logging
+import time
 import typing
 import uuid
 
+import urllib3.util.connection as urllib3_cn
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.apps import apps
 from django.conf import settings
 from django.utils.text import slugify
+
+# Force urllib3 / requests to resolve IPv4 addresses only.
+# On cloud VMs (such as Oracle Cloud Infrastructure), outbound IPv6 traffic
+# is dropped by default VCN routing, causing TCP connect attempts to hang
+# for ~21 seconds (SYN retransmits) before falling back to IPv4.
+urllib3_cn.HAS_IPV6 = False
 
 logger = logging.getLogger(__name__)
 
@@ -59,39 +67,72 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         )
 
     def get_requests_session(self):
-        # TODO(remove after OAuth debug): temporary diagnostic logging of
-        # the exact token/profile request params allauth sends, with secrets
-        # redacted, to pin down provider-side rejections (invalid_grant).
         session = super().get_requests_session()
         orig_request = session.request
 
         def logging_request(method, url, **kwargs):
-            if any(
+            # Enforce connect and read timeouts (5s connect, 10s read) so
+            # outbound OAuth calls can never hang indefinitely.
+            kwargs.setdefault("timeout", (5.0, 10.0))
+
+            is_oauth_call = any(
                 marker in url
                 for marker in ("oauth2", "token", "graph.facebook", "googleapis")
-            ):
+            )
+            _min_mask_len = 8
+            if is_oauth_call:
                 data = dict(kwargs.get("data") or {})
-                safe = {
-                    key: (
-                        "<redacted>"
-                        if key
-                        in {
-                            "client_secret",
-                            "code",
-                            "code_verifier",
-                            "refresh_token",
-                        }
-                        else value
-                    )
-                    for key, value in data.items()
-                }
+                safe = {}
+                for key, value in data.items():
+                    if key == "code" and isinstance(value, str):
+                        # Mask code while revealing ends/length to detect code reuse
+                        # across retry requests without leaking full grant.
+                        safe[key] = (
+                            f"{value[:4]}...{value[-4:]}(len={len(value)})"
+                            if len(value) > _min_mask_len
+                            else "<code_present>"
+                        )
+                    elif key in {
+                        "client_secret",
+                        "code_verifier",
+                        "refresh_token",
+                    }:
+                        safe[key] = "<redacted>"
+                    else:
+                        safe[key] = value
+
                 logger.error(
-                    "Social token request: %s %s data=%s",
+                    "Social token request: %s %s data=%s timeout=%s",
                     method,
                     url,
                     safe,
+                    kwargs.get("timeout"),
                 )
-            return orig_request(method, url, **kwargs)
+
+            t0 = time.monotonic()
+            try:
+                resp = orig_request(method, url, **kwargs)
+            except Exception:
+                elapsed = time.monotonic() - t0
+                if is_oauth_call:
+                    logger.exception(
+                        "Social token call failed [%.2fs]: %s",
+                        elapsed,
+                        url,
+                    )
+                raise
+            else:
+                elapsed = time.monotonic() - t0
+                if is_oauth_call:
+                    body_preview = (resp.text or "")[:200].replace("\n", " ")
+                    logger.error(
+                        "Social token response [%.2fs]: %s status=%d body=%s",
+                        elapsed,
+                        url,
+                        resp.status_code,
+                        body_preview,
+                    )
+                return resp
 
         session.request = logging_request
         return session

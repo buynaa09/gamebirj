@@ -2,6 +2,7 @@
 import logging
 
 import sentry_sdk
+import urllib3.util.connection as urllib3_cn
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -11,6 +12,12 @@ from .base import DATABASES
 from .base import INSTALLED_APPS
 from .base import REDIS_URL
 from .base import env
+
+# Oracle Cloud VCN drops IPv6 outbound packets by default, causing standard
+# getaddrinfo connections to hang for ~21s (SYN retry timeout) before falling
+# back to IPv4. Disabling IPv6 in urllib3 forces all outbound HTTPS requests
+# (allauth OAuth, Sentry, Cloudflare R2, SMTP) to use IPv4 immediately.
+urllib3_cn.HAS_IPV6 = False
 
 # GENERAL
 # ------------------------------------------------------------------------------
