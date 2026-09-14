@@ -7,6 +7,12 @@
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "89496d5dd00f4810205f351759594fc2742bf8eea85a2f2b2d1de59f4bd91576"
     },
+    "oauth": {
+      "source": "vercel-labs/portless",
+      "sourceType": "github",
+      "skillPath": "skills/oauth/SKILL.md",
+      "computedHash": "141fa84182bbe56650fc7c8f86e1d109bb1582e8bb8b844d1866daccc1ff8caf"
+    },
     "tailwind-design-system": {
       "source": "wshobson/agents",
       "sourceType": "github",

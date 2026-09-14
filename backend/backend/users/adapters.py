@@ -32,6 +32,24 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
     ) -> bool:
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
 
+    def on_authentication_error(
+        self,
+        request: HttpRequest,
+        provider,
+        error=None,
+        exception=None,
+        extra_context=None,
+    ) -> None:
+        # allauth's default hook is a no-op and its error page hides the
+        # cause, so log everything needed to diagnose silent 401s. No
+        # secrets are logged (exceptions carry error codes, not tokens).
+        logger.error(
+            "Social login failed: provider=%s error=%s exception=%r",
+            getattr(provider, "id", provider),
+            error,
+            exception,
+        )
+
     def populate_user(
         self,
         request: HttpRequest,
