@@ -1,18 +1,20 @@
-import { ClerkProvider } from '@clerk/react';
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import App from './App';
-import './index.css';
+import { ClerkProvider } from '@clerk/clerk-react';
+import { dark } from '@clerk/themes'; // 1. Dark theme-ийг импортлох
 
-const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
-if (!publishableKey) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY — run `clerk env pull` in client/.');
-}
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ClerkProvider publishableKey={publishableKey} afterSignOutUrl="/">
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ClerkProvider 
+      publishableKey={PUBLISHABLE_KEY}
+      appearance={{
+        baseTheme: dark, // 2. Энд dark theme-ийг зааж өгнө
+      }}
+    >
       <App />
     </ClerkProvider>
-  </StrictMode>,
+  </React.StrictMode>
 );

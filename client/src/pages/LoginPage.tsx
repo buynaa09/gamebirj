@@ -1,15 +1,13 @@
 import { SignIn, useAuth } from '@clerk/react';
-import { Navigate, useSearchParams } from 'react-router-dom';
-import styles from './AuthPage.module.css';
+import { Navigate } from 'react-router-dom';
 
 export function LoginPage() {
   const { isLoaded, isSignedIn } = useAuth();
-  const [params] = useSearchParams();
 
   if (!isLoaded) {
     return (
-      <main className={styles.page}>
-        <p className={styles.subtitle}>Уншиж байна…</p>
+      <main style={{ display: 'flex', justifyContent: 'center', padding: '4rem 1rem' }}>
+        <p>Уншиж байна…</p>
       </main>
     );
   }
@@ -18,17 +16,9 @@ export function LoginPage() {
     return <Navigate to="/" replace />;
   }
 
-  const error = params.get('error');
-
   return (
-    <main className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.eyebrow}>Welcome back</div>
-        <h1 className={styles.title}>Log in to GameBirj</h1>
-        <p className={styles.subtitle}>Buy and sell gaming accounts with escrow protection.</p>
-        {error && <div className={styles.error}>Social login failed. Please try again.</div>}
-        <SignIn signUpUrl="/signup" />
-      </div>
+    <main style={{ display: 'flex', justifyContent: 'center', padding: '4rem 1rem' }}>
+      <SignIn signUpUrl="/signup" />
     </main>
   );
 }
