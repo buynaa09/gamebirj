@@ -8,10 +8,12 @@ import { ListingCard } from '../components/marketplace/ListingCard';
 import { Lightbox } from '../components/marketplace/Lightbox';
 import { BuyModal } from '../components/marketplace/BuyModal';
 import { RentModal } from '../components/marketplace/RentModal';
+import { QPayCheckoutModal } from '../components/marketplace/QPayCheckoutModal';
 import { OfferModal } from '../components/chat/OfferModal';
-import { buyAccount, rentAccount } from '../services/accounts';
+import { fetchOrder, fetchRental } from '../services/accounts';
+import { createQPayInvoice } from '../services/payments';
 import { createOffer, openSellerThread } from '../services/chat';
-import type { PurchaseOrder, RentalOrder } from '../types';
+import type { PurchaseOrder, QPayPayment, RentalOrder } from '../types';
 import { formatPrice, formatRentalPrice, rentalUnitLabel, timeAgo } from '../utils/format';
 import styles from './ListingDetailPage.module.css';
 
@@ -34,6 +36,7 @@ export function ListingDetailPage({ id }: { id: number }) {
   const [rentOpen, setRentOpen] = useState(false);
   const [order, setOrder] = useState<PurchaseOrder | null>(null);
   const [rental, setRental] = useState<RentalOrder | null>(null);
+  const [checkout, setCheckout] = useState<QPayPayment | null>(null);
 
   if (loading) {
     return (
@@ -67,6 +70,48 @@ export function ListingDetailPage({ id }: { id: number }) {
   const paidPrice = account.sold_price ?? order?.amount ?? rental?.total ?? null;
   const isBuyer = order !== null || (account.sold_price !== null && !isOwner);
   const longDescription = account.description.length > 280;
+
+  const handlePaid = (paid: QPayPayment) => {
+    setCheckout(null);
+    if (paid.kind === 'rent') {
+      fetchRental(paid.account_id).then(setRental, () => {
+        setRental({
+          order_id: paid.id,
+          account_id: paid.account_id,
+          unit: account.rental_unit ?? 'day',
+          duration: paid.duration,
+          unit_price: account.price,
+          total: paid.amount,
+          status: 'active',
+          start_at: paid.paid_at ?? new Date().toISOString(),
+          end_at: paid.paid_at ?? new Date().toISOString(),
+          is_renter: true,
+          is_owner: false,
+        });
+      });
+    } else {
+      fetchOrder(paid.account_id).then(
+        (escrow) => {
+          setOrder({
+            order_id: escrow.order_id,
+            account_id: escrow.account_id,
+            amount: escrow.amount,
+            status: escrow.status,
+            sold_at: escrow.sold_at,
+          });
+        },
+        () => {
+          setOrder({
+            order_id: paid.id,
+            account_id: paid.account_id,
+            amount: paid.amount,
+            status: 'held',
+            sold_at: paid.paid_at ?? new Date().toISOString(),
+          });
+        },
+      );
+    }
+  };
 
   const share = () => {
     if (!navigator.clipboard) return;
@@ -392,10 +437,10 @@ export function ListingDetailPage({ id }: { id: number }) {
         <BuyModal
           price={account.price}
           onClose={() => setBuyOpen(false)}
-          onConfirm={() => buyAccount(account.id)}
-          onDone={(purchase) => {
+          onConfirm={() => createQPayInvoice(account.id, 'sale')}
+          onDone={(payment) => {
             setBuyOpen(false);
-            setOrder(purchase);
+            setCheckout(payment);
           }}
         />
       )}
@@ -405,11 +450,19 @@ export function ListingDetailPage({ id }: { id: number }) {
           price={account.price}
           unit={account.rental_unit}
           onClose={() => setRentOpen(false)}
-          onConfirm={(duration) => rentAccount(account.id, duration)}
-          onDone={(rentalOrder) => {
+          onConfirm={(duration) => createQPayInvoice(account.id, 'rent', duration)}
+          onDone={(payment) => {
             setRentOpen(false);
-            setRental(rentalOrder);
+            setCheckout(payment);
           }}
+        />
+      )}
+
+      {checkout && (
+        <QPayCheckoutModal
+          payment={checkout}
+          onClose={() => setCheckout(null)}
+          onPaid={handlePaid}
         />
       )}
     </main>

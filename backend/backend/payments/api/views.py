@@ -29,6 +29,25 @@ def _fail(status: int, message: str) -> HttpError:
     return HttpError(status, message)
 
 
+def _banks(payment: Payment) -> list[dict]:
+    urls = payment.qpay_urls
+    if not isinstance(urls, list):
+        return []
+    banks = []
+    for entry in urls:
+        if not isinstance(entry, dict) or not entry.get("link"):
+            continue
+        banks.append(
+            {
+                "name": str(entry.get("name") or "Банк"),
+                "description": str(entry.get("description") or ""),
+                "logo": str(entry.get("logo") or ""),
+                "link": str(entry.get("link") or ""),
+            },
+        )
+    return banks
+
+
 def _payload(payment: Payment) -> dict:
     return {
         "id": payment.pk,
@@ -41,6 +60,8 @@ def _payload(payment: Payment) -> dict:
         "invoice_id": payment.qpay_invoice_id,
         "qpay_short_url": payment.qpay_short_url,
         "qpay_qr_text": payment.qpay_qr_text,
+        "qpay_qr_image": payment.qpay_qr_image,
+        "banks": _banks(payment),
         "paid_amount": (
             float(payment.paid_amount) if payment.paid_amount is not None else None
         ),

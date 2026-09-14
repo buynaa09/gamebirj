@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { formatPrice, rentalUnitLabel } from '../../utils/format';
-import type { RentalOrder, RentalUnit } from '../../types';
+import type { QPayPayment, RentalUnit } from '../../types';
 import styles from './BuyModal.module.css';
 
 interface RentModalProps {
   price: number;
   unit: RentalUnit;
   onClose: () => void;
-  onConfirm: (duration: number) => Promise<RentalOrder>;
-  onDone: (order: RentalOrder) => void;
+  onConfirm: (duration: number) => Promise<QPayPayment>;
+  onDone: (payment: QPayPayment) => void;
 }
 
 export function RentModal({ price, unit, onClose, onConfirm, onDone }: RentModalProps) {
@@ -87,7 +87,7 @@ export function RentModal({ price, unit, onClose, onConfirm, onDone }: RentModal
             onClick={confirm}
             disabled={paying}
           >
-            {paying ? 'Төлж байна…' : 'Төлж түрээслэх'}
+            {paying ? 'Нэхэмжлэл үүсгэж байна…' : 'QPay-ээр төлөх'}
           </button>
         </div>
       </div>

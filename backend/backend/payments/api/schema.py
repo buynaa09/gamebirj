@@ -7,6 +7,15 @@ class InvoiceRequestSchema(Schema):
     duration: int = 1
 
 
+class QPayBankSchema(Schema):
+    """One bank deeplink from QPay invoice_create `urls`."""
+
+    name: str
+    description: str = ""
+    logo: str = ""
+    link: str = ""
+
+
 class PaymentSchema(Schema):
     id: int
     sender_invoice_no: str
@@ -18,6 +27,8 @@ class PaymentSchema(Schema):
     invoice_id: str = ""
     qpay_short_url: str = ""
     qpay_qr_text: str = ""
+    qpay_qr_image: str = ""
+    banks: list[QPayBankSchema] = []
     paid_amount: float | None = None
     created_at: str = ""
     paid_at: str | None = None

@@ -1,0 +1,208 @@
+.card {
+  position: fixed;
+  z-index: 70;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 22px 20px;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.close:hover {
+  color: var(--text);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.brandMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #e31837;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.brandName {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.amount {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--red);
+}
+
+.sub {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.success {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #33a17a;
+}
+
+.error {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--red);
+}
+
+.qr {
+  display: block;
+  width: min(200px, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  margin: 12px auto 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px;
+}
+
+.bankGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.bankBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.bankBtn:hover {
+  border-color: var(--red);
+}
+
+.bankLogo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #fff;
+}
+
+.bankFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--red);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.bankName {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.shortLink {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.qrToggle {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.payBtn {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+@media (max-width: 560px) {
+  .card {
+    padding: 20px 16px 16px;
+    border-radius: 12px;
+  }
+
+  .amount {
+    font-size: 22px;
+  }
+
+  .bankGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .card {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    padding: 28px 28px 22px;
+  }
+
+  .bankGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

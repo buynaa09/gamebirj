@@ -154,11 +154,15 @@ def create_payment_invoice(
     payment.qpay_invoice_id = invoice.invoice_id
     payment.qpay_short_url = invoice.qPay_shortUrl
     payment.qpay_qr_text = invoice.qr_text
+    payment.qpay_qr_image = invoice.qr_image
+    payment.qpay_urls = [url.model_dump() for url in invoice.urls]
     payment.save(
         update_fields=[
             "qpay_invoice_id",
             "qpay_short_url",
             "qpay_qr_text",
+            "qpay_qr_image",
+            "qpay_urls",
             "updated_at",
         ],
     )

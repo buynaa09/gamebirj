@@ -49,6 +49,11 @@ class Payment(models.Model):
     qpay_invoice_id = models.CharField(max_length=50, blank=True, default="")
     qpay_short_url = models.URLField(max_length=500, blank=True, default="")
     qpay_qr_text = models.TextField(blank=True, default="")
+    # Raw base64 QR PNG from QPay without any URI prefix.
+    qpay_qr_image = models.TextField(blank=True, default="")
+    # Bank deeplinks returned by QPay when the invoice is created.
+    # Logo URLs are QPay-hosted bank marks.
+    qpay_urls = models.JSONField(default=list, blank=True)
     status = models.CharField(
         max_length=16,
         choices=STATUS_CHOICES,

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from django.urls import reverse
+from qpay_client.v2.schemas import QPayDeeplink
 
 from backend.accounts.models import Account
 from backend.accounts.models import EscrowTransaction
@@ -36,8 +37,15 @@ class FakeQPayClient:
             invoice_id=f"INV-{request.sender_invoice_no}",
             qPay_shortUrl="https://qpay.mn/s/abc",
             qr_text="QR-TEXT",
-            qr_image="",
-            urls=[],
+            qr_image="QR-IMAGE-BASE64",
+            urls=[
+                QPayDeeplink(
+                    name="Khan bank",
+                    description="Хаан банк",
+                    logo="https://qpay.mn/q/logo/khanbank.png",
+                    link="khanbank://q?qPay_QRcode=QR-TEXT",
+                ),
+            ],
             subscription=None,
         )
 
@@ -103,6 +111,10 @@ def test_invoice_happy_path_sale(client: Client, monkeypatch):
     assert body["status"] == "pending"
     assert body["invoice_id"].startswith("INV-")
     assert body["qpay_short_url"] == "https://qpay.mn/s/abc"
+    assert body["qpay_qr_image"] == "QR-IMAGE-BASE64"
+    assert len(body["banks"]) == 1
+    assert body["banks"][0]["name"] == "Khan bank"
+    assert body["banks"][0]["logo"] == "https://qpay.mn/q/logo/khanbank.png"
     # Pay-then-claim: listing stays available until money arrives.
     account.refresh_from_db()
     assert account.status == Account.AVAILABLE

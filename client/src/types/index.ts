@@ -115,6 +115,33 @@ export interface EscrowOrder {
   is_seller: boolean;
 }
 
+export interface QPayBank {
+  name: string;
+  description: string;
+  logo: string;
+  link: string;
+}
+
+export type QPayPaymentStatus = 'pending' | 'paid' | 'failed' | 'expired' | 'cancelled';
+
+export interface QPayPayment {
+  id: number;
+  sender_invoice_no: string;
+  account_id: number;
+  kind: 'sale' | 'rent';
+  duration: number;
+  amount: number;
+  status: QPayPaymentStatus;
+  invoice_id: string;
+  qpay_short_url: string;
+  qpay_qr_text: string;
+  qpay_qr_image: string;
+  banks: QPayBank[];
+  paid_amount: number | null;
+  created_at: string;
+  paid_at: string | null;
+}
+
 export type SortKey = 'newest' | 'oldest' | 'price-asc' | 'price-desc';
 
 export interface GameFilter {

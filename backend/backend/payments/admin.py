@@ -27,6 +27,8 @@ class PaymentAdmin(admin.ModelAdmin):
         "qpay_invoice_id",
         "qpay_short_url",
         "qpay_qr_text",
+        "qpay_qr_image",
+        "qpay_urls",
         "paid_amount",
         "raw_callback",
         "created_at",

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { formatPrice } from '../../utils/format';
-import type { PurchaseOrder } from '../../types';
+import type { QPayPayment } from '../../types';
 import styles from './BuyModal.module.css';
 
 interface BuyModalProps {
   price: number;
   onClose: () => void;
-  onConfirm: () => Promise<PurchaseOrder>;
-  onDone: (order: PurchaseOrder) => void;
+  onConfirm: () => Promise<QPayPayment>;
+  onDone: (payment: QPayPayment) => void;
 }
 
 export function BuyModal({ price, onClose, onConfirm, onDone }: BuyModalProps) {
@@ -64,7 +64,7 @@ export function BuyModal({ price, onClose, onConfirm, onDone }: BuyModalProps) {
             onClick={confirm}
             disabled={paying}
           >
-            {paying ? 'Төлж байна…' : 'Төлж худалдаж авах'}
+            {paying ? 'Нэхэмжлэл үүсгэж байна…' : 'QPay-ээр төлөх'}
           </button>
         </div>
       </div>
