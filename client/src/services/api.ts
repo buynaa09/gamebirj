@@ -11,8 +11,13 @@ export function resolveMediaUrl(url: string | null | undefined): string | null {
 }
 
 export function getCsrfToken(): string | undefined {
-  const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : undefined;
+  // Production renames the CSRF cookie to `__Secure-csrftoken`
+  // (see backend config/settings/production.py); local dev uses `csrftoken`.
+  for (const name of ['__Secure-csrftoken', 'csrftoken']) {
+    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+    if (match) return decodeURIComponent(match[1]);
+  }
+  return undefined;
 }
 
 interface ErrorPayload {
