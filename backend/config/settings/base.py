@@ -99,6 +99,7 @@ LOCAL_APPS = [
     "backend.accounts",
     "backend.chat",
     "backend.panel",
+    "backend.payments",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -321,6 +322,31 @@ CLERK_SECRET_KEY = env("CLERK_SECRET_KEY", default="")
 CLERK_JWKS_URL = env("CLERK_JWKS_URL", default="")
 CLERK_API_BASE_URL = env("CLERK_API_BASE_URL", default="https://api.clerk.com/v1")
 CLERK_JWKS_CACHE_TTL = env.int("CLERK_JWKS_CACHE_TTL", default=600)
+
+
+# QPay v2 payments (https://developer.qpay.mn)
+# ------------------------------------------------------------------------------
+# Credentials live in .envs/.local/.qpay (sandbox) and
+# .envs/.production/.qpay (merchant). Never call QPaySettings() directly —
+# use backend.payments.qpay.get_qpay_settings(), which picks sandbox() or
+# production() from these values.
+QPAY_USE_SANDBOX = env.bool("QPAY_USE_SANDBOX", default=True)
+QPAY_USERNAME = env("QPAY_USERNAME", default="")
+QPAY_PASSWORD = env("QPAY_PASSWORD", default="")
+QPAY_INVOICE_CODE = env("QPAY_INVOICE_CODE", default="")
+# Public API base used to build per-invoice callback_url.
+QPAY_CALLBACK_BASE_URL = env(
+    "QPAY_CALLBACK_BASE_URL",
+    default="http://localhost:8000",
+).rstrip("/")
+# HTTP retry/backoff for the QPay transport (network errors, 5xx).
+QPAY_CLIENT_RETRIES = env.int("QPAY_CLIENT_RETRIES", default=2)
+QPAY_CLIENT_DELAY = env.float("QPAY_CLIENT_DELAY", default=0.5)
+QPAY_CLIENT_JITTER = env.float("QPAY_CLIENT_JITTER", default=0.5)
+# payment_check polling (exponential backoff until a payment is found).
+QPAY_PAYMENT_CHECK_RETRIES = env.int("QPAY_PAYMENT_CHECK_RETRIES", default=5)
+QPAY_PAYMENT_CHECK_DELAY = env.float("QPAY_PAYMENT_CHECK_DELAY", default=0.5)
+QPAY_PAYMENT_CHECK_JITTER = env.float("QPAY_PAYMENT_CHECK_JITTER", default=0.5)
 
 
 # Your stuff...

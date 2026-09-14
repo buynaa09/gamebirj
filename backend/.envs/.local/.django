@@ -17,5 +17,8 @@ FACEBOOK_CLIENT_SECRET=
 
 # Clerk (Dashboard -> Configure -> API keys; secret stays server-side)
 # JWKS URL shape: https://<clerk-frontend-api>/.well-known/jwks.json
+# Derived from client/.env VITE_CLERK_PUBLISHABLE_KEY (pk_test_... ->
+# fair-boa-6366.clerk.accounts.dev). Must match the instance the SPA signs
+# in with, or every API call 401s.
 CLERK_SECRET_KEY=
-CLERK_JWKS_URL=
+CLERK_JWKS_URL=https://fair-boa-6366.clerk.accounts.dev/.well-known/jwks.json
