@@ -19,22 +19,6 @@ function matchesQuery(account: MarketAccount, q: string): boolean {
   );
 }
 
-function matchesListingFilters(
-  account: MarketAccount,
-  listingFilters: Record<number, string>,
-): boolean {
-  for (const [idStr, rawValue] of Object.entries(listingFilters)) {
-    const filterValue = rawValue.trim().toLowerCase();
-    if (!filterValue) continue;
-    const listingId = Number(idStr);
-    const detail = account.listings.find((d) => d.listing_id === listingId);
-    if (!detail) return false;
-    const haystack = [...detail.choices, detail.value].join(' ').toLowerCase();
-    if (!haystack.includes(filterValue)) return false;
-  }
-  return true;
-}
-
 function sortAccounts(accounts: MarketAccount[], sort: SortKey): MarketAccount[] {
   const result = [...accounts];
   switch (sort) {
@@ -63,12 +47,10 @@ export function RentalPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   // Extra per-game filters: reset whenever the selected game changes.
   const [selectedRank, setSelectedRank] = useState<string | null>(null);
-  const [listingFilters, setListingFilters] = useState<Record<number, string>>({});
 
   const applyGameSelection = (next: string[]) => {
     setSelectedGames(next);
     setSelectedRank(null);
-    setListingFilters({});
   };
 
   const toggleGame = (gameName: string) => {
@@ -88,10 +70,6 @@ export function RentalPage() {
     applyGameSelection(next);
   };
 
-  const handleListingFilterChange = (listingId: number, value: string) => {
-    setListingFilters((prev) => ({ ...prev, [listingId]: value }));
-  };
-
   const sidebar = (
     <FiltersSidebar
       accounts={accounts}
@@ -103,8 +81,6 @@ export function RentalPage() {
       onToggleGame={toggleGame}
       selectedRank={selectedRank}
       onRankChange={setSelectedRank}
-      listingFilters={listingFilters}
-      onListingFilterChange={handleListingFilterChange}
     />
   );
 
@@ -118,8 +94,6 @@ export function RentalPage() {
     if (selectedRank) {
       result = result.filter((a) => a.game_rank === selectedRank);
     }
-
-    result = result.filter((a) => matchesListingFilters(a, listingFilters));
 
     if (minPrice !== null) {
       result = result.filter((a) => a.price >= minPrice);
@@ -135,7 +109,7 @@ export function RentalPage() {
     }
 
     return sortAccounts(result, sort);
-  }, [accounts, query, selectedGames, selectedRank, listingFilters, sort, minPrice, maxPrice]);
+  }, [accounts, query, selectedGames, selectedRank, sort, minPrice, maxPrice]);
 
   return (
     <main>
@@ -161,8 +135,6 @@ export function RentalPage() {
             onToggleGame={toggleGame}
             selectedRank={selectedRank}
             onRankChange={setSelectedRank}
-            listingFilters={listingFilters}
-            onListingFilterChange={handleListingFilterChange}
             className={sidebarStyles.filtersVisible}
           />
         </FiltersDrawer>

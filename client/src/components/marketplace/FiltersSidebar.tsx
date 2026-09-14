@@ -14,8 +14,6 @@ interface FiltersSidebarProps {
   onToggleGame: (gameName: string) => void;
   selectedRank: string | null;
   onRankChange: (value: string | null) => void;
-  listingFilters: Record<number, string>;
-  onListingFilterChange: (listingId: number, value: string) => void;
   className?: string;
 }
 
@@ -69,8 +67,6 @@ export function FiltersSidebar({
   onToggleGame,
   selectedRank,
   onRankChange,
-  listingFilters,
-  onListingFilterChange,
   className,
 }: FiltersSidebarProps) {
   const games = useGames();
@@ -139,40 +135,6 @@ export function FiltersSidebar({
           </select>
         </>
       )}
-
-      {selectedGame &&
-        selectedGame.listings.map((listing) =>
-          listing.listing_type === 'choice' ? (
-            <div key={listing.id}>
-              <div className={styles.groupTitle}>{listing.title}</div>
-              <select
-                aria-label={`Filter by ${listing.title}`}
-                className={styles.select}
-                value={listingFilters[listing.id] ?? ''}
-                onChange={(e) => onListingFilterChange(listing.id, e.target.value)}
-              >
-                <option value="">Бүгд</option>
-                {listing.choices.map((choice) => (
-                  <option key={choice} value={choice}>
-                    {choice}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <div key={listing.id}>
-              <div className={styles.groupTitle}>{listing.title}</div>
-              <input
-                type="text"
-                aria-label={`Filter by ${listing.title}`}
-                className={styles.textInput}
-                placeholder={listing.place_holder_value ?? listing.title}
-                value={listingFilters[listing.id] ?? ''}
-                onChange={(e) => onListingFilterChange(listing.id, e.target.value)}
-              />
-            </div>
-          ),
-        )}
 
       <div className={styles.groupTitle}>Үнийн хэмжээ</div>
       <div className={styles.priceInputs}>
