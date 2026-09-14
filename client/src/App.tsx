@@ -49,7 +49,7 @@ function AppShell() {
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/messages" element={<MessagesPage />} />
       </Routes>
-      <ChatBubble />
+      {/* <ChatBubble /> */}
       <BottomNav />
     </>
   );

@@ -44,7 +44,7 @@ router = Router(tags=["accounts"])
 
 logger = logging.getLogger(__name__)
 
-MAX_IMAGES = 8
+MAX_IMAGES = 15
 
 
 def _fail(status: int, message: str) -> HttpError:

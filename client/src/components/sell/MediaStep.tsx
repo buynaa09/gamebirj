@@ -21,9 +21,9 @@ export function MediaStep({ images, onChange }: MediaStepProps) {
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
       next.push({ name: file.name, url: URL.createObjectURL(file), file });
-      if (next.length >= 8) break;
+      if (next.length >= 15) break;
     }
-    onChange(next.slice(0, 8));
+    onChange(next.slice(0, 15));
   };
 
   const removeAt = (index: number) => {
@@ -36,7 +36,7 @@ export function MediaStep({ images, onChange }: MediaStepProps) {
     <div>
       <h3 className={styles.heading}>Зураг</h3>
       <p className={styles.lead}>
-        Ранк, скин болон инвенторийн нотолгоо болох зургуудыг оруулна уу. Нийт 8 хүртэлх скриншот оруулах боломжтой — нууц үгээ хэзээ ч бүү харуул.
+        Ранк, скин болон инвенторийн нотолгоо болох зургуудыг оруулна уу. Нийт 15 хүртэлх скриншот оруулах боломжтой — нууц үгээ хэзээ ч бүү харуул.
       </p>
 
       <input
@@ -66,9 +66,9 @@ export function MediaStep({ images, onChange }: MediaStepProps) {
         </div>
       )}
 
-      {images.length < 8 && (
+      {images.length < 15 && (
         <button type="button" className={styles.uploadBtn} onClick={() => inputRef.current?.click()}>
-          + Зураг нэмэх ({images.length}/8)
+          + Зураг нэмэх ({images.length}/15)
         </button>
       )}
 

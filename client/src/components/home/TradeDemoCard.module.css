@@ -71,10 +71,12 @@
   background: var(--panel-2);
   position: relative;
   overflow: hidden;
+  transition: border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
 .flowBox.active {
   border-color: var(--red);
+  box-shadow: 0 0 0 1px var(--red), 0 8px 20px -10px var(--red);
 }
 
 .flowBox .label {
@@ -95,8 +97,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 60%;
+  height: 0;
+  opacity: 0;
   background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--red) 30%, transparent));
+  transition: height 0.6s ease, opacity 0.6s ease;
+}
+
+.flowBox.active .flowFill {
+  height: 60%;
+  opacity: 1;
 }
 
 .flowChip {
@@ -140,4 +149,75 @@
   font-weight: 700;
   font-family: ui-monospace, monospace;
   font-size: 11px;
+}
+
+/* Looping demo animation: stage progress, text swaps, timeline highlight. */
+.progress {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--red);
+  border-radius: 2px;
+}
+
+.statusSwap,
+.chipSwap {
+  display: inline-block;
+}
+
+.timeline .row {
+  opacity: 0.55;
+  transition: opacity 0.5s ease;
+}
+
+.timeline .row.current,
+.timeline .row.done {
+  opacity: 1;
+}
+
+.timeline .row.done .t {
+  color: var(--text-faint);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .progress span {
+    animation: fillBar 2.4s linear both;
+  }
+
+  .statusSwap,
+  .chipSwap {
+    animation: swapIn 0.45s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tradeCard *,
+  .tradeCard {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes fillBar {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes swapIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
 }
