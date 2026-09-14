@@ -96,6 +96,56 @@ html[data-theme='light'] .error {
   cursor: not-allowed;
 }
 
+.socialList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.socialBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.socialBtn:hover {
+  filter: brightness(0.96);
+}
+
+.socialBtn:active {
+  transform: translateY(1px);
+}
+
+.googleBtn {
+  background: #fff;
+  color: #1f1f1f;
+  border-color: #dadce0;
+}
+
+.facebookBtn {
+  background: #1877f2;
+  border-color: #1877f2;
+  color: #fff;
+}
+
+.hint {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
 .switch {
   margin-top: 18px;
   text-align: center;

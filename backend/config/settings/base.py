@@ -1,5 +1,6 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
+
 import os
 from pathlib import Path
 
@@ -93,6 +94,8 @@ THIRD_PARTY_APPS = [
     "allauth.account",
     "allauth.mfa",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.facebook",
     "corsheaders",
 ]
 
@@ -122,7 +125,13 @@ AUTHENTICATION_BACKENDS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "users:redirect"
+# After a social login the user lands back on the SPA (session cookie auth).
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
+LOGIN_REDIRECT_URL = env("DJANGO_LOGIN_REDIRECT_URL", default=FRONTEND_URL)
+ACCOUNT_LOGOUT_REDIRECT_URL = env(
+    "DJANGO_ACCOUNT_LOGOUT_REDIRECT_URL",
+    default=FRONTEND_URL,
+)
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "account_login"
 
@@ -333,6 +342,51 @@ ACCOUNT_FORMS = {"signup": "backend.users.forms.UserSignupForm"}
 SOCIALACCOUNT_ADAPTER = "backend.users.adapters.SocialAccountAdapter"
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_FORMS = {"signup": "backend.users.forms.UserSocialSignupForm"}
+# Social-only login for regular users (Google + Facebook). Password endpoints in
+# `backend/users/api/auth.py` are kept as an admin/staff fallback, not linked in UI.
+# GET on /accounts/<provider>/login/ starts OAuth immediately (plain <a> buttons).
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+# Provider emails are trusted — don't force the mandatory verification flow
+# (ACCOUNT_EMAIL_VERIFICATION stays "mandatory" for the password path).
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+# Connect a social login to an existing user with the same verified email.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+# https://docs.allauth.org/en/latest/socialaccount/providers.html
+# Credentials come from env (empty by default — user fills them in).
+# Callback URLs to register in consoles:
+#   <backend>/accounts/google/login/callback/
+#   <backend>/accounts/facebook/login/callback/
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": env("GOOGLE_CLIENT_ID", default=""),
+            "secret": env("GOOGLE_CLIENT_SECRET", default=""),
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+    },
+    "facebook": {
+        "APP": {
+            "client_id": env("FACEBOOK_CLIENT_ID", default=""),
+            "secret": env("FACEBOOK_CLIENT_SECRET", default=""),
+            "key": "",
+        },
+        "METHOD": "oauth2",
+        "SCOPE": ["email", "public_profile"],
+        "AUTH_PARAMS": {"auth_type": "reauthenticate"},
+        "FIELDS": [
+            "id",
+            "email",
+            "name",
+            "first_name",
+            "last_name",
+            "picture",
+        ],
+        "VERIFIED_EMAIL": True,
+    },
+}
 
 
 # Your stuff...

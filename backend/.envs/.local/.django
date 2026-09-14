@@ -4,3 +4,13 @@ USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
 # Channels Redis layer (PostgreSQL remains the source of truth for messages)
 REDIS_URL=redis://redis:6379/1
+# SPA origin — social logins redirect back here after the OAuth callback
+FRONTEND_URL=http://localhost:5173
+# Google OAuth (Google Cloud Console → Credentials → OAuth client ID, Web app)
+# Callback URL to register: http://localhost:8000/accounts/google/login/callback/
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+# Facebook Login (Meta Developers → Facebook Login → Settings)
+# Callback URL to register: http://localhost:8000/accounts/facebook/login/callback/
+FACEBOOK_CLIENT_ID=
+FACEBOOK_CLIENT_SECRET=

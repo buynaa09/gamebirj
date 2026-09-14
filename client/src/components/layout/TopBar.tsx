@@ -155,11 +155,8 @@ function TopBarInner() {
           ) : (
             !loading && (
               <div className={styles.authBtns}>
-                <NavLink to="/login" className={`btn btn-outline ${styles.authBtn}`}>
+                <NavLink to="/login" className={`btn btn-primary ${styles.authBtn}`}>
                   Нэвтрэх
-                </NavLink>
-                <NavLink to="/signup" className={`btn btn-primary ${styles.authBtn}`}>
-                  Бүртгүүлэх
                 </NavLink>
               </div>
             )
@@ -247,11 +244,8 @@ function MobileMenu({
           </div>
         ) : (
           <div className={styles.mobileAuth}>
-            <NavLink to="/login" onClick={onNavigate} className={`btn btn-outline ${styles.mobileAuthBtn}`}>
+            <NavLink to="/login" onClick={onNavigate} className={`btn btn-primary ${styles.mobileAuthBtn}`}>
               Нэвтрэх
-            </NavLink>
-            <NavLink to="/signup" onClick={onNavigate} className={`btn btn-primary ${styles.mobileAuthBtn}`}>
-              Бүртгүүлэх
             </NavLink>
           </div>
         ))}
