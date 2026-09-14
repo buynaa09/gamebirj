@@ -33,6 +33,7 @@ dependencies = [
   "psycopg[c]==3.3.5",
   "pyjwt[crypto]>=2.10",
   "python-slugify==8.0.4",
+  "qpay-client>=2.0.4",
   "redis==8.1.0",
   "sentry-sdk>=2.69.1",
   "uvicorn-worker==0.4.0",
