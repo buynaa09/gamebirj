@@ -374,6 +374,10 @@ html[data-theme='light'] .avatar {
 .bubbleImageLink {
   display: block;
   margin-bottom: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: zoom-in;
 }
 
 .bubbleImage {

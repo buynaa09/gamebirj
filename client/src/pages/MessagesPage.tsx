@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
 import { ChatBubbleIcon, ImageIcon, SearchIcon, SendIcon } from '../components/icons/Icons';
 import { OfferCard } from '../components/chat/OfferCard';
+import { Lightbox } from '../components/marketplace/Lightbox';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useChatSocket } from '../hooks/useChatSocket';
 import { confirmReceipt, fetchAccount, fetchOrder } from '../services/accounts';
@@ -56,6 +57,7 @@ export function MessagesPage() {
   const [listError, setListError] = useState<string | null>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [threadLoading, setThreadLoading] = useState(() => selectedId !== null);
   const [threadError, setThreadError] = useState<string | null>(null);
   const [oldestPage, setOldestPage] = useState(1);
@@ -507,6 +509,9 @@ export function MessagesPage() {
   });
   const selected = conversations.find((c) => c.conversation_id === selectedId) ?? null;
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread_count, 0);
+  const threadImages = messages
+    .map((m) => m.image)
+    .filter((src): src is string => src !== null);
   const hasOlder = messages.length < totalMessages;
   const otherIsSeller =
     listing !== null && selected !== null && listing.seller === selected.other_user.username;
@@ -749,15 +754,16 @@ export function MessagesPage() {
                           />
                         )}
                         {m.image && (
-                          <a
-                            href={m.image}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setLightboxIndex(threadImages.indexOf(m.image as string))
+                            }
                             className={styles.bubbleImageLink}
-                            aria-label="Зургийг бүтнээр харах"
+                            aria-label="Зургийг томруулж харах"
                           >
                             <img src={m.image} alt="" loading="lazy" className={styles.bubbleImage} />
-                          </a>
+                          </button>
                         )}
                         {m.content && <p className={styles.bubbleText}>{m.content}</p>}
                         <span className={styles.bubbleMeta}>
@@ -770,6 +776,16 @@ export function MessagesPage() {
                 })}
               <div ref={bottomRef} />
             </div>
+
+            {lightboxIndex !== null && threadImages.length > 0 && (
+              <Lightbox
+                photos={threadImages}
+                index={lightboxIndex}
+                title="Хавсаргасан зураг"
+                onIndexChange={setLightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+              />
+            )}
 
             {sendError && (
               <p className={styles.errorText} role="alert">

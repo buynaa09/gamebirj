@@ -38,7 +38,7 @@ function sortAccounts(accounts: MarketAccount[], sort: SortKey): MarketAccount[]
 }
 
 export function MarketplacePage() {
-  const { accounts, loading, error, reload } = useAccounts();
+  const { accounts, loading, error, reload } = useAccounts('sale');
   const [query, setQuery] = useState('');
   const [selectedGames, setSelectedGames] = useState<string[]>([]);
   const [sort, setSort] = useState<SortKey>('newest');
