@@ -58,6 +58,44 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
             "state" in params,
         )
 
+    def get_requests_session(self):
+        # TODO(remove after OAuth debug): temporary diagnostic logging of
+        # the exact token/profile request params allauth sends, with secrets
+        # redacted, to pin down provider-side rejections (invalid_grant).
+        session = super().get_requests_session()
+        orig_request = session.request
+
+        def logging_request(method, url, **kwargs):
+            if any(
+                marker in url
+                for marker in ("oauth2", "token", "graph.facebook", "googleapis")
+            ):
+                data = dict(kwargs.get("data") or {})
+                safe = {
+                    key: (
+                        "<redacted>"
+                        if key
+                        in {
+                            "client_secret",
+                            "code",
+                            "code_verifier",
+                            "refresh_token",
+                        }
+                        else value
+                    )
+                    for key, value in data.items()
+                }
+                logger.error(
+                    "Social token request: %s %s data=%s",
+                    method,
+                    url,
+                    safe,
+                )
+            return orig_request(method, url, **kwargs)
+
+        session.request = logging_request
+        return session
+
     def populate_user(
         self,
         request: HttpRequest,
