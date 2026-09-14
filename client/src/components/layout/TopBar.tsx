@@ -1,9 +1,10 @@
+import { Show, SignInButton, SignUpButton, UserButton, useClerk } from '@clerk/react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { useAuth } from '../../context/AuthContext';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useUnreadMessages } from '../../hooks/useUnreadMessages';
-import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon, ChatBubbleIcon } from '../icons/Icons';
+import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon, ChatBubbleIcon, GridIcon } from '../icons/Icons';
 import darkLogo from '../../assets/logo/dark.png';
 import lightLogo from '../../assets/logo/light.png';
 import styles from './TopBar.module.css';
@@ -14,52 +15,17 @@ export function TopBar() {
 
 function TopBarInner() {
   const { theme, toggleTheme } = useTheme();
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useCurrentUser();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const unreadMessages = useUnreadMessages();
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
-  useEffect(() => {
-    if (!dropdownOpen) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setDropdownOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [dropdownOpen]);
-
   const handleBrandClick = () => {
-    setDropdownOpen(false);
     closeMobileMenu();
   };
-
-  const handleLogout = () => {
-    setDropdownOpen(false);
-    closeMobileMenu();
-    logout()
-      .catch(() => {
-        // Ниш хэдийн дууссан ч гарсанд тооцно.
-      })
-      .finally(() => {
-        navigate('/', { replace: true });
-      });
-  };
-
-  const initial = user?.username?.charAt(0).toUpperCase() ?? '?';
 
   return (
     <>
@@ -124,40 +90,20 @@ function TopBarInner() {
                 <BellIcon />
               </button>
 
-              <div className={styles.profileWrap} ref={dropdownRef}>
-                <button
-                  className={styles.avatar}
-                  aria-label="Профайл цэс"
-                  aria-expanded={dropdownOpen}
-                  onClick={() => setDropdownOpen((o) => !o)}
-                >
-                  {initial}
-                </button>
-                {dropdownOpen && (
-                  <div className={styles.dropdown} role="menu">
-                    <div className={styles.dropdownHeader}>{user.username}</div>
-                    <a href="#" role="menuitem">
-                      Профайл
-                    </a>
-                    <a href="#" role="menuitem">
-                      Гүйлгээнүүд
-                    </a>
-                    <NavLink to="/wishlist" role="menuitem">
-                      Хадгалсан
-                    </NavLink>
-                    <button role="menuitem" className={styles.dropdownLogout} onClick={handleLogout}>
-                      Гарах
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UserButton>
+                <UserButton.MenuItems>
+                  <UserButton.Link label="Хадгалсан" href="/wishlist" labelIcon={<GridIcon size={15} />} />
+                </UserButton.MenuItems>
+              </UserButton>
             </>
           ) : (
             !loading && (
               <div className={styles.authBtns}>
-                <NavLink to="/login" className={`btn btn-primary ${styles.authBtn}`}>
-                  Нэвтрэх
-                </NavLink>
+                <Show when="signed-out">
+                  <SignInButton mode="modal" signUpFallbackRedirectUrl="/">
+                    <span className={`btn btn-primary ${styles.authBtn}`}>Нэвтрэх</span>
+                  </SignInButton>
+                </Show>
               </div>
             )
           )}
@@ -173,11 +119,7 @@ function TopBarInner() {
       </header>
 
       {mobileMenuOpen && (
-        <MobileMenu
-          currentPath={location.pathname}
-          onNavigate={closeMobileMenu}
-          onLogout={handleLogout}
-        />
+        <MobileMenu currentPath={location.pathname} onNavigate={closeMobileMenu} />
       )}
     </>
   );
@@ -186,13 +128,18 @@ function TopBarInner() {
 function MobileMenu({
   currentPath,
   onNavigate,
-  onLogout,
 }: {
   currentPath: string;
   onNavigate: () => void;
-  onLogout: () => void;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useCurrentUser();
+  const { signOut } = useClerk();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    onNavigate();
+    signOut(() => navigate('/', { replace: true }));
+  };
 
   return (
     <div className={styles.mobileMenu}>
@@ -238,15 +185,20 @@ function MobileMenu({
         (user ? (
           <div className={styles.mobileAuth}>
             <span className={styles.mobileUser}>{user.username}</span>
-            <button className={`btn btn-outline ${styles.mobileAuthBtn}`} onClick={onLogout}>
+            <button className={`btn btn-outline ${styles.mobileAuthBtn}`} onClick={handleLogout}>
               Гарах
             </button>
           </div>
         ) : (
           <div className={styles.mobileAuth}>
-            <NavLink to="/login" onClick={onNavigate} className={`btn btn-primary ${styles.mobileAuthBtn}`}>
-              Нэвтрэх
-            </NavLink>
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <span className={`btn btn-primary ${styles.mobileAuthBtn}`}>Нэвтрэх</span>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <span className={`btn btn-outline ${styles.mobileAuthBtn}`}>Бүртгүүлэх</span>
+              </SignUpButton>
+            </Show>
           </div>
         ))}
     </div>

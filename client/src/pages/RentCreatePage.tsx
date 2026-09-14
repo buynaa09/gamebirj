@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useGames } from '../hooks/useGames';
 import { useRentDraft } from '../hooks/useRentDraft';
 import { publishListing } from '../services/accounts';
@@ -20,7 +20,7 @@ const RENTAL_UNITS: { value: RentalUnit; label: string }[] = [
 ];
 
 export function RentCreatePage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useCurrentUser();
   const navigate = useNavigate();
   const games = useGames();
   const { draft, update, reset, restored } = useRentDraft();

@@ -16,7 +16,7 @@ from .base import env
 # Oracle Cloud VCN drops IPv6 outbound packets by default, causing standard
 # getaddrinfo connections to hang for ~21s (SYN retry timeout) before falling
 # back to IPv4. Disabling IPv6 in urllib3 forces all outbound HTTPS requests
-# (allauth OAuth, Sentry, Cloudflare R2, SMTP) to use IPv4 immediately.
+# (Clerk, Sentry, Cloudflare R2, SMTP) to use IPv4 immediately.
 urllib3_cn.HAS_IPV6 = False
 
 # GENERAL
@@ -45,8 +45,7 @@ CACHES = {
     },
 }
 
-# Absolute URLs (emails, OAuth) must use https behind the proxy.
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+# Absolute URLs (emails) must use https behind the proxy.
 
 # SECURITY
 # ------------------------------------------------------------------------------
@@ -138,7 +137,6 @@ EMAIL_SUBJECT_PREFIX = env(
     "DJANGO_EMAIL_SUBJECT_PREFIX",
     default="[GameBirj] ",
 )
-ACCOUNT_EMAIL_SUBJECT_PREFIX = EMAIL_SUBJECT_PREFIX
 
 # ADMIN
 # ------------------------------------------------------------------------------

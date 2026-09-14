@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useCurrentUser } from './useCurrentUser';
 import { fetchConversations } from '../services/chat';
 
 const REFRESH_MS = 20000;
 
 /** Total unread chat messages; 0 when logged out. Polls quietly in background. */
 export function useUnreadMessages(): number {
-  const { user, loading } = useAuth();
+  const { user, loading } = useCurrentUser();
   const userId = !loading && user ? user.id : null;
   const [unread, setUnread] = useState(0);
   const [trackedId, setTrackedId] = useState<number | null>(userId);

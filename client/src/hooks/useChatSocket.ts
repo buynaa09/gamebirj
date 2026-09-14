@@ -17,9 +17,14 @@ interface UseChatSocketOptions {
   onEvent: (event: ChatServerEvent) => void;
   /** Set false while logged out so no socket is opened. */
   enabled: boolean;
+  /** Resolves the Clerk session JWT appended as `?token=` (WS has no headers). */
+  getToken?: () => Promise<string | null>;
 }
 
-export function useChatSocket(conversationId: number | null, { onEvent, enabled }: UseChatSocketOptions) {
+export function useChatSocket(
+  conversationId: number | null,
+  { onEvent, enabled, getToken }: UseChatSocketOptions,
+) {
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -29,6 +34,11 @@ export function useChatSocket(conversationId: number | null, { onEvent, enabled 
   useEffect(() => {
     onEventRef.current = onEvent;
   }, [onEvent]);
+
+  const getTokenRef = useRef(getToken);
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
 
   const clearTimer = () => {
     if (timerRef.current !== null) {
@@ -48,36 +58,41 @@ export function useChatSocket(conversationId: number | null, { onEvent, enabled 
 
     const connect = () => {
       if (closed) return;
-      const socket = new WebSocket(buildChatWsUrl(conversationId));
-      socketRef.current = socket;
-
-      socket.onopen = () => {
+      void (async () => {
         if (closed) return;
-        attemptsRef.current = 0;
-        setConnected(true);
-      };
-
-      socket.onmessage = (e: MessageEvent<string>) => {
-        try {
-          const parsed: unknown = JSON.parse(e.data);
-          if (isServerEvent(parsed)) onEventRef.current(parsed);
-        } catch {
-          // Ignore malformed frames.
-        }
-      };
-
-      socket.onclose = (e: CloseEvent) => {
-        if (socketRef.current === socket) socketRef.current = null;
-        setConnected(false);
+        const token = await getTokenRef.current?.().catch(() => null);
         if (closed) return;
-        // Auth/permission rejections are final; normal close was intentional.
-        if (e.code === UNAUTHORIZED_CLOSE || e.code === FORBIDDEN_CLOSE || e.code === NORMAL_CLOSE) {
-          return;
-        }
-        attemptsRef.current += 1;
-        const backoff = Math.min(1000 * 2 ** (attemptsRef.current - 1), MAX_BACKOFF_MS);
-        timerRef.current = window.setTimeout(connect, backoff);
-      };
+        const socket = new WebSocket(buildChatWsUrl(conversationId, token));
+        socketRef.current = socket;
+
+        socket.onopen = () => {
+          if (closed) return;
+          attemptsRef.current = 0;
+          setConnected(true);
+        };
+
+        socket.onmessage = (e: MessageEvent<string>) => {
+          try {
+            const parsed: unknown = JSON.parse(e.data);
+            if (isServerEvent(parsed)) onEventRef.current(parsed);
+          } catch {
+            // Ignore malformed frames.
+          }
+        };
+
+        socket.onclose = (e: CloseEvent) => {
+          if (socketRef.current === socket) socketRef.current = null;
+          setConnected(false);
+          if (closed) return;
+          // Auth/permission rejections are final; normal close was intentional.
+          if (e.code === UNAUTHORIZED_CLOSE || e.code === FORBIDDEN_CLOSE || e.code === NORMAL_CLOSE) {
+            return;
+          }
+          attemptsRef.current += 1;
+          const backoff = Math.min(1000 * 2 ** (attemptsRef.current - 1), MAX_BACKOFF_MS);
+          timerRef.current = window.setTimeout(connect, backoff);
+        };
+      })();
     };
 
     connect();

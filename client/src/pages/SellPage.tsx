@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useGames } from '../hooks/useGames';
 import { useSellDraft } from '../hooks/useSellDraft';
 import { publishListing } from '../services/accounts';
@@ -14,7 +14,7 @@ import type { CreatedAccount } from '../types';
 import styles from './SellPage.module.css';
 
 export function SellPage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useCurrentUser();
   const navigate = useNavigate();
   const games = useGames();
   const { draft, update, reset, restored } = useSellDraft();

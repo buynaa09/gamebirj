@@ -91,9 +91,12 @@ export async function openSellerThread(sellerUsername: string, accountId: number
   return conversation.id;
 }
 
-/** ws(s)://host/ws/chat/{id}/ derived from the REST base URL (cookies included). */
-export function buildChatWsUrl(conversationId: number): string {
+/** ws(s)://host/ws/chat/{id}/ derived from the REST base URL.
+ *  Browsers can't set WebSocket headers, so the Clerk JWT travels as
+ *  `?token=` and is verified by the Django channel middleware. */
+export function buildChatWsUrl(conversationId: number, token?: string | null): string {
   const base = API_BASE.replace(/\/api\/?$/, '');
   const wsBase = base.replace(/^http/, 'ws');
-  return `${wsBase}/ws/chat/${conversationId}/`;
+  const url = `${wsBase}/ws/chat/${conversationId}/`;
+  return token ? `${url}?token=${encodeURIComponent(token)}` : url;
 }

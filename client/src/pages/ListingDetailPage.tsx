@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAccount } from '../hooks/useAccount';
 import { useAccounts } from '../hooks/useAccounts';
-import { useAuth } from '../context/AuthContext';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useWishlist } from '../context/WishlistContext';
 import { ListingCard } from '../components/marketplace/ListingCard';
 import { Lightbox } from '../components/marketplace/Lightbox';
@@ -21,7 +21,7 @@ export function ListingDetailPage({ id }: { id: number }) {
   const navigate = useNavigate();
   const { account, loading, error } = useAccount(id);
   const { accounts } = useAccounts();
-  const { user } = useAuth();
+  const { user } = useCurrentUser();
   const { ids, toggle } = useWishlist();
   const [activePhoto, setActivePhoto] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);

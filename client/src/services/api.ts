@@ -1,6 +1,22 @@
 export const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000/api';
 
+/** Async supplier of the Clerk session JWT. Registered once Clerk is mounted
+ *  (see ClerkTokenBridge) so plain service modules can stay hook-free. */
+type TokenProvider = () => Promise<string | null>;
+let tokenProvider: TokenProvider | null = null;
+
+export function setAuthTokenProvider(provider: TokenProvider | null): void {
+  tokenProvider = provider;
+}
+
+async function authHeaders(): Promise<Headers> {
+  const headers = new Headers({ 'Content-Type': 'application/json' });
+  const token = await tokenProvider?.();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  return headers;
+}
+
 /** Resolve a media URL: absolute URLs pass through, relative ones (WS events)
  *  are resolved against the API origin (same host that serves /media/). */
 export function resolveMediaUrl(url: string | null | undefined): string | null {
@@ -8,16 +24,6 @@ export function resolveMediaUrl(url: string | null | undefined): string | null {
   if (/^https?:\/\//i.test(url)) return url;
   const origin = API_BASE.replace(/\/api\/?$/, '');
   return `${origin}${url.startsWith('/') ? url : `/${url}`}`;
-}
-
-export function getCsrfToken(): string | undefined {
-  // Production renames the CSRF cookie to `__Secure-csrftoken`
-  // (see backend config/settings/production.py); local dev uses `csrftoken`.
-  for (const name of ['__Secure-csrftoken', 'csrftoken']) {
-    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-    if (match) return decodeURIComponent(match[1]);
-  }
-  return undefined;
 }
 
 interface ErrorPayload {
@@ -47,7 +53,8 @@ function throwIfBad(response: Response, payload: unknown): void {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { credentials: 'include' });
+  const headers = await authHeaders();
+  const response = await fetch(`${API_BASE}${path}`, { headers, credentials: 'include' });
   if (response.status === 204) {
     return undefined as T;
   }
@@ -57,9 +64,7 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 async function apiSend<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body: unknown): Promise<T> {
-  const headers = new Headers({ 'Content-Type': 'application/json' });
-  const csrf = getCsrfToken();
-  if (csrf) headers.set('X-CSRFToken', csrf);
+  const headers = await authHeaders();
 
   const response = await fetch(`${API_BASE}${path}`, {
     method,
@@ -89,8 +94,8 @@ export function apiDelete<T>(path: string): Promise<T> {
 
 export async function postForm<T>(path: string, form: FormData): Promise<T> {
   const headers = new Headers();
-  const csrf = getCsrfToken();
-  if (csrf) headers.set('X-CSRFToken', csrf);
+  const token = await tokenProvider?.();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const response = await fetch(`${API_BASE}${path}`, {
     method: 'POST',

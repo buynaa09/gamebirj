@@ -1,7 +1,7 @@
 """WebSocket consumer for 1-to-1 private chat.
 
 URL: /ws/chat/{conversation_id}/
-Auth: Django session (same as the REST API) via AuthMiddlewareStack.
+Auth: Clerk JWT via `?token=` (or Django session) — see ClerkTokenAuthMiddleware.
 """
 
 from __future__ import annotations

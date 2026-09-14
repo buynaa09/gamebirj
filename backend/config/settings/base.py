@@ -90,12 +90,6 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
-    "allauth",
-    "allauth.account",
-    "allauth.mfa",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
-    "allauth.socialaccount.providers.facebook",
     "corsheaders",
 ]
 
@@ -120,20 +114,14 @@ MIGRATION_MODULES = {"sites": "backend.contrib.sites.migrations"}
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-# After a social login the user lands back on the SPA (session cookie auth).
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
 LOGIN_REDIRECT_URL = env("DJANGO_LOGIN_REDIRECT_URL", default=FRONTEND_URL)
-ACCOUNT_LOGOUT_REDIRECT_URL = env(
-    "DJANGO_ACCOUNT_LOGOUT_REDIRECT_URL",
-    default=FRONTEND_URL,
-)
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "account_login"
+LOGIN_URL = "admin:login"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -169,7 +157,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
 ]
 
 # STATIC
@@ -220,7 +207,6 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
-                "backend.users.context_processors.allauth_settings",
             ],
         },
     },
@@ -238,7 +224,8 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 # https://docs.djangoproject.com/en/dev/ref/settings/#fixture-dirs
 FIXTURE_DIRS = (str(APPS_DIR / "fixtures"),)
 
-# CORS / CSRF for the Vite SPA client (session auth with cookies)
+# CORS / CSRF for the Vite SPA client (Clerk JWT auth; session cookies only
+# remain for the Django admin and staff API docs)
 # ------------------------------------------------------------------------------
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = env.list(
@@ -281,8 +268,6 @@ ADMINS = ['"Buyntogtokh4" <buyntogtokh4@soliltsoo.com>']
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
 # https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
-# Force the `admin` sign in process to go through the `django-allauth` workflow
-DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=False)
 
 # LOGGING
 # ------------------------------------------------------------------------------
@@ -325,68 +310,17 @@ CHANNEL_LAYERS = {
 }
 
 
-# django-allauth
+# Clerk authentication (https://clerk.com/docs)
 # ------------------------------------------------------------------------------
-ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
-# https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_LOGIN_METHODS = {"username"}
-# https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-# https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-# https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_ADAPTER = "backend.users.adapters.AccountAdapter"
-# https://docs.allauth.org/en/latest/account/forms.html
-ACCOUNT_FORMS = {"signup": "backend.users.forms.UserSignupForm"}
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_ADAPTER = "backend.users.adapters.SocialAccountAdapter"
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_FORMS = {"signup": "backend.users.forms.UserSocialSignupForm"}
-# Social-only login for regular users (Google + Facebook). Password endpoints in
-# `backend/users/api/auth.py` are kept as an admin/staff fallback, not linked in UI.
-# GET on /accounts/<provider>/login/ starts OAuth immediately (plain <a> buttons).
-SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
-# Provider emails are trusted — don't force the mandatory verification flow
-# (ACCOUNT_EMAIL_VERIFICATION stays "mandatory" for the password path).
-SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
-# Connect a social login to an existing user with the same verified email.
-SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
-# https://docs.allauth.org/en/latest/socialaccount/providers.html
-# Credentials come from env (empty by default — user fills them in).
-# Callback URLs to register in consoles:
-#   <backend>/accounts/google/login/callback/
-#   <backend>/accounts/facebook/login/callback/
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": env("GOOGLE_CLIENT_ID", default=""),
-            "secret": env("GOOGLE_CLIENT_SECRET", default=""),
-            "key": "",
-        },
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"},
-    },
-    "facebook": {
-        "APP": {
-            "client_id": env("FACEBOOK_CLIENT_ID", default=""),
-            "secret": env("FACEBOOK_CLIENT_SECRET", default=""),
-            "key": "",
-        },
-        "METHOD": "oauth2",
-        "SCOPE": ["email", "public_profile"],
-        "AUTH_PARAMS": {"auth_type": "reauthenticate"},
-        "FIELDS": [
-            "id",
-            "email",
-            "name",
-            "first_name",
-            "last_name",
-            "picture",
-        ],
-        "VERIFIED_EMAIL": True,
-    },
-}
+# The SPA authenticates with Clerk and sends the session JWT as
+# `Authorization: Bearer <token>` (REST) or `?token=` (websockets).
+# Tokens are verified against the instance JWKS; the Backend API (secret
+# key, server-side only) provisions local users on first sight.
+# JWKS URL shape: https://<clerk-frontend-api>/.well-known/jwks.json
+CLERK_SECRET_KEY = env("CLERK_SECRET_KEY", default="")
+CLERK_JWKS_URL = env("CLERK_JWKS_URL", default="")
+CLERK_API_BASE_URL = env("CLERK_API_BASE_URL", default="https://api.clerk.com/v1")
+CLERK_JWKS_CACHE_TTL = env.int("CLERK_JWKS_CACHE_TTL", default=600)
 
 
 # Your stuff...

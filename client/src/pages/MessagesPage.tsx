@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@clerk/react';
 import { ChatBubbleIcon, ImageIcon, SearchIcon, SendIcon } from '../components/icons/Icons';
 import { OfferCard } from '../components/chat/OfferCard';
-import { useAuth } from '../context/AuthContext';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useChatSocket } from '../hooks/useChatSocket';
 import { confirmReceipt, fetchAccount, fetchOrder } from '../services/accounts';
 import {
@@ -43,7 +44,8 @@ function messageTime(iso: string): string {
 }
 
 export function MessagesPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useCurrentUser();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = Number(searchParams.get('conversation')) || null;
@@ -360,6 +362,7 @@ export function MessagesPage() {
   const { connected, sendMessage, sendRead, sendTyping } = useChatSocket(selectedId, {
     onEvent: handleServerEvent,
     enabled: !authLoading && user !== null && selectedId !== null,
+    getToken,
   });
 
   useEffect(() => {

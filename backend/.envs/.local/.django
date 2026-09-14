@@ -14,3 +14,8 @@ GOOGLE_CLIENT_SECRET=
 # Callback URL to register: http://localhost:8000/accounts/facebook/login/callback/
 FACEBOOK_CLIENT_ID=
 FACEBOOK_CLIENT_SECRET=
+
+# Clerk (Dashboard -> Configure -> API keys; secret stays server-side)
+# JWKS URL shape: https://<clerk-frontend-api>/.well-known/jwks.json
+CLERK_SECRET_KEY=
+CLERK_JWKS_URL=

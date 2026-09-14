@@ -29,11 +29,14 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 django_asgi_application = get_asgi_application()
 
 # Import routing here, so apps from django_asgi_application are loaded first
+from backend.chat.clerk_middleware import ClerkTokenAuthMiddleware  # noqa: E402
 from backend.chat.routing import websocket_urlpatterns  # noqa: E402
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_application,
-        "websocket": AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
+        "websocket": ClerkTokenAuthMiddleware(
+            AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
+        ),
     },
 )

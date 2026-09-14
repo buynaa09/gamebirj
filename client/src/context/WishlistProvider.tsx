@@ -2,11 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WishlistContext } from './WishlistContext';
-import { useAuth } from './AuthContext';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { addWishlist, fetchWishlist, removeWishlist } from '../services/accounts';
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user } = useCurrentUser();
   const navigate = useNavigate();
   const [ids, setIds] = useState<Set<number>>(new Set());
 

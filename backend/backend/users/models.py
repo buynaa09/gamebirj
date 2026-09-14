@@ -15,6 +15,15 @@ class User(AbstractUser):
     name = CharField(_("Name of User"), blank=True, max_length=255)
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
+    # Clerk user ID (`sub` claim) for accounts authenticated via Clerk.
+    # Null for legacy/staff accounts created before the Clerk migration.
+    clerk_id = CharField(
+        _("Clerk user ID"),
+        max_length=255,
+        unique=True,
+        null=True,
+        blank=True,
+    )
 
     def get_absolute_url(self) -> str:
         """Get URL for user's detail view.

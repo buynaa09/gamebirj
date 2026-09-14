@@ -1,7 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeProvider';
-import { AuthProvider } from './context/AuthProvider';
 import { WishlistProvider } from './context/WishlistProvider';
+import { ClerkTokenBridge } from './components/auth/ClerkTokenBridge';
 import { TopBar } from './components/layout/TopBar';
 import { BottomNav } from './components/layout/BottomNav';
 // import { ChatBubble } from './components/layout/ChatBubble';
@@ -9,6 +9,7 @@ import { HomePage } from './pages/HomePage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { RentalPage } from './pages/RentalPage';
 import { LoginPage } from './pages/LoginPage';
+import { SignupPage } from './pages/SignupPage';
 import { SellPage } from './pages/SellPage';
 import { RentCreatePage } from './pages/RentCreatePage';
 import { SellDashboardPage } from './pages/SellDashboardPage';
@@ -21,11 +22,10 @@ export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <AuthProvider>
-          <WishlistProvider>
-            <AppShell />
-          </WishlistProvider>
-        </AuthProvider>
+        <ClerkTokenBridge />
+        <WishlistProvider>
+          <AppShell />
+        </WishlistProvider>
       </BrowserRouter>
     </ThemeProvider>
   );
@@ -40,8 +40,8 @@ function AppShell() {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/rent" element={<RentalPage />} />
         <Route path="/rent/create" element={<RentCreatePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<Navigate to="/login" replace />} />
+        <Route path="/login/*" element={<LoginPage />} />
+        <Route path="/signup/*" element={<SignupPage />} />
         <Route path="/sell" element={<SellDashboardPage />} />
         <Route path="/sell/processing" element={<SellPage />} />
         <Route path="/listing/:id" element={<ListingRoute />} />

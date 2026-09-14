@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { deleteAccount, fetchMyAccounts, updateAccount } from '../services/accounts';
 import type { MarketAccount } from '../types';
 import { formatPrice, timeAgo } from '../utils/format';
 import styles from './SellDashboardPage.module.css';
 
 export function SellDashboardPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useCurrentUser();
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState<MarketAccount[]>([]);
   const [loading, setLoading] = useState(true);
