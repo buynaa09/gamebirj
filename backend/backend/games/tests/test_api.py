@@ -105,6 +105,18 @@ def test_list_games_includes_global_listings(client: Client):
     assert "Global Field" in [item["title"] for item in payload["listings"]]
 
 
+def test_list_games_excludes_inactive_games(client: Client):
+    active = Game.objects.create(name="Active Game", is_active=True)
+    inactive = Game.objects.create(name="Inactive Game", is_active=False)
+
+    response = client.get(reverse("api:list_games"))
+
+    assert response.status_code == HTTPStatus.OK
+    ids = {g["id"] for g in response.json()}
+    assert active.pk in ids
+    assert inactive.pk not in ids
+
+
 def test_game_specific_listing_shadows_global(client: Client):
     game = Game.objects.create(name="Shadow Game")
     Listing.objects.create(title="Server", place_holder_value="Global server")

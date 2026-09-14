@@ -52,7 +52,7 @@ def _game_payload(request, game: Game, global_listings: list[Listing]) -> dict:
 
 @router.get("/", response=list[GameSchema], auth=None)
 def list_games(request):
-    games = Game.objects.prefetch_related(
+    games = Game.objects.filter(is_active=True).prefetch_related(
         "ranks",
         Prefetch("listings__choices"),
     ).all()

@@ -105,6 +105,19 @@ def test_create_account_rejects_foreign_rank(client: Client):
     assert Account.objects.count() == 0
 
 
+def test_create_account_rejects_inactive_game(client: Client):
+    client.force_login(UserFactory.create())
+    game = Game.objects.create(name="Inactive Game", is_active=False)
+
+    response = client.post(
+        reverse("api:create_account"),
+        data={"game": str(game.pk), "price": "100"},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert Account.objects.count() == 0
+
+
 def test_create_account_rejects_foreign_listing(client: Client):
     client.force_login(UserFactory.create())
     game = _mlbb()
