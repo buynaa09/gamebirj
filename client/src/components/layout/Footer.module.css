@@ -1,0 +1,66 @@
+.footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-alt);
+  margin-top: 40px;
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 24px calc(28px + 0px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+@media (min-width: 900px) {
+  .inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wordmark {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+.tagline {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.links a:hover {
+  color: var(--red);
+}
+
+.copy {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+/* Keep clear of the fixed mobile bottom nav */
+@media (max-width: 899px) {
+  .inner {
+    padding-bottom: 96px;
+  }
+}

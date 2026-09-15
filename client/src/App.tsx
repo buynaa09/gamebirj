@@ -5,6 +5,7 @@ import { WishlistProvider } from './context/WishlistProvider';
 import { ClerkTokenBridge } from './components/auth/ClerkTokenBridge';
 import { TopBar } from './components/layout/TopBar';
 import { BottomNav } from './components/layout/BottomNav';
+import { Footer } from './components/layout/Footer';
 // import { ChatBubble } from './components/layout/ChatBubble';
 import { HomePage } from './pages/HomePage';
 import { MarketplacePage } from './pages/MarketplacePage';
@@ -14,6 +15,7 @@ import { SellPage } from './pages/SellPage';
 import { RentCreatePage } from './pages/RentCreatePage';
 import { SellDashboardPage } from './pages/SellDashboardPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
+import { FacebookPolicyPage } from './pages/FacebookPolicyPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { MessagesPage } from './pages/MessagesPage';
 import './App.module.css';
@@ -61,8 +63,10 @@ function AppShell() {
         <Route path="/listing/:id" element={<ListingRoute />} />
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/messages" element={<MessagesPage />} />
+        <Route path="/facebook-policy" element={<FacebookPolicyPage />} />
       </Routes>
       {/* <ChatBubble /> */}
+      <Footer />
       <BottomNav />
     </>
   );
