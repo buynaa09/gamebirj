@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="mn">
+<html lang="mn" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -75,15 +75,20 @@
       }
     </script>
     <script>
+      // Default to dark mode. Restore the saved theme before first paint
+      // to avoid a flash. Key must match ThemeProvider ('ascend-theme').
       (function () {
-        var theme = localStorage.getItem("theme");
-        if (theme === "dark" || (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-          document.documentElement.classList.remove("light");
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-          document.documentElement.classList.add("light");
-        }
+        var saved = null;
+        try {
+          saved = localStorage.getItem('ascend-theme');
+        } catch (e) { /* ignore */ }
+        var theme =
+          saved === 'light' || saved === 'dark'
+            ? saved
+            : window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
       })();
     </script>
   </head>
