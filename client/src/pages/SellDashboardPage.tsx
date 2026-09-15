@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Seo } from '../components/seo/Seo';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { deleteAccount, fetchMyAccounts, updateAccount } from '../services/accounts';
 import type { MarketAccount } from '../types';
@@ -54,6 +55,12 @@ export function SellDashboardPage() {
 
   return (
     <main className={styles.page}>
+      <Seo
+        title="Миний зарууд | GameBirj"
+        description="Таны GameBirj дээрх зарууд — зарын төлөв, үнэ засварлах, устгах."
+        path="/sell"
+        noindex
+      />
       <div className={styles.crumbs}>
         <Link to="/">Нүүр</Link> &nbsp;›&nbsp; <span className={styles.cur}>Зарах</span>
       </div>

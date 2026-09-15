@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Seo } from '../components/seo/Seo';
 import { RentalHeader } from '../components/marketplace/RentalHeader';
 import { FiltersSidebar } from '../components/marketplace/FiltersSidebar';
 import sidebarStyles from '../components/marketplace/FiltersSidebar.module.css';
@@ -113,6 +114,11 @@ export function RentalPage() {
 
   return (
     <main>
+      <Seo
+        title="Аккаунт түрээс — Тоглоомын аккаунт түрээслүүлнэ | GameBirj"
+        description="GameBirj түрээс: тоглоомын аккаунтыг хоног, сараар түрээсэл. Төлбөр escrow дансанд хамгаалагдаж, түрээс дуусахад аккаунт буцаагдана."
+        path="/rent"
+      />
       <RentalHeader />
       <div className={styles.body}>
         {sidebar}

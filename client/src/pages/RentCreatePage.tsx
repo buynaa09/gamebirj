@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Seo } from '../components/seo/Seo';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useGames } from '../hooks/useGames';
 import { useRentDraft } from '../hooks/useRentDraft';
@@ -126,6 +127,12 @@ export function RentCreatePage() {
   if (published) {
     return (
       <main className={styles.page}>
+        <Seo
+          title="Түрээс нийтлэгдлээ | GameBirj"
+          description="Таны тоглоомын аккаунтын түрээс GameBirj дээр нийтлэгдлээ."
+          path="/rent/create"
+          noindex
+        />
         <div className={styles.card}>
           <div className={styles.successBadge}>✓</div>
           <h1 className={styles.title}>Түрээс нийтлэгдлээ</h1>
@@ -157,6 +164,12 @@ export function RentCreatePage() {
 
   return (
     <main className={styles.page}>
+      <Seo
+        title="Аккаунт түрээслүүлэх | GameBirj"
+        description="Тоглоомын аккаунтаа GameBirj дээр түрээслүүлж, escrow хамгаалалттайгаар орлого олоорой."
+        path="/rent/create"
+        noindex
+      />
       <div className={styles.crumbs}>
         <Link to="/">Нүүр</Link> &nbsp;›&nbsp; <Link to="/rent">Түрээс</Link> &nbsp;›&nbsp;{' '}
         <span className={styles.cur}>Түрээслүүлэх</span>

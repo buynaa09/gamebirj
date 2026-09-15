@@ -1,10 +1,79 @@
 <!doctype html>
-<html lang="en" class="light">
+<html lang="mn">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/dark.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GameBirj - Gaming Account Marketplace</title>
+    <title>GameBirj — Тоглоомын аккаунт худалдаа, түрээс | Gaming Account Marketplace</title>
+    <meta
+      name="description"
+      content="GameBirj — тоглоомын аккаунт худалдах, худалдан авах, түрээслэх найдвартай marketplace. Escrow хамгаалалттайгаар Mobile Legends, PUBG болон бусад тоглоомын аккаунтыг аюулгүй арилжаал."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://gamebirj.com/" />
+    <!-- Google Search Console verification: replace YOUR_TOKEN_HERE with the real token
+         (or set VITE_GOOGLE_SITE_VERIFICATION and mirror it here at build time).
+         See client/.env.example. -->
+    <!-- <meta name="google-site-verification" content="YOUR_TOKEN_HERE" /> -->
+    <meta name="theme-color" content="#e5344a" />
+    <meta name="application-name" content="GameBirj" />
+    <meta name="apple-mobile-web-app-title" content="GameBirj" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="GameBirj" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="mn_MN" />
+    <meta property="og:url" content="https://gamebirj.com/" />
+    <meta
+      property="og:title"
+      content="GameBirj — Тоглоомын аккаунт худалдаа, түрээс | Gaming Account Marketplace"
+    />
+    <meta
+      property="og:description"
+      content="Тоглоомын аккаунт худалдах, худалдан авах, түрээслэх найдвартай marketplace. Escrow хамгаалалттай аюулгүй арилжаа."
+    />
+    <meta property="og:image" content="https://gamebirj.com/og-cover.png" />
+    <meta property="og:image:alt" content="GameBirj — gaming account marketplace" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="GameBirj — Тоглоомын аккаунт худалдаа, түрээс | Gaming Account Marketplace"
+    />
+    <meta
+      name="twitter:description"
+      content="Тоглоомын аккаунт худалдах, худалдан авах, түрээслэх найдвартай marketplace. Escrow хамгаалалттай аюулгүй арилжаа."
+    />
+    <meta name="twitter:image" content="https://gamebirj.com/og-cover.png" />
+
+    <link rel="icon" type="image/png" href="/dark.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Structured data: only schemas that describe this site truthfully.
+         No fake ratings, reviews, prices, or addresses. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://gamebirj.com/#website",
+            "url": "https://gamebirj.com/",
+            "name": "GameBirj",
+            "inLanguage": ["mn", "en"],
+            "description": "Gaming account marketplace — buy, sell and rent game accounts with escrow protection."
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://gamebirj.com/#organization",
+            "name": "GameBirj",
+            "url": "https://gamebirj.com/",
+            "logo": "https://gamebirj.com/dark.png"
+          }
+        ]
+      }
+    </script>
     <script>
       (function () {
         var theme = localStorage.getItem("theme");

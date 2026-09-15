@@ -29,7 +29,15 @@ export function ListingCard({ listing, index }: ListingCardProps) {
         className={styles.cardMedia}
         style={cover ? undefined : { background: `linear-gradient(135deg, ${color}22, ${color}44)` }}
       >
-        {cover && <img src={cover} alt="" className={styles.cover} loading="lazy" />}
+        {cover && (
+          <img
+            src={cover}
+            alt={`${listing.title} — ${listing.game ?? 'тоглоомын'} аккаунт`}
+            className={styles.cover}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
         {listing.status === 'sold' && <span className={styles.soldRibbon}>Зарагдсан</span>}
         {listing.status === 'rented' && <span className={styles.soldRibbon}>Түрээслэгдсэн</span>}
         <button

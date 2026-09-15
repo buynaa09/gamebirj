@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Seo } from '../components/seo/Seo';
 import styles from './FacebookPolicyPage.module.css';
 
 const sections = [
@@ -21,6 +22,11 @@ const sections = [
 export function FacebookPolicyPage() {
   return (
     <main className={styles.page}>
+      <Seo
+        title="Privacy Policy | GameBirj"
+        description="GameBirj privacy policy: how we collect, use, store and share information, including Facebook / Meta integration data and deletion requests."
+        path="/facebook-policy"
+      />
       <div className={styles.container}>
         <nav className={styles.breadcrumb} aria-label="Breadcrumb">
           <Link to="/">Home</Link>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Seo } from '../components/seo/Seo';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useGames } from '../hooks/useGames';
 import { useSellDraft } from '../hooks/useSellDraft';
@@ -118,6 +119,12 @@ export function SellPage() {
   if (published) {
     return (
       <main className={styles.page}>
+        <Seo
+          title="Зар нийтлэгдлээ | GameBirj"
+          description="Таны тоглоомын аккаунтын зар GameBirj дээр нийтлэгдлээ."
+          path="/sell/processing"
+          noindex
+        />
         <div className={styles.card}>
           <div className={styles.successBadge}>✓</div>
           <h1 className={styles.title}>Зар нийтлэгдлээ</h1>
@@ -149,6 +156,12 @@ export function SellPage() {
 
   return (
     <main className={styles.page}>
+      <Seo
+        title="Аккаунт зарах | GameBirj"
+        description="Тоглоомын аккаунтаа GameBirj дээр зарж, escrow хамгаалалттайгаар мөнгөө аваарай."
+        path="/sell/processing"
+        noindex
+      />
       <div className={styles.crumbs}>
         <Link to="/">Нүүр</Link> &nbsp;›&nbsp; <span className={styles.cur}>Зарах</span>
       </div>

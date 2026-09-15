@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Seo } from '../components/seo/Seo';
 import { useAccount } from '../hooks/useAccount';
 import { useAccounts } from '../hooks/useAccounts';
 import { useCurrentUser } from '../hooks/useCurrentUser';
@@ -41,6 +42,12 @@ export function ListingDetailPage({ id }: { id: number }) {
   if (loading) {
     return (
       <main className={styles.page}>
+        <Seo
+          title="Зар уншиж байна… | GameBirj"
+          description="GameBirj дээрх тоглоомын аккаунтын зарын дэлгэрэнгүй."
+          path={`/listing/${id}`}
+          noindex
+        />
         <p className={styles.state}>Уншиж байна…</p>
       </main>
     );
@@ -49,6 +56,12 @@ export function ListingDetailPage({ id }: { id: number }) {
   if (error || !account) {
     return (
       <main className={styles.page}>
+        <Seo
+          title="Зар олдсонгүй | GameBirj"
+          description="Хайсан зар олдсонгүй. GameBirj зарын хэсгээс өөр аккаунт хайна уу."
+          path={`/listing/${id}`}
+          noindex
+        />
         <p className={styles.state}>Зарын мэдээллийг ачаалж чадсангүй ({error ?? 'олдсонгүй'}).</p>
         <button type="button" className="btn btn-outline" onClick={() => navigate('/marketplace')}>
           Зарын хэсэг рүү буцах
@@ -123,6 +136,42 @@ export function ListingDetailPage({ id }: { id: number }) {
 
   return (
     <main className={styles.page}>
+      <Seo
+        title={`${account.title} | GameBirj`}
+        description={
+          account.description.trim() !== ''
+            ? `${account.description.trim().slice(0, 155)}${account.description.trim().length > 155 ? '…' : ''}`
+            : `${account.title} — GameBirj дээрх тоглоомын аккаунтын зар. Escrow хамгаалалттай аюулгүй худалдан аваарай.`
+        }
+        path={`/listing/${account.id}`}
+        image={photos[0]}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Нүүр',
+                item: 'https://gamebirj.com/',
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: isRent ? 'Түрээс' : 'Зарын хэсэг',
+                item: isRent ? 'https://gamebirj.com/rent' : 'https://gamebirj.com/marketplace',
+              },
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: account.title,
+                item: `https://gamebirj.com/listing/${account.id}`,
+              },
+            ],
+          },
+        ]}
+      />
       <button type="button" className={styles.backBtn} onClick={() => navigate(-1)}>
         ← Буцах
       </button>
@@ -145,7 +194,13 @@ export function ListingDetailPage({ id }: { id: number }) {
                 aria-label="Зургийг томруулж харах"
                 onClick={() => setLightboxIndex(shown)}
               >
-                <img src={photos[shown]} alt={account.title} className={styles.mainImg} />
+                <img
+                  src={photos[shown]}
+                  alt={`${account.title} — ${account.game ?? 'тоглоомын'} аккаунтын зураг ${shown + 1}`}
+                  className={styles.mainImg}
+                  fetchPriority="high"
+                  decoding="async"
+                />
               </button>
             )}
             {photos.length > 1 && (
@@ -180,9 +235,9 @@ export function ListingDetailPage({ id }: { id: number }) {
                   type="button"
                   className={`${styles.thumb} ${i === shown ? styles.thumbActive : ''}`}
                   onClick={() => setActivePhoto(i)}
-                  aria-label={`Зураг ${i + 1}`}
+                  aria-label={`Зураг ${i + 1}: ${account.title}`}
                 >
-                  <img src={src} alt="" loading="lazy" />
+                  <img src={src} alt="" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>

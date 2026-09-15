@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /marketplace
+Allow: /rent
+Allow: /listing/
+Allow: /facebook-policy
+
+Disallow: /login
+Disallow: /signup
+Disallow: /sell
+Disallow: /sell/
+Disallow: /rent/create
+Disallow: /wishlist
+Disallow: /messages
+Disallow: /api/
+
+Sitemap: https://gamebirj.com/sitemap.xml

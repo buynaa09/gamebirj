@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Seo } from '../components/seo/Seo';
 import { useAccounts } from '../hooks/useAccounts';
 import { useWishlist } from '../context/WishlistContext';
 import { ListingGrid } from '../components/marketplace/ListingGrid';
@@ -11,6 +12,12 @@ export function WishlistPage() {
 
   return (
     <main className={styles.page}>
+      <Seo
+        title="Wishlist | GameBirj"
+        description="Таны GameBirj дээр хадгалсан тоглоомын аккаунтын зарууд."
+        path="/wishlist"
+        noindex
+      />
       <div className={styles.crumbs}>
         <Link to="/">Home</Link> &nbsp;›&nbsp; <span className={styles.cur}>Wishlist</span>
       </div>

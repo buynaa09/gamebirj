@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Seo } from '../components/seo/Seo';
 import { MarketplaceHeader } from '../components/marketplace/MarketplaceHeader';
 import { FiltersSidebar } from '../components/marketplace/FiltersSidebar';
 import sidebarStyles from '../components/marketplace/FiltersSidebar.module.css';
@@ -113,6 +114,11 @@ export function MarketplacePage() {
 
   return (
     <main>
+      <Seo
+        title="Зарын хэсэг — Тоглоомын аккаунт худалдаа | GameBirj"
+        description="GameBirj зарын хэсэг: худалдаанд байгаа тоглоомын аккаунтуудыг үнэ, тоглоом, ранкаар шүүж, escrow хамгаалалттайгаар аюулгүй худалдан аваарай."
+        path="/marketplace"
+      />
       <MarketplaceHeader />
       <div className={styles.body}>
         {sidebar}

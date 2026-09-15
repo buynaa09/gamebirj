@@ -1,0 +1,22 @@
+{
+  "name": "GameBirj — Gaming Account Marketplace",
+  "short_name": "GameBirj",
+  "description": "Buy, sell and rent gaming accounts with escrow protection.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f0f12",
+  "theme_color": "#e5344a",
+  "icons": [
+    {
+      "src": "/dark.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
+import { Seo } from '../components/seo/Seo';
 import { ChatBubbleIcon, ImageIcon, SearchIcon, SendIcon } from '../components/icons/Icons';
 import { OfferCard } from '../components/chat/OfferCard';
 import { Lightbox } from '../components/marketplace/Lightbox';
@@ -524,6 +525,12 @@ export function MessagesPage() {
   if (!authLoading && !user) {
     return (
       <main className={styles.page}>
+        <Seo
+          title="Зурвасууд | GameBirj"
+          description="Таны GameBirj дээрх худалдагч, худалдан авагчидтай харилцан ярианууд."
+          path="/messages"
+          noindex
+        />
         <section className={styles.listPanel} aria-label="Харилцан ярианууд">
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Нэвтэрч орно уу</p>
@@ -539,6 +546,12 @@ export function MessagesPage() {
 
   return (
     <main className={`${styles.page} ${selectedId !== null ? styles.threadOpen : ''}`}>
+      <Seo
+        title="Зурвасууд | GameBirj"
+        description="Таны GameBirj дээрх худалдагч, худалдан авагчидтай харилцан ярианууд."
+        path="/messages"
+        noindex
+      />
       <section className={styles.listPanel} aria-label="Харилцан ярианууд">
         <div className={styles.listHead}>
           <h1 className={styles.title}>

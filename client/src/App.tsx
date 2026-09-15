@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-
 import { ThemeProvider } from './context/ThemeProvider';
 import { WishlistProvider } from './context/WishlistProvider';
 import { ClerkTokenBridge } from './components/auth/ClerkTokenBridge';
+import { Seo } from './components/seo/Seo';
 import { TopBar } from './components/layout/TopBar';
 import { BottomNav } from './components/layout/BottomNav';
 import { Footer } from './components/layout/Footer';
@@ -16,6 +17,7 @@ import { RentCreatePage } from './pages/RentCreatePage';
 import { SellDashboardPage } from './pages/SellDashboardPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
 import { FacebookPolicyPage } from './pages/FacebookPolicyPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { MessagesPage } from './pages/MessagesPage';
 import './App.module.css';
@@ -51,6 +53,12 @@ function AppShell() {
               </Show>
               <Show when="signed-out">
                 <main style={{ display: 'flex', justifyContent: 'center', padding: '4rem 1rem' }}>
+                  <Seo
+                    title="Нэвтрэх | GameBirj"
+                    description="GameBirj-д нэвтэрч тоглоомын аккаунт худалдах, худалдан авах, түрээслэх боломжтой болоорой."
+                    path="/login"
+                    noindex
+                  />
                   <SignIn signUpUrl="/signup" />
                 </main>
               </Show>
@@ -64,6 +72,7 @@ function AppShell() {
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/messages" element={<MessagesPage />} />
         <Route path="/facebook-policy" element={<FacebookPolicyPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       {/* <ChatBubble /> */}
       <Footer />
