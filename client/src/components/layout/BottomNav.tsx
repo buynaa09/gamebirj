@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, ShopIcon, ClockIcon, ChatBubbleIcon, CheckIcon } from '../icons/Icons';
+import { HomeIcon, ShopIcon, ClockIcon, ChatBubbleIcon, CheckIcon, TrophyIcon } from '../icons/Icons';
 import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import styles from './BottomNav.module.css';
 
 const routeLinks = [
   { to: '/', label: 'Нүүр', icon: HomeIcon },
   { to: '/marketplace', label: 'Зарууд', icon: ShopIcon },
+  { to: '/tournaments', label: 'Тэмцээн', icon: TrophyIcon },
   { to: '/messages', label: 'Зурвас', icon: ChatBubbleIcon },
   { to: '/sell', label: 'Зарах', icon: ClockIcon },
   { to: '/rent', label: 'Түрээс', icon: CheckIcon },

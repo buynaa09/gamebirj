@@ -14,6 +14,7 @@ export function Footer() {
           <Link to="/">Home</Link>
           <Link to="/marketplace">Marketplace</Link>
           <Link to="/rent">Rentals</Link>
+          <Link to="/tournaments">Тэмцээн</Link>
           <Link to="/sell">Sell</Link>
           <Link to="/facebook-policy">Privacy Policy</Link>
         </nav>

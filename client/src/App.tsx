@@ -11,6 +11,7 @@ import { Footer } from './components/layout/Footer';
 import { HomePage } from './pages/HomePage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { RentalPage } from './pages/RentalPage';
+import { TournamentsPage } from './pages/TournamentsPage';
 import { SignupPage } from './pages/SignupPage';
 import { SellPage } from './pages/SellPage';
 import { RentCreatePage } from './pages/RentCreatePage';
@@ -43,6 +44,7 @@ function AppShell() {
         <Route path="/" element={<HomePage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/rent" element={<RentalPage />} />
+        <Route path="/tournaments" element={<TournamentsPage />} />
         <Route path="/rent/create" element={<RentCreatePage />} />
         <Route
           path="/login/*"

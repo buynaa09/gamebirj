@@ -49,6 +49,9 @@ function TopBarInner() {
           <NavLink to="/rent" className={({ isActive }) => (isActive ? styles.active : '')}>
             Түрээс
           </NavLink>
+          <NavLink to="/tournaments" className={({ isActive }) => (isActive ? styles.active : '')}>
+            Тэмцээн
+          </NavLink>
           <a href="#">Бусад ▾</a>
         </nav>
 
@@ -173,6 +176,13 @@ function MobileMenu({
         className={`${styles.mobileLink} ${currentPath === '/rent' ? styles.mobileActive : ''}`}
       >
         Түрээс
+      </NavLink>
+      <NavLink
+        to="/tournaments"
+        onClick={onNavigate}
+        className={`${styles.mobileLink} ${currentPath === '/tournaments' ? styles.mobileActive : ''}`}
+      >
+        Тэмцээн
       </NavLink>
       <a href="#" className={styles.mobileLink}>
         Гүйлгээнүүд
