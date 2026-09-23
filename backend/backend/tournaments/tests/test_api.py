@@ -8,6 +8,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from backend.games.models import Game
+from backend.tournaments.api import views as tournament_views
+from backend.tournaments.id_check import IdCheckAccount
+from backend.tournaments.id_check import IdCheckNotFoundError
 from backend.tournaments.models import Tournament
 from backend.users.tests.factories import UserFactory
 
@@ -190,3 +193,128 @@ def test_register_team_rejects_full_tournament(client: Client):
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def make_checkable_tournament(title="MLBB Cup"):
+    tournament = make_tournament(title=title)
+    tournament.game.id_check_slug = "mobile-legends"
+    tournament.game.save(update_fields=["id_check_slug"])
+    return tournament
+
+
+def test_check_id_returns_nickname(client: Client, monkeypatch):
+    client.force_login(UserFactory.create())
+    tournament = make_checkable_tournament()
+    monkeypatch.setattr(
+        tournament_views,
+        "check_game_account",
+        lambda slug, user_id, server_id="": IdCheckAccount(
+            nickname="NightWolf", region="Mongolia",
+        ),
+    )
+
+    response = client.post(
+        reverse("api:check_leader_id"),
+        data={
+            "tournament_id": tournament.pk,
+            "user_id": "1234449725",
+            "server_id": "11467",
+        },
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"nickname": "NightWolf", "region": "Mongolia"}
+
+
+def test_check_id_rejects_unknown_account(client: Client, monkeypatch):
+    client.force_login(UserFactory.create())
+    tournament = make_checkable_tournament()
+
+    def _missing(slug, user_id, server_id=""):
+        raise IdCheckNotFoundError
+
+    monkeypatch.setattr(tournament_views, "check_game_account", _missing)
+
+    response = client.post(
+        reverse("api:check_leader_id"),
+        data={"tournament_id": tournament.pk, "user_id": "1", "server_id": "1"},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_check_id_unsupported_game(client: Client):
+    client.force_login(UserFactory.create())
+    tournament = make_tournament(title="Open Cup")
+
+    response = client.post(
+        reverse("api:check_leader_id"),
+        data={"tournament_id": tournament.pk, "user_id": "1", "server_id": "1"},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_register_team_verifies_leader_and_stores_nickname(client: Client, monkeypatch):
+    client.force_login(UserFactory.create())
+    tournament = make_checkable_tournament()
+    monkeypatch.setattr(
+        tournament_views,
+        "check_game_account",
+        lambda slug, user_id, server_id="": IdCheckAccount(
+            nickname="NightWolf", region="Mongolia",
+        ),
+    )
+
+    response = client.post(
+        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
+        data={
+            "team_name": "Night Wolves",
+            "leader_game_id": "1234449725",
+            "leader_server_id": "11467",
+        },
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.json()
+    assert payload["leader_server_id"] == "11467"
+    assert payload["leader_nickname"] == "NightWolf"
+
+
+def test_register_team_requires_server_id_for_checkable_game(client: Client):
+    client.force_login(UserFactory.create())
+    tournament = make_checkable_tournament()
+
+    response = client.post(
+        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
+        data={"team_name": "Night Wolves", "leader_game_id": "1234449725"},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_register_team_rejects_invalid_leader(client: Client, monkeypatch):
+    client.force_login(UserFactory.create())
+    tournament = make_checkable_tournament()
+
+    def _missing(slug, user_id, server_id=""):
+        raise IdCheckNotFoundError
+
+    monkeypatch.setattr(tournament_views, "check_game_account", _missing)
+
+    response = client.post(
+        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
+        data={
+            "team_name": "Night Wolves",
+            "leader_game_id": "1",
+            "leader_server_id": "1",
+        },
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY

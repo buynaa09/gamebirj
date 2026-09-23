@@ -6,6 +6,9 @@ class Game(models.Model):
     image = models.ImageField(upload_to="game_images/", blank=True, null=True)
     is_active_marketplace = models.BooleanField(default=True)
     is_active_tournament = models.BooleanField(default=True)
+    # Slug for the third-party game ID checker, e.g. "mobile-legends".
+    # Empty means leader IDs are not verifiable.
+    id_check_slug = models.CharField(max_length=100, blank=True, default="")
     class Meta:
         ordering = ["name"]
 

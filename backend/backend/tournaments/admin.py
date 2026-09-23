@@ -14,6 +14,14 @@ class TournamentAdmin(admin.ModelAdmin):
 
 @admin.register(TournamentRegistration)
 class TournamentRegistrationAdmin(admin.ModelAdmin):
-    list_display = ["team_name", "tournament", "leader_game_id", "user", "created_at"]
-    search_fields = ["team_name", "leader_game_id"]
+    list_display = [
+        "team_name",
+        "tournament",
+        "leader_game_id",
+        "leader_server_id",
+        "leader_nickname",
+        "user",
+        "created_at",
+    ]
+    search_fields = ["team_name", "leader_game_id", "leader_nickname"]
     list_filter = ["tournament"]

@@ -49,6 +49,9 @@ class TournamentRegistration(models.Model):
     )
     team_name = models.CharField(max_length=100)
     leader_game_id = models.CharField(max_length=100)
+    leader_server_id = models.CharField(max_length=100, blank=True, default="")
+    # Nickname snapshot from the ID check at registration time.
+    leader_nickname = models.CharField(max_length=100, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

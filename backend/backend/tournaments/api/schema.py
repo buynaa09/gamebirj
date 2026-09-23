@@ -6,6 +6,7 @@ class TournamentSchema(Schema):
     title: str
     game_id: int
     game: str
+    id_check_slug: str = ""
     status: str
     prize_pool: str
     entry_fee: str
@@ -19,6 +20,8 @@ class TournamentSchema(Schema):
 class RegisterTeamSchema(Schema):
     team_name: str
     leader_game_id: str
+    leader_server_id: str = ""
+    leader_nickname: str = ""
 
 
 class RegistrationSchema(Schema):
@@ -26,4 +29,17 @@ class RegistrationSchema(Schema):
     tournament: int
     team_name: str
     leader_game_id: str
+    leader_server_id: str = ""
+    leader_nickname: str = ""
     created_at: str
+
+
+class CheckIdSchema(Schema):
+    tournament_id: int
+    user_id: str
+    server_id: str = ""
+
+
+class CheckedAccountSchema(Schema):
+    nickname: str
+    region: str = ""

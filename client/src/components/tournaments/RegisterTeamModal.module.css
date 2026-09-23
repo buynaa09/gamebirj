@@ -100,6 +100,28 @@
   color: var(--red);
 }
 
+.idRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.checkBtn {
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.verified {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(46, 160, 67, 0.12);
+  color: #3fb950;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .actions {
   display: flex;
   gap: 10px;

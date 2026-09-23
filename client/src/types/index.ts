@@ -151,6 +151,7 @@ export interface Tournament {
   title: string;
   game_id: number;
   game: string;
+  id_check_slug: string;
   status: TournamentStatus;
   prize_pool: string;
   entry_fee: string;
@@ -164,6 +165,8 @@ export interface Tournament {
 export interface RegisterTeamInput {
   team_name: string;
   leader_game_id: string;
+  leader_server_id?: string;
+  leader_nickname?: string;
 }
 
 export interface TournamentRegistration {
