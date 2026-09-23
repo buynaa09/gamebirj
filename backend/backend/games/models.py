@@ -4,7 +4,8 @@ from django.db import models
 class Game(models.Model):
     name = models.CharField(max_length=100)
     image = models.ImageField(upload_to="game_images/", blank=True, null=True)
-    is_active = models.BooleanField(default=True)
+    is_active_marketplace = models.BooleanField(default=True)
+    is_active_tournament = models.BooleanField(default=True)
     class Meta:
         ordering = ["name"]
 

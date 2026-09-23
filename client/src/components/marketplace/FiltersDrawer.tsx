@@ -4,11 +4,12 @@ import styles from './FiltersDrawer.module.css';
 
 interface FiltersDrawerProps {
   resultCount: number;
+  resultNoun?: string;
   onClose: () => void;
   children: ReactNode;
 }
 
-export function FiltersDrawer({ resultCount, onClose, children }: FiltersDrawerProps) {
+export function FiltersDrawer({ resultCount, resultNoun = 'зар', onClose, children }: FiltersDrawerProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -40,7 +41,7 @@ export function FiltersDrawer({ resultCount, onClose, children }: FiltersDrawerP
         <div className={styles.body}>{children}</div>
         <div className={styles.footer}>
           <button type="button" className="btn btn-primary" onClick={onClose}>
-            {resultCount} зар харах
+            {resultCount} {resultNoun} харах
           </button>
         </div>
       </div>

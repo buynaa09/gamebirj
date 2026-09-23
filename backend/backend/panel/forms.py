@@ -17,7 +17,7 @@ class BootstrapMixin:
 class GameForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Game
-        fields = ["name", "image", "is_active"]
+        fields = ["name", "image", "is_active_marketplace", "is_active_tournament"]
 
 
 class GameRankForm(BootstrapMixin, forms.ModelForm):

@@ -436,7 +436,7 @@ def create_account(  # noqa: PLR0913, PLR0917
     rental_unit: str = Form(""),
 ):
     try:
-        game_obj = Game.objects.get(pk=game, is_active=True)
+        game_obj = Game.objects.get(pk=game, is_active_marketplace=True)
     except Game.DoesNotExist as exc:
         raise _fail(404, "Game not found.") from exc
 

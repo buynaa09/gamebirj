@@ -144,6 +144,36 @@ export interface QPayPayment {
 
 export type SortKey = 'newest' | 'oldest' | 'price-asc' | 'price-desc';
 
+export type TournamentStatus = 'open' | 'live' | 'finished';
+
+export interface Tournament {
+  id: number;
+  title: string;
+  game_id: number;
+  game: string;
+  status: TournamentStatus;
+  prize_pool: string;
+  entry_fee: string;
+  starts_at: string | null;
+  format: string;
+  total_slots: number;
+  filled_slots: number;
+  slot_unit: string;
+}
+
+export interface RegisterTeamInput {
+  team_name: string;
+  leader_game_id: string;
+}
+
+export interface TournamentRegistration {
+  id: number;
+  tournament: number;
+  team_name: string;
+  leader_game_id: string;
+  created_at: string;
+}
+
 export interface GameFilter {
   id: string;
   name: string;

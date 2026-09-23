@@ -8,10 +8,10 @@ from .models import ListingChoice
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ["name", "is_active"]
-    list_editable = ["is_active"]
+    list_display = ["name", "is_active_marketplace", "is_active_tournament"]
+    list_editable = ["is_active_marketplace", "is_active_tournament"]
     search_fields = ["name"]
-    list_filter = ["is_active"]
+    list_filter = ["is_active_marketplace", "is_active_tournament"]
 
 
 @admin.register(GameRank)

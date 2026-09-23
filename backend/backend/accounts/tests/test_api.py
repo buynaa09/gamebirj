@@ -107,7 +107,7 @@ def test_create_account_rejects_foreign_rank(client: Client):
 
 def test_create_account_rejects_inactive_game(client: Client):
     client.force_login(UserFactory.create())
-    game = Game.objects.create(name="Inactive Game", is_active=False)
+    game = Game.objects.create(name="Inactive Game", is_active_marketplace=False)
 
     response = client.post(
         reverse("api:create_account"),

@@ -4,7 +4,7 @@ import styles from './SearchBar.module.css';
 interface SearchBarProps {
   query: string;
   onQueryChange: (q: string) => void;
-  onOpenFilters: () => void;
+  onOpenFilters?: () => void;
 }
 
 export function SearchBar({ query, onQueryChange, onOpenFilters }: SearchBarProps) {
@@ -20,10 +20,12 @@ export function SearchBar({ query, onQueryChange, onOpenFilters }: SearchBarProp
           aria-label="Заруудаас хайх"
         />
       </div>
-      <button type="button" className={styles.filtersMobileBtn} aria-label="Шүүлтүүр нээх" onClick={onOpenFilters}>
-        <FilterIcon />
-        Шүүлтүүр
-      </button>
+      {onOpenFilters && (
+        <button type="button" className={styles.filtersMobileBtn} aria-label="Шүүлтүүр нээх" onClick={onOpenFilters}>
+          <FilterIcon />
+          Шүүлтүүр
+        </button>
+      )}
     </div>
   );
 }

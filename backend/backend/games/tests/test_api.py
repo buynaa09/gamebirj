@@ -106,15 +106,30 @@ def test_list_games_includes_global_listings(client: Client):
 
 
 def test_list_games_excludes_inactive_games(client: Client):
-    active = Game.objects.create(name="Active Game", is_active=True)
-    inactive = Game.objects.create(name="Inactive Game", is_active=False)
+    active = Game.objects.create(
+        name="Active Game",
+        is_active_marketplace=True,
+        is_active_tournament=True,
+    )
+    marketplace_inactive = Game.objects.create(
+        name="Marketplace Inactive Game",
+        is_active_marketplace=False,
+        is_active_tournament=True,
+    )
+    tournament_inactive = Game.objects.create(
+        name="Tournament Inactive Game",
+        is_active_marketplace=True,
+        is_active_tournament=False,
+    )
 
     response = client.get(reverse("api:list_games"))
 
     assert response.status_code == HTTPStatus.OK
     ids = {g["id"] for g in response.json()}
     assert active.pk in ids
-    assert inactive.pk not in ids
+    assert marketplace_inactive.pk not in ids
+    # The tournament flag does not affect the marketplace listing.
+    assert tournament_inactive.pk in ids
 
 
 def test_game_specific_listing_shadows_global(client: Client):

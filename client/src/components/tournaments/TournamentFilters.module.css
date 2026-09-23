@@ -1,0 +1,86 @@
+.filters {
+  display: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  background: var(--panel);
+  align-self: start;
+  position: sticky;
+  top: 76px;
+}
+
+@media (min-width: 960px) {
+  .filters {
+    display: block;
+  }
+}
+
+/* Used inside the mobile drawer, where .filters is hidden by default. */
+.filtersVisible {
+  display: block;
+  border: none;
+  padding: 0;
+  position: static;
+  background: transparent;
+}
+
+.filters h4 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.reset {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--red);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.reset:hover {
+  text-decoration: underline;
+}
+
+.groupTitle {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  color: var(--text-faint);
+  font-weight: 800;
+  text-transform: uppercase;
+  margin: 18px 0 10px;
+}
+
+.groupTitle:first-of-type {
+  margin-top: 0;
+}
+
+.fltRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.fltRow .left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+}
+
+.fltRow input {
+  accent-color: var(--red);
+  width: 15px;
+  height: 15px;
+}
