@@ -12,6 +12,7 @@ import { HomePage } from './pages/HomePage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { RentalPage } from './pages/RentalPage';
 import { TournamentsPage } from './pages/TournamentsPage';
+import { TournamentDetailPage } from './pages/TournamentDetailPage';
 import { SignupPage } from './pages/SignupPage';
 import { SellPage } from './pages/SellPage';
 import { RentCreatePage } from './pages/RentCreatePage';
@@ -45,6 +46,7 @@ function AppShell() {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/rent" element={<RentalPage />} />
         <Route path="/tournaments" element={<TournamentsPage />} />
+        <Route path="/tournaments/:id" element={<TournamentRoute />} />
         <Route path="/rent/create" element={<RentCreatePage />} />
         <Route
           path="/login/*"
@@ -87,4 +89,9 @@ function ListingRoute() {
   const { id } = useParams();
   // Remount on id change so gallery state and data reset between listings.
   return <ListingDetailPage key={id} id={Number(id)} />;
+}
+
+function TournamentRoute() {
+  const { id } = useParams();
+  return <TournamentDetailPage key={id} id={Number(id)} />;
 }

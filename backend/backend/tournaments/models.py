@@ -22,7 +22,11 @@ class Tournament(models.Model):
     prize_pool = models.CharField(max_length=100)
     entry_fee = models.CharField(max_length=100, default="Үнэгүй")
     starts_at = models.DateTimeField(blank=True, null=True)
+    ends_at = models.DateTimeField(blank=True, null=True)
     format = models.CharField(max_length=100, blank=True)
+    mode = models.CharField(max_length=20, default="Online")
+    team_size = models.PositiveIntegerField(default=5)
+    rules = models.TextField(blank=True, default="")
     total_slots = models.PositiveIntegerField(default=16)
     filled_slots = models.PositiveIntegerField(default=0)
     slot_unit = models.CharField(max_length=20, default="баг")  # noqa: RUF001 — Mongolian word for "team"
@@ -36,6 +40,20 @@ class Tournament(models.Model):
         return f"{self.title} ({self.game})"
 
 
+class TournamentTeam(models.Model):
+    game = models.ForeignKey(
+        "games.Game",
+        on_delete=models.CASCADE,
+        related_name="tournament_teams",
+    )
+
+    name = models.CharField(max_length=100)
+    leader_game_id = models.CharField(max_length=100)
+    leader_server_id = models.CharField(max_length=100, blank=True, default="")
+    leader_nickname = models.CharField(max_length=100, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class TournamentRegistration(models.Model):
     tournament = models.ForeignKey(
         Tournament,
@@ -47,11 +65,11 @@ class TournamentRegistration(models.Model):
         on_delete=models.CASCADE,
         related_name="tournament_registrations",
     )
-    team_name = models.CharField(max_length=100)
-    leader_game_id = models.CharField(max_length=100)
-    leader_server_id = models.CharField(max_length=100, blank=True, default="")
-    # Nickname snapshot from the ID check at registration time.
-    leader_nickname = models.CharField(max_length=100, blank=True, default="")
+    team = models.ForeignKey(
+        TournamentTeam,
+        on_delete=models.CASCADE,
+        related_name="registrations",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

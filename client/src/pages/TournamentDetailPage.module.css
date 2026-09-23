@@ -1,0 +1,537 @@
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+}
+
+.crumbs {
+  font-size: 13px;
+  color: var(--text-faint);
+  margin-bottom: 14px;
+}
+
+.crumbs .cur {
+  color: var(--text);
+}
+
+.state {
+  color: var(--text-dim);
+  font-size: 14px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+/* Hero band */
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 0;
+}
+
+.heroThumb {
+  width: 110px;
+  height: 110px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--panel-2);
+  flex-shrink: 0;
+}
+
+.heroThumbFallback {
+  width: 110px;
+  height: 110px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--red);
+  flex-shrink: 0;
+}
+
+.heroMain {
+  flex: 1;
+  min-width: 220px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+.dateRange {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.open {
+  background: rgba(46, 160, 67, 0.15);
+  color: #3fb950;
+}
+
+.live {
+  background: rgba(229, 52, 74, 0.14);
+  color: var(--red);
+}
+
+.finished {
+  background: var(--panel-2);
+  color: var(--text-faint);
+}
+
+.heroCta {
+  flex-shrink: 0;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 14px 18px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tabActive {
+  color: var(--text);
+  border-bottom-color: var(--red);
+}
+
+.tabCount {
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--panel-2);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--text-dim);
+}
+
+/* Overview columns */
+.columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 960px) {
+  .columns {
+    grid-template-columns: 1.4fr 1fr;
+  }
+}
+
+.sectionTitle {
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0 0 16px;
+}
+
+.columns section + section {
+  margin-top: 28px;
+}
+
+/* Information panel */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.infoGrid > div {
+  padding: 16px;
+}
+
+.infoGrid > div + div {
+  border-left: 1px solid var(--border);
+}
+
+.infoGame {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.infoGame div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.infoGame b {
+  font-size: 14.5px;
+}
+
+.infoGame span {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.infoGameImg {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--panel-2);
+  flex-shrink: 0;
+}
+
+.infoGameEmoji {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.infoCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+}
+
+.infoCell b {
+  font-size: 14px;
+}
+
+.infoLabel {
+  font-size: 12px;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+.infoSub {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* Stage cards */
+.stageCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.stageCard {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stageCard b {
+  font-size: 15px;
+}
+
+.stageCard span {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* Schedule */
+.scheduleHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scheduleHead .sectionTitle {
+  margin-bottom: 16px;
+}
+
+.tz {
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.scheduleCard {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.scheduleCard p {
+  margin: 6px 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scheduleMeta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.scheduleMeta div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.scheduleMeta dt {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+.scheduleMeta dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.prize {
+  color: var(--red);
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progressBar {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.progressBar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--red);
+}
+
+.progressLabel {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.shareBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: 0.15s;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.shareBtn:hover {
+  background: var(--panel-2);
+}
+
+/* Teams / rules / similar */
+.count {
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.empty {
+  color: var(--text-dim);
+  font-size: 14px;
+  margin: 0;
+}
+
+.teamList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 720px;
+}
+
+.teamList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 14px;
+}
+
+.teamName {
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teamNick {
+  color: var(--text-dim);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teamDate {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rulesList {
+  margin: 0;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 720px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.similar {
+  margin-top: 28px;
+}
+
+.similar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.similar a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  font-size: 14px;
+  transition: 0.15s;
+}
+
+.similar a:hover {
+  border-color: var(--red-dim);
+}
+
+.similar a span {
+  color: var(--text-dim);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .infoGrid > div + div {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding: 20px 16px 64px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .hero {
+    padding: 16px;
+  }
+
+  .heroThumb,
+  .heroThumbFallback {
+    width: 84px;
+    height: 84px;
+    font-size: 34px;
+  }
+
+  .heroCta {
+    width: 100%;
+    justify-content: center;
+  }
+}

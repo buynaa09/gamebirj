@@ -50,6 +50,10 @@ def test_list_tournaments_as_anonymous_user(client: Client):
     assert payload["prize_pool"] == "1,000,000₮"
     assert payload["entry_fee"] == tournament.entry_fee
     assert payload["starts_at"] == tournament.starts_at.isoformat()
+    assert payload["ends_at"] is None
+    assert payload["mode"] == "Online"
+    assert payload["team_size"] == tournament.team_size
+    assert payload["rules"] == ""
     assert payload["format"] == "5v5 · Single Elimination"
     assert payload["total_slots"] == tournament.total_slots
     assert payload["filled_slots"] == tournament.filled_slots
@@ -318,3 +322,43 @@ def test_register_team_rejects_invalid_leader(client: Client, monkeypatch):
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_retrieve_tournament_detail(client: Client):
+    tournament = make_checkable_tournament(title="Detail Cup")
+    other = UserFactory.create()
+    registration_model = tournament.registrations.model
+    registration_model.objects.create(
+        tournament=tournament,
+        user=other,
+        team_name="Night Wolves",
+        leader_game_id="1234449725",
+        leader_server_id="11467",
+        leader_nickname="NightWolf",
+    )
+
+    url = reverse("api:retrieve_tournament", kwargs={"tournament_id": tournament.pk})
+    response = client.get(url)
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.json()
+    assert payload["title"] == "Detail Cup"
+    assert payload["id_check_slug"] == "mobile-legends"
+    assert len(payload["registrations"]) == 1
+    team = payload["registrations"][0]
+    assert team["team_name"] == "Night Wolves"
+    assert team["leader_nickname"] == "NightWolf"
+    # Leader game IDs are never exposed publicly.
+    assert "leader_game_id" not in team
+    assert "leader_server_id" not in team
+
+
+def test_retrieve_tournament_detail_404_for_inactive_game(client: Client):
+    tournament = make_tournament(title="Hidden Cup")
+    tournament.game.is_active_tournament = False
+    tournament.game.save(update_fields=["is_active_tournament"])
+
+    url = reverse("api:retrieve_tournament", kwargs={"tournament_id": tournament.pk})
+    response = client.get(url)
+
+    assert response.status_code == HTTPStatus.NOT_FOUND

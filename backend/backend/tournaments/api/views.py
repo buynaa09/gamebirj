@@ -11,6 +11,7 @@ from backend.tournaments.api.schema import CheckedAccountSchema
 from backend.tournaments.api.schema import CheckIdSchema
 from backend.tournaments.api.schema import RegisterTeamSchema
 from backend.tournaments.api.schema import RegistrationSchema
+from backend.tournaments.api.schema import TournamentDetailSchema
 from backend.tournaments.api.schema import TournamentSchema
 from backend.tournaments.id_check import IdCheckNotFoundError
 from backend.tournaments.id_check import IdCheckTransportError
@@ -52,7 +53,11 @@ def list_tournaments(request):
             "starts_at": tournament.starts_at.isoformat()
             if tournament.starts_at
             else None,
+            "ends_at": tournament.ends_at.isoformat() if tournament.ends_at else None,
             "format": tournament.format,
+            "mode": tournament.mode,
+            "team_size": tournament.team_size,
+            "rules": tournament.rules,
             "total_slots": tournament.total_slots,
             "filled_slots": tournament.filled_slots,
             "slot_unit": tournament.slot_unit,
@@ -126,4 +131,38 @@ def register_team(request, tournament_id: int, data: RegisterTeamSchema):
         "leader_server_id": registration.leader_server_id,
         "leader_nickname": registration.leader_nickname,
         "created_at": registration.created_at.isoformat(),
+    }
+
+
+@router.get("/{tournament_id}/", response=TournamentDetailSchema, auth=None)
+def retrieve_tournament(request, tournament_id: int):
+    tournament = _get_tournament(tournament_id)
+    registrations = tournament.registrations.order_by("created_at")
+    return {
+        "id": tournament.id,
+        "title": tournament.title,
+        "game_id": tournament.game_id,
+        "game": tournament.game.name,
+        "id_check_slug": tournament.game.id_check_slug,
+        "status": tournament.status,
+        "prize_pool": tournament.prize_pool,
+        "entry_fee": tournament.entry_fee,
+        "starts_at": tournament.starts_at.isoformat() if tournament.starts_at else None,
+        "ends_at": tournament.ends_at.isoformat() if tournament.ends_at else None,
+        "format": tournament.format,
+        "mode": tournament.mode,
+        "team_size": tournament.team_size,
+        "rules": tournament.rules,
+        "total_slots": tournament.total_slots,
+        "filled_slots": tournament.filled_slots,
+        "slot_unit": tournament.slot_unit,
+        # Leader game IDs stay private; only nicknames are public.
+        "registrations": [
+            {
+                "team_name": registration.team_name,
+                "leader_nickname": registration.leader_nickname,
+                "created_at": registration.created_at.isoformat(),
+            }
+            for registration in registrations
+        ],
     }

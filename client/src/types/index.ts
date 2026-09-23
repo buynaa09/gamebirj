@@ -156,7 +156,11 @@ export interface Tournament {
   prize_pool: string;
   entry_fee: string;
   starts_at: string | null;
+  ends_at: string | null;
   format: string;
+  mode: string;
+  team_size: number;
+  rules: string;
   total_slots: number;
   filled_slots: number;
   slot_unit: string;
@@ -175,6 +179,16 @@ export interface TournamentRegistration {
   team_name: string;
   leader_game_id: string;
   created_at: string;
+}
+
+export interface RegisteredTeam {
+  team_name: string;
+  leader_nickname: string;
+  created_at: string;
+}
+
+export interface TournamentDetail extends Tournament {
+  registrations: RegisteredTeam[];
 }
 
 export interface GameFilter {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Seo } from '../components/seo/Seo';
 import { SearchBar } from '../components/marketplace/SearchBar';
 import { FiltersDrawer } from '../components/marketplace/FiltersDrawer';
@@ -71,6 +71,7 @@ function formatStartsAt(startsAt: string | null, status: TournamentStatus): stri
 
 export function TournamentsPage() {
   const { tournaments, loading, error, reload } = useTournaments();
+  const navigate = useNavigate();
   const apiGames = useGames();
   const [filter, setFilter] = useState<FilterKey>('all');
   const [selectedGame, setSelectedGame] = useState<string>('all');
@@ -255,7 +256,9 @@ export function TournamentsPage() {
                   <span className={styles.game}>{t.game}</span>
                   <span className={`${styles.badge} ${styles[meta.className]}`}>{meta.label}</span>
                 </div>
-                <h2 className={styles.cardTitle}>{t.title}</h2>
+                <h2 className={styles.cardTitle}>
+                  <Link to={`/tournaments/${t.id}`}>{t.title}</Link>
+                </h2>
                 <p className={styles.format}>{t.format}</p>
                 <dl className={styles.meta}>
                   <div>
@@ -295,11 +298,19 @@ export function TournamentsPage() {
                       Бүртгүүлэх
                     </button>
                   ) : t.status === 'live' ? (
-                    <button className="btn btn-outline" type="button">
+                    <button
+                      className="btn btn-outline"
+                      type="button"
+                      onClick={() => navigate(`/tournaments/${t.id}`)}
+                    >
                       Шууд үзэх
                     </button>
                   ) : (
-                    <button className="btn btn-outline" type="button">
+                    <button
+                      className="btn btn-outline"
+                      type="button"
+                      onClick={() => navigate(`/tournaments/${t.id}`)}
+                    >
                       Дүн харах
                     </button>
                   )}

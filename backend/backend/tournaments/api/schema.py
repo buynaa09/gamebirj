@@ -11,7 +11,11 @@ class TournamentSchema(Schema):
     prize_pool: str
     entry_fee: str
     starts_at: str | None = None
+    ends_at: str | None = None
     format: str = ""
+    mode: str = ""
+    team_size: int = 0
+    rules: str = ""
     total_slots: int = 0
     filled_slots: int = 0
     slot_unit: str = ""
@@ -43,3 +47,13 @@ class CheckIdSchema(Schema):
 class CheckedAccountSchema(Schema):
     nickname: str
     region: str = ""
+
+
+class RegisteredTeamSchema(Schema):
+    team_name: str
+    leader_nickname: str = ""
+    created_at: str
+
+
+class TournamentDetailSchema(TournamentSchema):
+    registrations: list[RegisteredTeamSchema] = []

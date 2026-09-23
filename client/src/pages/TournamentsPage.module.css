@@ -262,6 +262,10 @@
   line-height: 1.35;
 }
 
+.cardTitle a:hover {
+  color: var(--red);
+}
+
 .format {
   font-size: 13px;
   color: var(--text-faint);
