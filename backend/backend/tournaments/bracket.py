@@ -207,6 +207,15 @@ def ensure_rooms(tournament: Tournament) -> tuple[int, list[str]]:
     cookie = MLBBMatchConfig.get_cookie()
     if not cookie:
         return 0, ["matchTools cookie is not configured"]
+    for match in tournament.matches.exclude(mlbb_match_id="").filter(
+        lobby_deadline__isnull=True,
+    ):
+        match.lobby_deadline = (
+            tournament.starts_at
+            if match.round_index == 0
+            else timezone.now() + timedelta(minutes=5)
+        )
+        match.save(update_fields=["lobby_deadline"])
     created = 0
     errors: list[str] = []
     for match in tournament.matches.filter(mlbb_match_id="").order_by(
@@ -233,8 +242,15 @@ def ensure_rooms(tournament: Tournament) -> tuple[int, list[str]]:
             continue
         match.mlbb_match_id = room.match_id
         match.draft_url = lobby.url
+        match.lobby_deadline = (
+            tournament.starts_at
+            if match.round_index == 0
+            else timezone.now() + timedelta(minutes=5)
+        )
         match.status = TournamentMatch.Status.OPEN
-        match.save(update_fields=["mlbb_match_id", "draft_url", "status"])
+        match.save(
+            update_fields=["mlbb_match_id", "draft_url", "lobby_deadline", "status"],
+        )
         created += 1
     return created, errors
 
@@ -318,7 +334,12 @@ def poll_match_results(tournament: Tournament | None = None) -> dict:
         return summary
     matches = (
         TournamentMatch.objects.exclude(mlbb_match_id="")
-        .exclude(status=TournamentMatch.Status.FINISHED)
+        .exclude(
+            status__in=[
+                TournamentMatch.Status.FINISHED,
+                TournamentMatch.Status.EXPIRED,
+            ],
+        )
         .select_related("team_a", "team_b", "tournament")
         .order_by("tournament_id", "round_index", "position")
     )
@@ -327,6 +348,17 @@ def poll_match_results(tournament: Tournament | None = None) -> dict:
     cutoff = timezone.now() - timedelta(seconds=POLL_INTERVAL_SECONDS)
     touched_tournaments: dict[int, Tournament] = {}
     for match in matches:
+        if (
+            match.lobby_deadline is not None
+            and match.lobby_deadline <= timezone.now()
+            and match.winner_id is None
+            and match.status != TournamentMatch.Status.FINISHED
+        ):
+            match.status = TournamentMatch.Status.EXPIRED
+            match.is_expired = True
+            match.save(update_fields=["status", "is_expired"])
+            logger.info("Match deadline expired: %s", match)
+            continue
         if match.last_polled_at is not None and match.last_polled_at >= cutoff:
             continue
         _poll_one_match(match, cookie, summary)

@@ -9,7 +9,7 @@ interface LobbyModalProps {
   game: string;
   lobbyUrl: string;
   camp: number | null;
-  startsAt: string | null;
+  deadline: string | null;
   onClose: () => void;
 }
 
@@ -20,9 +20,9 @@ function formatCountdown(seconds: number): string {
   return `${minutes}:${remainder}`;
 }
 
-export function LobbyModal({ title, game, lobbyUrl, camp, startsAt, onClose }: LobbyModalProps) {
+export function LobbyModal({ title, game, lobbyUrl, camp, deadline, onClose }: LobbyModalProps) {
   const [copied, setCopied] = useState(false);
-  const [remaining, setRemaining] = useState<number | null>(startsAt ? 300 : null);
+  const [remaining, setRemaining] = useState<number | null>(deadline ? 300 : null);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -38,18 +38,13 @@ export function LobbyModal({ title, game, lobbyUrl, camp, startsAt, onClose }: L
   }, [onClose]);
 
   useEffect(() => {
-    if (!startsAt) return;
-    const target = new Date(startsAt).getTime();
-    const now = Date.now();
-    const deadline = Math.min(
-      Number.isNaN(target) || target <= now ? now + 300_000 : target,
-      now + 300_000,
-    );
-    const update = () => setRemaining(Math.ceil((deadline - Date.now()) / 1000));
+    if (!deadline) return;
+    const target = new Date(deadline).getTime();
+    const update = () => setRemaining(Number.isNaN(target) ? null : Math.ceil((target - Date.now()) / 1000));
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
-  }, [startsAt]);
+  }, [deadline]);
 
   useEffect(() => {
     if (!copied) return;
@@ -101,13 +96,14 @@ export function LobbyModal({ title, game, lobbyUrl, camp, startsAt, onClose }: L
           <b>Анхаарах нөхцөл</b>
           <ul>
             <li>Энэ зураг дээрх талд танай баг байрлана.</li>
+             <li>Тоглолт 5 минут дотор эхлэх ёстой</li>
             <li>Inspector-т хүн орохыг хориглоно. </li>
             <li>Та match leader бол Inspector-т орсон хүнийг Kick хийнэ.</li>
           </ul>
         </div>
         <div className={styles.countdown}>
-          <b>Тоглолт 5 минут дотор эхлэх ёстой</b>
-          <span>{remaining === null ? 'Цагийг тооцоод байна…' : remaining > 0 ? formatCountdown(remaining) : 'Тоглолт эхлэх цаг өндөрлөгдсөн'}</span>
+         
+          <span>{remaining === null ? 'Цагийг тооцоолж байна…' : remaining > 0 ? formatCountdown(remaining) : 'Тоглолт эхлэх цаг дуссан'}</span>
         </div>
         {/* <p className={styles.url}>{lobbyUrl}</p> */}
 

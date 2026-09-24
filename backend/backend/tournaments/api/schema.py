@@ -83,6 +83,7 @@ class TournamentDetailSchema(TournamentSchema):
     my_draft_url: str | None = None
     my_match_status: str | None = None
     my_camp: int | None = None
+    my_lobby_deadline: str | None = None
 
 
 class TournamentMatchSchema(Schema):
@@ -95,6 +96,7 @@ class TournamentMatchSchema(Schema):
     score_a: int | None = None
     score_b: int | None = None
     status: str = ""
+    is_expired: bool = False
     mlbb_status: str = ""
     has_room: bool = False
     # Draft lobby link — only for the two playing teams (and staff).

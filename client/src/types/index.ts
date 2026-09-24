@@ -224,6 +224,7 @@ export interface TournamentDetail extends Tournament {
   my_draft_url: string | null;
   my_match_status: string | null;
   my_camp: number | null;
+  my_lobby_deadline: string | null;
 }
 
 export interface TournamentMatch {
@@ -236,6 +237,7 @@ export interface TournamentMatch {
   score_a: number | null;
   score_b: number | null;
   status: string;
+  is_expired: boolean;
   mlbb_status: string;
   has_room: boolean;
   draft_url: string | null;

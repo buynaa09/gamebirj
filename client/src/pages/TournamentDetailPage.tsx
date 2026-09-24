@@ -91,6 +91,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
   const [joinOpen, setJoinOpen] = useState(false);
   const [lobbyUrl, setLobbyUrl] = useState<string | null>(null);
   const [lobbyCamp, setLobbyCamp] = useState<number | null>(null);
+  const [lobbyDeadline, setLobbyDeadline] = useState<string | null>(null);
   const [shared, setShared] = useState(false);
   // Bracket + history share one matches fetch, loaded on demand per tab.
   const bracketTabActive = tab === 'stages' || tab === 'matches';
@@ -122,6 +123,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
     if (tournament?.my_draft_url) {
       setLobbyUrl(tournament.my_draft_url);
       setLobbyCamp(tournament.my_camp);
+      setLobbyDeadline(tournament.my_lobby_deadline);
       return;
     }
     setTab('matches');
@@ -465,7 +467,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
           game={tournament.game}
           lobbyUrl={lobbyUrl}
           camp={lobbyCamp}
-          startsAt={tournament.starts_at}
+          deadline={lobbyDeadline}
           onClose={() => setLobbyUrl(null)}
         />
       )}

@@ -252,12 +252,19 @@ def retrieve_tournament(request, tournament_id: int):
     registrations = tournament.registrations.select_related("team").order_by(
         "created_at",
     )
+    if _tournament_started(tournament):
+        ensure_rooms(tournament)
     user = _optional_user(request)
     is_registered = tournament.id in _registered_tournament_ids(request)
     my_match = _my_next_match(tournament, user)
     my_draft_match = _my_draft_match(tournament, user)
     my_draft_url = my_draft_match.draft_url if my_draft_match else None
     my_camp = _my_camp(my_draft_match, _my_team_ids(tournament, user))
+    my_lobby_deadline = (
+        my_draft_match.lobby_deadline.isoformat()
+        if my_draft_match and my_draft_match.lobby_deadline
+        else None
+    )
     return {
         "id": tournament.id,
         "title": tournament.title,
@@ -282,6 +289,7 @@ def retrieve_tournament(request, tournament_id: int):
             (my_match.mlbb_status or my_match.status) if my_match else None
         ),
         "my_camp": my_camp,
+        "my_lobby_deadline": my_lobby_deadline,
         # Leader game IDs stay private; only nicknames are public.
         "registrations": [
             {
@@ -396,6 +404,7 @@ def _match_payloads(request, tournament: Tournament) -> list[dict]:
                 "score_a": match.score_a,
                 "score_b": match.score_b,
                 "status": match.status,
+                "is_expired": match.is_expired,
                 "mlbb_status": match.mlbb_status,
                 "has_room": bool(match.mlbb_match_id),
                 "draft_url": (

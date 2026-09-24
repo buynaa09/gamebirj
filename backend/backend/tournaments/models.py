@@ -143,6 +143,7 @@ class TournamentMatch(models.Model):
         PENDING = "pending", "Pending (teams or room TBD)"
         OPEN = "open", "Room open"
         LIVE = "live", "Match in progress"
+        EXPIRED = "expired", "Deadline expired"
         FINISHED = "finished", "Finished"
 
     tournament = models.ForeignKey(
@@ -175,6 +176,7 @@ class TournamentMatch(models.Model):
     )
     mlbb_match_id = models.CharField(max_length=100, blank=True, default="")
     draft_url = models.CharField(max_length=500, blank=True, default="")
+    lobby_deadline = models.DateTimeField(null=True, blank=True)
     # Raw matchTools room state (create/room/battle/result) from polling.
     mlbb_status = models.CharField(max_length=20, blank=True, default="")
     last_polled_at = models.DateTimeField(null=True, blank=True)
@@ -189,6 +191,7 @@ class TournamentMatch(models.Model):
         choices=Status.choices,
         default=Status.PENDING,
     )
+    is_expired = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

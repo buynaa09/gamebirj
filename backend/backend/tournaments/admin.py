@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from .bracket import advance_winners
 from .models import MLBBMatchConfig
 from .models import Tournament
 from .models import TournamentMatch
@@ -19,10 +20,11 @@ class TournamentMatchInline(admin.TabularInline):
         "score_a",
         "score_b",
         "status",
+        "is_expired",
         "mlbb_status",
         "draft_url",
     ]
-    readonly_fields = ["mlbb_status", "draft_url"]
+    readonly_fields = ["is_expired", "mlbb_status", "draft_url"]
     show_change_link = True
 
 
@@ -33,6 +35,10 @@ class TournamentAdmin(admin.ModelAdmin):
     search_fields = ["title"]
     list_filter = ["status", "is_active", "game"]
     inlines = [TournamentMatchInline]
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        advance_winners(form.instance)
 
 
 @admin.register(TournamentTeam)
@@ -59,17 +65,23 @@ class TournamentMatchAdmin(admin.ModelAdmin):
         "team_b",
         "winner",
         "status",
+        "is_expired",
         "mlbb_status",
     ]
-    list_filter = ["tournament", "status", "mlbb_status", "round_index"]
+    list_filter = ["tournament", "status", "is_expired", "mlbb_status", "round_index"]
     readonly_fields = [
         "mlbb_match_id",
         "mlbb_status",
+        "is_expired",
         "battle_data",
         "last_polled_at",
         "draft_url",
         "created_at",
     ]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        advance_winners(obj.tournament)
 
 
 @admin.register(MLBBMatchConfig)
