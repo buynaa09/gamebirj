@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from django.db import IntegrityError
+from django.db.models import F
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.errors import HttpError
@@ -174,8 +175,9 @@ def register_team(request, tournament_id: int, data: RegisterTeamSchema):
         )
     except IntegrityError as exc:
         raise HttpError(409, "This team is already registered.") from exc
-    tournament.filled_slots += 1
-    tournament.save(update_fields=["filled_slots"])
+    # Atomic increment — concurrent registrations never lose a count.
+    Tournament.objects.filter(pk=tournament.pk).update(filled_slots=F("filled_slots") + 1)
+    tournament.refresh_from_db(fields=["filled_slots"])
     return {
         "id": registration.id,
         "tournament": tournament.id,

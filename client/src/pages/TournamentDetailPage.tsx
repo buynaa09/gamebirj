@@ -90,7 +90,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
     setRegisterOpen(true);
   };
 
-  if (loading) {
+  if (loading && !tournament) {
     return (
       <main className={styles.page}>
         <Seo
@@ -104,7 +104,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
     );
   }
 
-  if (error || !tournament) {
+  if (!tournament) {
     return (
       <main className={styles.page}>
         <Seo

@@ -245,9 +245,9 @@ export function TournamentsPage() {
         </select>
       </div>
 
-      {loading ? (
+      {loading && tournaments.length === 0 ? (
         <p className={styles.empty}>Тэмцээнүүд ачааллаж байна…</p>
-      ) : error ? (
+      ) : error && tournaments.length === 0 ? (
         <p className={styles.empty}>
           {error}{' '}
           <button type="button" className={styles.retry} onClick={reload}>
@@ -263,7 +263,15 @@ export function TournamentsPage() {
             const pct =
               t.total_slots > 0 ? Math.round((t.filled_slots / t.total_slots) * 100) : 0;
             return (
-              <article key={t.id} className={styles.card}>
+              <article
+                key={t.id}
+                className={styles.card}
+                onClick={(e) => {
+                  // Товч/линк дээр дарсан бол card navigation ажиллахгүй
+                  if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+                  navigate(`/tournaments/${t.id}`);
+                }}
+              >
                 <div className={styles.cardTop}>
                   <span className={styles.game}>{t.game}</span>
                   <span className={`${styles.badge} ${styles[meta.className]}`}>{meta.label}</span>

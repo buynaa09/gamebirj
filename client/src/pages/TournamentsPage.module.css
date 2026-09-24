@@ -211,6 +211,7 @@
   flex-direction: column;
   gap: 10px;
   transition: 0.15s;
+  cursor: pointer;
 }
 
 .card:hover {
