@@ -7,18 +7,22 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.errors import HttpError
 
+from backend.games.models import Game
 from backend.tournaments.api.schema import CheckedAccountSchema
 from backend.tournaments.api.schema import CheckIdSchema
+from backend.tournaments.api.schema import CreateTeamSchema
 from backend.tournaments.api.schema import RegisterTeamSchema
 from backend.tournaments.api.schema import RegistrationSchema
 from backend.tournaments.api.schema import TournamentDetailSchema
 from backend.tournaments.api.schema import TournamentSchema
+from backend.tournaments.api.schema import TournamentTeamSchema
 from backend.tournaments.id_check import IdCheckNotFoundError
 from backend.tournaments.id_check import IdCheckTransportError
 from backend.tournaments.id_check import IdCheckUnsupportedError
 from backend.tournaments.id_check import check_game_account
 from backend.tournaments.models import Tournament
 from backend.tournaments.models import TournamentRegistration
+from backend.tournaments.models import TournamentTeam
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +36,34 @@ def _get_tournament(tournament_id: int) -> Tournament:
         is_active=True,
         game__is_active_tournament=True,
     )
+
+
+def _verify_leader(slug: str, leader_game_id: str, leader_server_id: str) -> str:
+    """Return the verified nickname, raising HttpError when invalid.
+
+    Transport failures fail open (the browser pre-check already confirmed
+    the account); a definitive miss fails closed.
+    """
+    try:
+        return check_game_account(slug, leader_game_id, leader_server_id).nickname
+    except (IdCheckUnsupportedError, IdCheckTransportError) as exc:
+        logger.warning("Leader ID re-check skipped: %s", exc)
+        return ""
+    except IdCheckNotFoundError as exc:
+        raise HttpError(422, "Leader game account not found.") from exc
+
+
+def _team_payload(team: TournamentTeam) -> dict:
+    return {
+        "id": team.id,
+        "game_id": team.game_id,
+        "game": team.game.name,
+        "name": team.name,
+        "leader_game_id": team.leader_game_id,
+        "leader_server_id": team.leader_server_id,
+        "leader_nickname": team.leader_nickname,
+        "created_at": team.created_at.isoformat(),
+    }
 
 
 @router.get("/", response=list[TournamentSchema], auth=None)
@@ -66,6 +98,47 @@ def list_tournaments(request):
     ]
 
 
+@router.get("/teams/", response=list[TournamentTeamSchema])
+def list_my_teams(request, game: int):
+    teams = TournamentTeam.objects.filter(
+        owner=request.user,
+        game_id=game,
+    ).select_related("game")
+    return [_team_payload(team) for team in teams]
+
+
+@router.post("/teams/", response=TournamentTeamSchema)
+def create_team(request, data: CreateTeamSchema):
+    game = get_object_or_404(Game, pk=data.game_id, is_active_tournament=True)
+    name = data.name.strip()
+    leader_game_id = data.leader_game_id.strip()
+    leader_server_id = data.leader_server_id.strip()
+    if not name or not leader_game_id:
+        raise HttpError(422, "Team name and leader game ID are required.")
+    slug = game.id_check_slug
+    nickname = ""
+    if slug:
+        if not leader_server_id:
+            raise HttpError(422, "Server ID is required for this game.")
+        nickname = _verify_leader(slug, leader_game_id, leader_server_id)
+        if not nickname:
+            # Re-check above fails open on transport errors; without a
+            # confirmed nickname the team cannot be created blindly.
+            raise HttpError(422, "Leader game account could not be verified.")
+    try:
+        team = TournamentTeam.objects.create(
+            game=game,
+            owner=request.user,
+            name=name,
+            leader_game_id=leader_game_id,
+            leader_server_id=leader_server_id,
+            leader_nickname=nickname or data.leader_nickname.strip(),
+        )
+    except IntegrityError as exc:
+        raise HttpError(409, "You already have a team for this game.") from exc
+    return _team_payload(team)
+
+
 @router.post("/check-id/", response=CheckedAccountSchema)
 def check_leader_id(request, data: CheckIdSchema):
     tournament = _get_tournament(data.tournament_id)
@@ -88,36 +161,16 @@ def register_team(request, tournament_id: int, data: RegisterTeamSchema):
     tournament = _get_tournament(tournament_id)
     if tournament.status != Tournament.Status.OPEN:
         raise HttpError(400, "Registration is closed for this tournament.")
-    team_name = data.team_name.strip()
-    leader_game_id = data.leader_game_id.strip()
-    leader_server_id = data.leader_server_id.strip()
-    leader_nickname = data.leader_nickname.strip()
-    if not team_name or not leader_game_id:
-        raise HttpError(422, "Team name and leader game ID are required.")
+    team = get_object_or_404(TournamentTeam, pk=data.team_id, owner=request.user)
+    if team.game_id != tournament.game_id:
+        raise HttpError(400, "This team plays a different game.")
     if tournament.filled_slots >= tournament.total_slots:
         raise HttpError(400, "This tournament is full.")
-    slug = tournament.game.id_check_slug
-    if slug:
-        if not leader_server_id:
-            raise HttpError(422, "Server ID is required for this game.")
-        try:
-            account = check_game_account(slug, leader_game_id, leader_server_id)
-        except (IdCheckUnsupportedError, IdCheckTransportError) as exc:
-            # Third-party outage must not block registration; the
-            # pre-submit browser check already confirmed the account.
-            logger.warning("ID_CHECK re-check skipped for %s: %s", tournament, exc)
-        except IdCheckNotFoundError as exc:
-            raise HttpError(422, "Leader game account not found.") from exc
-        else:
-            leader_nickname = account.nickname
     try:
         registration = TournamentRegistration.objects.create(
             tournament=tournament,
             user=request.user,
-            team_name=team_name,
-            leader_game_id=leader_game_id,
-            leader_server_id=leader_server_id,
-            leader_nickname=leader_nickname,
+            team=team,
         )
     except IntegrityError as exc:
         raise HttpError(409, "This team is already registered.") from exc
@@ -126,10 +179,11 @@ def register_team(request, tournament_id: int, data: RegisterTeamSchema):
     return {
         "id": registration.id,
         "tournament": tournament.id,
-        "team_name": registration.team_name,
-        "leader_game_id": registration.leader_game_id,
-        "leader_server_id": registration.leader_server_id,
-        "leader_nickname": registration.leader_nickname,
+        "team_id": team.id,
+        "team_name": team.name,
+        "leader_game_id": team.leader_game_id,
+        "leader_server_id": team.leader_server_id,
+        "leader_nickname": team.leader_nickname,
         "created_at": registration.created_at.isoformat(),
     }
 
@@ -137,7 +191,9 @@ def register_team(request, tournament_id: int, data: RegisterTeamSchema):
 @router.get("/{tournament_id}/", response=TournamentDetailSchema, auth=None)
 def retrieve_tournament(request, tournament_id: int):
     tournament = _get_tournament(tournament_id)
-    registrations = tournament.registrations.order_by("created_at")
+    registrations = tournament.registrations.select_related("team").order_by(
+        "created_at",
+    )
     return {
         "id": tournament.id,
         "title": tournament.title,
@@ -159,8 +215,8 @@ def retrieve_tournament(request, tournament_id: int):
         # Leader game IDs stay private; only nicknames are public.
         "registrations": [
             {
-                "team_name": registration.team_name,
-                "leader_nickname": registration.leader_nickname,
+                "team_name": registration.team.name,
+                "leader_nickname": registration.team.leader_nickname,
                 "created_at": registration.created_at.isoformat(),
             }
             for registration in registrations

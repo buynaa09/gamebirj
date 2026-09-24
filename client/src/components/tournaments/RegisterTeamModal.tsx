@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { checkLeaderId, registerTeam } from '../../services/tournaments';
+import { checkLeaderId, createTeam, fetchMyTeams, registerTeam } from '../../services/tournaments';
 import type { CheckedAccount } from '../../services/tournaments';
-import type { Tournament } from '../../types';
+import type { Tournament, TournamentTeam } from '../../types';
 import styles from './RegisterTeamModal.module.css';
 
 interface RegisterTeamModalProps {
@@ -10,8 +10,19 @@ interface RegisterTeamModalProps {
   onRegistered: () => void;
 }
 
+type Phase = 'loading' | 'pick' | 'create' | 'done';
+
+function authError(message: string): string {
+  return message === 'Unauthorized' || message.includes('CSRF')
+    ? 'Бүртгүүлэхийн тулд эхлээд нэвтэрнэ үү.'
+    : message;
+}
+
 export function RegisterTeamModal({ tournament, onClose, onRegistered }: RegisterTeamModalProps) {
   const verifiable = tournament.id_check_slug !== '';
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [teamName, setTeamName] = useState('');
   const [leaderGameId, setLeaderGameId] = useState('');
   const [serverId, setServerId] = useState('');
@@ -19,7 +30,7 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [doneName, setDoneName] = useState('');
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -34,7 +45,25 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
     };
   }, [onClose]);
 
-  const invalidateCheck = () => setChecked(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchMyTeams(tournament.game_id).then(
+      (result) => {
+        if (cancelled) return;
+        setTeams(result);
+        setSelectedId(result.length > 0 ? result[0].id : null);
+        setPhase(result.length > 0 ? 'pick' : 'create');
+      },
+      (err: unknown) => {
+        if (cancelled) return;
+        setError(authError(err instanceof Error ? err.message : 'Багууд ачааллаж чадсангүй.'));
+        setPhase('create');
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [tournament.game_id]);
 
   const checkAccount = async () => {
     const userId = leaderGameId.trim();
@@ -56,7 +85,26 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
     }
   };
 
-  const submit = async () => {
+  const submitPick = async () => {
+    if (selectedId === null) {
+      setError('Багаа сонгоно уу.');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const registration = await registerTeam(tournament.id, { team_id: selectedId });
+      setDoneName(registration.team_name);
+      setPhase('done');
+      onRegistered();
+    } catch (err) {
+      setError(authError(err instanceof Error ? err.message : 'Бүртгэл амжилтгүй боллоо.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitCreate = async () => {
     const name = teamName.trim();
     const gameId = leaderGameId.trim();
     if (!name || !gameId) {
@@ -70,21 +118,20 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
     setSubmitting(true);
     setError(null);
     try {
-      await registerTeam(tournament.id, {
-        team_name: name,
+      const team = await createTeam({
+        game_id: tournament.game_id,
+        name,
         leader_game_id: gameId,
         leader_server_id: verifiable ? serverId.trim() : undefined,
         leader_nickname: checked?.nickname,
       });
-      setDone(true);
+      const registration = await registerTeam(tournament.id, { team_id: team.id });
+      setTeams((prev) => [...prev, team]);
+      setDoneName(registration.team_name);
+      setPhase('done');
       onRegistered();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Бүртгэл амжилтгүй боллоо.';
-      setError(
-        message === 'Unauthorized' || message.includes('CSRF')
-          ? 'Бүртгүүлэхийн тулд эхлээд нэвтэрнэ үү.'
-          : message,
-      );
+      setError(authError(err instanceof Error ? err.message : 'Бүртгэл амжилтгүй боллоо.'));
     } finally {
       setSubmitting(false);
     }
@@ -102,26 +149,73 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
         <div className={styles.header}>
           <div>
             <p className={styles.kicker}>{tournament.game}</p>
-            <h3 className={styles.title}>{done ? 'Бүртгэл амжилттай!' : 'Баг бүртгүүлэх'}</h3>
-            {!done && <p className={styles.sub}>{tournament.title}</p>}
+            <h3 className={styles.title}>
+              {phase === 'done' ? 'Бүртгэл амжилттай!' : 'Баг бүртгүүлэх'}
+            </h3>
+            {phase !== 'done' && <p className={styles.sub}>{tournament.title}</p>}
           </div>
           <button type="button" className={styles.closeBtn} aria-label="Хаах" onClick={onClose}>
             ✕
           </button>
         </div>
 
-        {done ? (
+        {phase === 'loading' && <p className={styles.state}>Уншиж байна…</p>}
+
+        {phase === 'done' && (
           <div className={styles.success}>
             <p>
-              <b>{teamName.trim()}</b> баг <b>{tournament.title}</b> тэмцээнд бүртгэгдлээ.
+              <b>{doneName}</b> баг <b>{tournament.title}</b> тэмцээнд бүртгэгдлээ.
               Тэмцээний хуваарь зарлагдахыг хүлээнэ үү.
             </p>
             <button type="button" className="btn btn-primary" onClick={onClose}>
               Хаах
             </button>
           </div>
-        ) : (
+        )}
+
+        {phase === 'pick' && (
           <>
+            <p className={styles.hint}>Баг сонгоно уу — дараах тэмцээнд шууд бүртгэгдэнэ.</p>
+            <div className={styles.teamOptions} role="radiogroup" aria-label="Багууд">
+              {teams.map((team) => (
+                <label key={team.id} className={styles.teamOption}>
+                  <input
+                    type="radio"
+                    name="register-team"
+                    checked={selectedId === team.id}
+                    onChange={() => setSelectedId(team.id)}
+                  />
+                  <span>
+                    <b>{team.name}</b>
+                    {team.leader_nickname && <i>{team.leader_nickname}</i>}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {error && <p className={styles.error}>{error}</p>}
+            <div className={styles.actions}>
+              <button type="button" className="btn btn-outline" onClick={() => setPhase('create')}>
+                + Шинэ баг
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={submitPick}
+                disabled={submitting}
+              >
+                {submitting ? 'Бүртгэж байна…' : 'Бүртгүүлэх'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {phase === 'create' && (
+          <>
+            {teams.length > 0 && (
+              <button type="button" className={styles.backLink} onClick={() => setPhase('pick')}>
+                ← Багууд руу буцах
+              </button>
+            )}
             <label className={styles.field}>
               <span>Багийн нэр</span>
               <input
@@ -143,7 +237,7 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
                       value={leaderGameId}
                       onChange={(e) => {
                         setLeaderGameId(e.target.value);
-                        invalidateCheck();
+                        setChecked(null);
                       }}
                       placeholder="1234449725"
                       maxLength={100}
@@ -157,7 +251,7 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
                       value={serverId}
                       onChange={(e) => {
                         setServerId(e.target.value);
-                        invalidateCheck();
+                        setChecked(null);
                       }}
                       placeholder="11467"
                       maxLength={100}
@@ -200,10 +294,10 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={submit}
+                onClick={submitCreate}
                 disabled={submitting}
               >
-                {submitting ? 'Бүртгэж байна…' : 'Бүртгүүлэх'}
+                {submitting ? 'Бүртгэж байна…' : 'Баг нээж бүртгүүлэх'}
               </button>
             </div>
           </>

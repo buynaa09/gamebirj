@@ -41,17 +41,43 @@ class Tournament(models.Model):
 
 
 class TournamentTeam(models.Model):
+    """A reusable player team for one game.
+
+    A user creates a team once (leader ID verified at creation) and then
+    registers it into any tournament of the same game without re-creating.
+    """
+
     game = models.ForeignKey(
         "games.Game",
         on_delete=models.CASCADE,
         related_name="tournament_teams",
     )
-
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="tournament_teams",
+    )
     name = models.CharField(max_length=100)
     leader_game_id = models.CharField(max_length=100)
     leader_server_id = models.CharField(max_length=100, blank=True, default="")
+    # Nickname snapshot from the ID check at team creation time.
     leader_nickname = models.CharField(max_length=100, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["game", "name"],
+                name="unique_team_name_per_game",
+            ),
+            models.UniqueConstraint(
+                fields=["game", "owner"],
+                name="unique_team_per_game_owner",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.game})"
 
 
 class TournamentRegistration(models.Model):
@@ -75,14 +101,14 @@ class TournamentRegistration(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["tournament", "team_name"],
-                name="unique_team_per_tournament",
+                fields=["tournament", "team"],
+                name="unique_team_registration",
             ),
             models.UniqueConstraint(
                 fields=["tournament", "user"],
-                name="unique_user_per_tournament",
+                name="unique_user_registration",
             ),
         ]
 
     def __str__(self):
-        return f"{self.team_name} ({self.tournament})"
+        return f"{self.team.name} ({self.tournament})"

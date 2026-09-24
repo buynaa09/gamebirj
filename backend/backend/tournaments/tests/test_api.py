@@ -12,6 +12,7 @@ from backend.tournaments.api import views as tournament_views
 from backend.tournaments.id_check import IdCheckAccount
 from backend.tournaments.id_check import IdCheckNotFoundError
 from backend.tournaments.models import Tournament
+from backend.tournaments.models import TournamentTeam
 from backend.users.tests.factories import UserFactory
 
 if TYPE_CHECKING:
@@ -107,21 +108,34 @@ def test_list_tournaments_null_starts_at(client: Client):
     assert payload["status"] == "live"
 
 
+def make_team(user, game, name="Night Wolves", **kwargs):
+    defaults = {
+        "leader_game_id": "512345678",
+        "leader_server_id": "",
+        "leader_nickname": "",
+    }
+    return TournamentTeam.objects.create(
+        game=game, owner=user, name=name, **{**defaults, **kwargs},
+    )
+
+
 def test_register_team_happy_path(client: Client):
-    client.force_login(UserFactory.create())
+    user = UserFactory.create()
+    client.force_login(user)
     tournament = make_tournament(title="Open Cup", filled_slots=21)
     filled_before = tournament.filled_slots
+    team = make_team(user, tournament.game)
 
     response = client.post(
         reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
-        data={"team_name": "Night Wolves", "leader_game_id": "512345678"},
+        data={"team_id": team.pk},
         content_type="application/json",
     )
 
     assert response.status_code == HTTPStatus.OK
     payload = response.json()
+    assert payload["team_id"] == team.pk
     assert payload["team_name"] == "Night Wolves"
-    assert payload["leader_game_id"] == "512345678"
     assert payload["tournament"] == tournament.pk
     tournament.refresh_from_db()
     assert tournament.filled_slots == filled_before + 1
@@ -132,33 +146,22 @@ def test_register_team_requires_auth(client: Client):
 
     response = client.post(
         reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
-        data={"team_name": "Night Wolves", "leader_game_id": "512345678"},
+        data={"team_id": 1},
         content_type="application/json",
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
-def test_register_team_rejects_blank_fields(client: Client):
-    client.force_login(UserFactory.create())
-    tournament = make_tournament(title="Open Cup")
-
-    response = client.post(
-        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
-        data={"team_name": "  ", "leader_game_id": ""},
-        content_type="application/json",
-    )
-
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-
-
 def test_register_team_rejects_closed_tournament(client: Client):
-    client.force_login(UserFactory.create())
+    user = UserFactory.create()
+    client.force_login(user)
     tournament = make_tournament(title="Live Cup", status=Tournament.Status.LIVE)
+    team = make_team(user, tournament.game)
 
     response = client.post(
         reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
-        data={"team_name": "Night Wolves", "leader_game_id": "512345678"},
+        data={"team_id": team.pk},
         content_type="application/json",
     )
 
@@ -169,17 +172,18 @@ def test_register_team_rejects_duplicate_team(client: Client):
     user = UserFactory.create()
     client.force_login(user)
     tournament = make_tournament(title="Open Cup")
+    team = make_team(user, tournament.game)
 
     first = client.post(
         reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
-        data={"team_name": "Night Wolves", "leader_game_id": "512345678"},
+        data={"team_id": team.pk},
         content_type="application/json",
     )
     assert first.status_code == HTTPStatus.OK
 
     second = client.post(
         reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
-        data={"team_name": "Night Wolves", "leader_game_id": "999999999"},
+        data={"team_id": team.pk},
         content_type="application/json",
     )
 
@@ -187,16 +191,48 @@ def test_register_team_rejects_duplicate_team(client: Client):
 
 
 def test_register_team_rejects_full_tournament(client: Client):
-    client.force_login(UserFactory.create())
+    user = UserFactory.create()
+    client.force_login(user)
     tournament = make_tournament(title="Full Cup", total_slots=16, filled_slots=16)
+    team = make_team(user, tournament.game)
 
     response = client.post(
         reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
-        data={"team_name": "Night Wolves", "leader_game_id": "512345678"},
+        data={"team_id": team.pk},
         content_type="application/json",
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_register_team_rejects_wrong_game_team(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    tournament = make_tournament(title="Open Cup")
+    other_game = Game.objects.create(name="Other Game")
+    team = make_team(user, other_game)
+
+    response = client.post(
+        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
+        data={"team_id": team.pk},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_register_team_rejects_foreign_team(client: Client):
+    client.force_login(UserFactory.create())
+    tournament = make_tournament(title="Open Cup")
+    team = make_team(UserFactory.create(), tournament.game)
+
+    response = client.post(
+        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
+        data={"team_id": team.pk},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def make_checkable_tournament(title="MLBB Cup"):
@@ -262,7 +298,7 @@ def test_check_id_unsupported_game(client: Client):
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_register_team_verifies_leader_and_stores_nickname(client: Client, monkeypatch):
+def test_create_team_verifies_leader_and_stores_nickname(client: Client, monkeypatch):
     client.force_login(UserFactory.create())
     tournament = make_checkable_tournament()
     monkeypatch.setattr(
@@ -274,9 +310,10 @@ def test_register_team_verifies_leader_and_stores_nickname(client: Client, monke
     )
 
     response = client.post(
-        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
+        reverse("api:create_team"),
         data={
-            "team_name": "Night Wolves",
+            "game_id": tournament.game_id,
+            "name": "Night Wolves",
             "leader_game_id": "1234449725",
             "leader_server_id": "11467",
         },
@@ -285,24 +322,29 @@ def test_register_team_verifies_leader_and_stores_nickname(client: Client, monke
 
     assert response.status_code == HTTPStatus.OK
     payload = response.json()
+    assert payload["name"] == "Night Wolves"
     assert payload["leader_server_id"] == "11467"
     assert payload["leader_nickname"] == "NightWolf"
 
 
-def test_register_team_requires_server_id_for_checkable_game(client: Client):
+def test_create_team_requires_server_id_for_checkable_game(client: Client):
     client.force_login(UserFactory.create())
     tournament = make_checkable_tournament()
 
     response = client.post(
-        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
-        data={"team_name": "Night Wolves", "leader_game_id": "1234449725"},
+        reverse("api:create_team"),
+        data={
+            "game_id": tournament.game_id,
+            "name": "Night Wolves",
+            "leader_game_id": "1234449725",
+        },
         content_type="application/json",
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
-def test_register_team_rejects_invalid_leader(client: Client, monkeypatch):
+def test_create_team_rejects_invalid_leader(client: Client, monkeypatch):
     client.force_login(UserFactory.create())
     tournament = make_checkable_tournament()
 
@@ -312,9 +354,10 @@ def test_register_team_rejects_invalid_leader(client: Client, monkeypatch):
     monkeypatch.setattr(tournament_views, "check_game_account", _missing)
 
     response = client.post(
-        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
+        reverse("api:create_team"),
         data={
-            "team_name": "Night Wolves",
+            "game_id": tournament.game_id,
+            "name": "Night Wolves",
             "leader_game_id": "1",
             "leader_server_id": "1",
         },
@@ -324,17 +367,57 @@ def test_register_team_rejects_invalid_leader(client: Client, monkeypatch):
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
+def test_create_team_rejects_second_team_for_same_game(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    tournament = make_tournament(title="Open Cup")
+    make_team(user, tournament.game)
+
+    response = client.post(
+        reverse("api:create_team"),
+        data={
+            "game_id": tournament.game_id,
+            "name": "Other Name",
+            "leader_game_id": "512345678",
+        },
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+
+
+def test_list_my_teams_filters_by_game_and_owner(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    tournament = make_tournament(title="Open Cup")
+    mine = make_team(user, tournament.game)
+    other_game = Game.objects.create(name="Other Game")
+    make_team(user, other_game, name="Other Wolves")
+    make_team(UserFactory.create(), tournament.game, name="Stranger Wolves")
+
+    response = client.get(reverse("api:list_my_teams") + f"?game={tournament.game_id}")
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.json()
+    assert [t["id"] for t in payload] == [mine.pk]
+    assert payload[0]["name"] == "Night Wolves"
+
+
 def test_retrieve_tournament_detail(client: Client):
     tournament = make_checkable_tournament(title="Detail Cup")
     other = UserFactory.create()
+    team = make_team(
+        other,
+        tournament.game,
+        leader_game_id="1234449725",
+        leader_server_id="11467",
+        leader_nickname="NightWolf",
+    )
     registration_model = tournament.registrations.model
     registration_model.objects.create(
         tournament=tournament,
         user=other,
-        team_name="Night Wolves",
-        leader_game_id="1234449725",
-        leader_server_id="11467",
-        leader_nickname="NightWolf",
+        team=team,
     )
 
     url = reverse("api:retrieve_tournament", kwargs={"tournament_id": tournament.pk})

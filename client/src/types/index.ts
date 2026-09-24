@@ -167,10 +167,26 @@ export interface Tournament {
 }
 
 export interface RegisterTeamInput {
-  team_name: string;
+  team_id: number;
+}
+
+export interface CreateTeamInput {
+  game_id: number;
+  name: string;
   leader_game_id: string;
   leader_server_id?: string;
   leader_nickname?: string;
+}
+
+export interface TournamentTeam {
+  id: number;
+  game_id: number;
+  game: string;
+  name: string;
+  leader_game_id: string;
+  leader_server_id: string;
+  leader_nickname: string;
+  created_at: string;
 }
 
 export interface TournamentRegistration {

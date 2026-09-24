@@ -1,9 +1,11 @@
 import { apiGet, apiPost } from './api';
 import type {
+  CreateTeamInput,
   RegisterTeamInput,
   Tournament,
   TournamentDetail,
   TournamentRegistration,
+  TournamentTeam,
 } from '../types';
 
 export function fetchTournaments(): Promise<Tournament[]> {
@@ -12,6 +14,14 @@ export function fetchTournaments(): Promise<Tournament[]> {
 
 export function fetchTournament(id: number): Promise<TournamentDetail> {
   return apiGet<TournamentDetail>(`/tournaments/${id}/`);
+}
+
+export function fetchMyTeams(gameId: number): Promise<TournamentTeam[]> {
+  return apiGet<TournamentTeam[]>(`/tournaments/teams/?game=${gameId}`);
+}
+
+export function createTeam(input: CreateTeamInput): Promise<TournamentTeam> {
+  return apiPost<TournamentTeam>('/tournaments/teams/', input);
 }
 
 export interface CheckedAccount {

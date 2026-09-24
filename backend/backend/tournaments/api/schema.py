@@ -22,16 +22,33 @@ class TournamentSchema(Schema):
 
 
 class RegisterTeamSchema(Schema):
-    team_name: str
-    leader_game_id: str
-    leader_server_id: str = ""
-    leader_nickname: str = ""
+    team_id: int
 
 
 class RegistrationSchema(Schema):
     id: int
     tournament: int
+    team_id: int
     team_name: str
+    leader_game_id: str
+    leader_server_id: str = ""
+    leader_nickname: str = ""
+    created_at: str
+
+
+class CreateTeamSchema(Schema):
+    game_id: int
+    name: str
+    leader_game_id: str
+    leader_server_id: str = ""
+    leader_nickname: str = ""
+
+
+class TournamentTeamSchema(Schema):
+    id: int
+    game_id: int
+    game: str
+    name: str
     leader_game_id: str
     leader_server_id: str = ""
     leader_nickname: str = ""
