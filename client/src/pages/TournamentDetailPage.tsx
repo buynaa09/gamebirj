@@ -22,7 +22,7 @@ const TABS: { key: DetailTab; label: string }[] = [
   { key: 'overview', label: 'Тойм' },
   { key: 'stages', label: 'Шат' },
   { key: 'matches', label: 'Тоглолтууд' },
-  { key: 'participants', label: 'Оролцогчид' },
+  { key: 'participants', label: 'Багууд' },
   { key: 'rules', label: 'Дүрэм' },
 ];
 
@@ -321,9 +321,9 @@ export function TournamentDetailPage({ id }: { id: number }) {
       )}
 
       {tab === 'participants' && (
-        <section aria-label="Оролцогчид">
+        <section aria-label="Багууд">
           <h2 className={styles.sectionTitle}>
-            Оролцогчид <span className={styles.count}>{tournament.registrations.length}</span>
+            Багууд <span className={styles.count}>{tournament.registrations.length}</span>
           </h2>
           {tournament.registrations.length === 0 ? (
             <p className={styles.empty}>Одоогоор бүртгэлтэй баг алга байна.</p>

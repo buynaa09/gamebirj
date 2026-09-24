@@ -41,16 +41,22 @@ def _get_tournament(tournament_id: int) -> Tournament:
 
 
 def _optional_user(request):
-    """User for public (auth=None) endpoints: session user if present,
-    otherwise the Clerk JWT from the Authorization header, else None."""
+    """User for public (auth=None) endpoints.
+
+    The SPA always sends its Clerk JWT, which takes precedence — a Django
+    session cookie may belong to a different (e.g. staff) account in the
+    same browser and must not shadow the Clerk identity.
+    """
+    auth = request.headers.get("Authorization", "")
+    scheme, _, token = auth.partition(" ")
+    if scheme.lower() == "bearer" and token.strip():
+        resolved = get_user_from_token(token.strip())
+        if resolved is not None:
+            return resolved
     user = getattr(request, "user", None)
     if user is not None and getattr(user, "is_authenticated", False):
         return user
-    auth = request.headers.get("Authorization", "")
-    scheme, _, token = auth.partition(" ")
-    if scheme.lower() != "bearer" or not token.strip():
-        return None
-    return get_user_from_token(token.strip())
+    return None
 
 
 def _registered_tournament_ids(request) -> set[int]:
