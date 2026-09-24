@@ -58,23 +58,25 @@ export function TournamentBracket({ teams, totalSlots }: TournamentBracketProps)
     slots = Array.from({ length: matches.length }, () => ({ name: null }));
   }
 
-  // Column height is driven by round 0 (size/2 matches); later rounds spread
-  // evenly so each match stays vertically centered between its two feeders.
-  const firstRoundMatches = size / 2;
-  const fullHeight = firstRoundMatches * MATCH_H + (firstRoundMatches - 1) * BASE_GAP;
-  const gaps = rounds.map((matches) => {
-    if (matches.length <= 1) return 0;
-    return (fullHeight - matches.length * MATCH_H) / (matches.length - 1);
-  });
+  // Each match must sit exactly centered between its two feeders. With
+  // top-aligned columns that means round r starts half a feeder-unit lower
+  // and doubles its spacing every round: pad_r = U*(2^r-1)/2, gap_r = U*2^r-H.
+  const unit = MATCH_H + BASE_GAP;
+  const pads = rounds.map((_, r) => (unit * (2 ** r - 1)) / 2);
+  const gaps = rounds.map((_, r) => unit * 2 ** r - MATCH_H);
   // Vertical connector span for round r = distance between its feeders' centers.
-  const spans = gaps.map((_, r) => (r === 0 ? 0 : MATCH_H + gaps[r - 1]));
+  const spans = rounds.map((_, r) => (r === 0 ? 0 : unit * 2 ** (r - 1)));
+  const championPad = pads[pads.length - 1] ?? 0;
 
   return (
     <div className={styles.bracket} role="list" aria-label="Single elimination шат">
       {rounds.map((matches, r) => (
         <div className={styles.round} key={r} role="listitem" aria-label={roundLabel(matches.length)}>
           <div className={styles.roundTitle}>{roundLabel(matches.length)}</div>
-          <div className={styles.matches} style={{ gap: `${gaps[r]}px` }}>
+          <div
+            className={styles.matches}
+            style={{ gap: `${gaps[r]}px`, paddingTop: `${pads[r]}px` }}
+          >
             {matches.map(([a, b], i) => (
               <div
                 key={i}
@@ -96,7 +98,7 @@ export function TournamentBracket({ teams, totalSlots }: TournamentBracketProps)
       ))}
       <div className={styles.round} role="listitem" aria-label="Аварга">
         <div className={styles.roundTitle}>Аварга</div>
-        <div className={styles.matches} style={{ gap: '0px' }}>
+        <div className={styles.matches} style={{ gap: '0px', paddingTop: `${championPad}px` }}>
           <div className={`${styles.match} ${styles.champion} ${styles.hasIncoming}`}>
             <div className={styles.slot}>
               <span className={styles.trophy} aria-hidden="true">
