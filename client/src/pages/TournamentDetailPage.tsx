@@ -5,6 +5,7 @@ import { Seo } from '../components/seo/Seo';
 import { RegisterTeamModal } from '../components/tournaments/RegisterTeamModal';
 import { JoinTournamentModal } from '../components/tournaments/JoinTournamentModal';
 import { TournamentBracket } from '../components/tournaments/TournamentBracket';
+import { TournamentMatches } from '../components/tournaments/TournamentMatches';
 import { useTournament } from '../hooks/useTournament';
 import { useTournaments } from '../hooks/useTournaments';
 import { hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
@@ -335,7 +336,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
       {tab === 'matches' && (
         <section aria-label="Тоглолтууд">
           <h2 className={styles.sectionTitle}>Тоглолтууд</h2>
-          <p className={styles.empty}>Тоглолтын хуваарь удахгүй зарлагдана.</p>
+          <TournamentMatches tournamentId={tournament.id} />
         </section>
       )}
 

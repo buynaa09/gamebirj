@@ -75,3 +75,21 @@ class RegisteredTeamSchema(Schema):
 
 class TournamentDetailSchema(TournamentSchema):
     registrations: list[RegisteredTeamSchema] = []
+
+
+class TournamentMatchSchema(Schema):
+    id: int
+    round_index: int
+    position: int
+    team_a: str | None = None
+    team_b: str | None = None
+    winner: str | None = None
+    status: str = ""
+    has_room: bool = False
+    # Draft lobby link — only for the two playing teams (and staff).
+    draft_url: str | None = None
+
+
+class EnsureRoomsSchema(Schema):
+    created: int = 0
+    errors: list[str] = []

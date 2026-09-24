@@ -1,0 +1,147 @@
+.state {
+  color: var(--text-dim);
+  font-size: 14px;
+  padding: 12px 0;
+}
+
+.retry {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--red);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.roundTitle {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.matchNo {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.badge {
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.open {
+  background: rgba(46, 160, 67, 0.15);
+  color: #3fb950;
+}
+
+.pending {
+  background: var(--panel);
+  color: var(--text-faint);
+}
+
+.finished {
+  background: rgba(229, 52, 74, 0.12);
+  color: var(--red);
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--red);
+}
+
+.name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tbd .avatar,
+.tbd .name {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.won {
+  border-color: #eab308;
+}
+
+.crown {
+  margin-left: auto;
+  font-size: 14px;
+}
+
+.joinBtn {
+  margin-top: 6px;
+  justify-content: center;
+}
+
+.note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}

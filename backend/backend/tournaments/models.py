@@ -112,3 +112,86 @@ class TournamentRegistration(models.Model):
 
     def __str__(self):
         return f"{self.team.name} ({self.tournament})"
+
+
+class MLBBMatchConfig(models.Model):
+    """Singleton holding the matchTools browser cookie.
+
+    The ``acw_tc`` cookie is pasted from a browser session and can expire at
+    any time, so it lives in the database (editable in admin) instead of env.
+    """
+
+    cookie = models.TextField(blank=True, default="")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"MLBB matchTools config (updated {self.updated_at})"
+
+    @classmethod
+    def get_cookie(cls) -> str:
+        config = cls.objects.order_by("-updated_at").first()
+        return config.cookie.strip() if config else ""
+
+
+class TournamentMatch(models.Model):
+    """One bracket fixture. Rooms (MLBB lobbies) are created automatically
+    once both teams are known; ``winner`` is set by staff until result
+    polling lands."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending (teams or room TBD)"
+        OPEN = "open", "Room open"
+        FINISHED = "finished", "Finished"
+
+    tournament = models.ForeignKey(
+        Tournament,
+        on_delete=models.CASCADE,
+        related_name="matches",
+    )
+    round_index = models.PositiveIntegerField(default=0)
+    position = models.PositiveIntegerField(default=0)
+    team_a = models.ForeignKey(
+        TournamentTeam,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="matches_as_a",
+    )
+    team_b = models.ForeignKey(
+        TournamentTeam,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="matches_as_b",
+    )
+    winner = models.ForeignKey(
+        TournamentTeam,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="matches_won",
+    )
+    mlbb_match_id = models.CharField(max_length=100, blank=True, default="")
+    draft_url = models.CharField(max_length=500, blank=True, default="")
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["round_index", "position"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tournament", "round_index", "position"],
+                name="unique_match_per_round_position",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.tournament.title} R{self.round_index} M{self.position}"
+
+    @property
+    def both_teams_known(self) -> bool:
+        return self.team_a_id is not None and self.team_b_id is not None

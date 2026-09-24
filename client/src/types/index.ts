@@ -208,6 +208,18 @@ export interface TournamentDetail extends Tournament {
   registrations: RegisteredTeam[];
 }
 
+export interface TournamentMatch {
+  id: number;
+  round_index: number;
+  position: number;
+  team_a: string | null;
+  team_b: string | null;
+  winner: string | null;
+  status: string;
+  has_room: boolean;
+  draft_url: string | null;
+}
+
 export interface GameFilter {
   id: string;
   name: string;

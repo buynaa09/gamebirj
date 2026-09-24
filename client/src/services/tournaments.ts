@@ -4,6 +4,7 @@ import type {
   RegisterTeamInput,
   Tournament,
   TournamentDetail,
+  TournamentMatch,
   TournamentRegistration,
   TournamentTeam,
 } from '../types';
@@ -46,4 +47,8 @@ export function registerTeam(
   input: RegisterTeamInput,
 ): Promise<TournamentRegistration> {
   return apiPost<TournamentRegistration>(`/tournaments/${tournamentId}/register/`, input);
+}
+
+export function fetchTournamentMatches(tournamentId: number): Promise<TournamentMatch[]> {
+  return apiGet<TournamentMatch[]>(`/tournaments/${tournamentId}/matches/`);
 }

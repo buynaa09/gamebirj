@@ -5,6 +5,7 @@ import logging
 from django.db import IntegrityError
 from django.db.models import F
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
@@ -12,11 +13,15 @@ from backend.games.models import Game
 from backend.tournaments.api.schema import CheckedAccountSchema
 from backend.tournaments.api.schema import CheckIdSchema
 from backend.tournaments.api.schema import CreateTeamSchema
+from backend.tournaments.api.schema import EnsureRoomsSchema
 from backend.tournaments.api.schema import RegisterTeamSchema
 from backend.tournaments.api.schema import RegistrationSchema
 from backend.tournaments.api.schema import TournamentDetailSchema
+from backend.tournaments.api.schema import TournamentMatchSchema
 from backend.tournaments.api.schema import TournamentSchema
 from backend.tournaments.api.schema import TournamentTeamSchema
+from backend.tournaments.bracket import ensure_bracket
+from backend.tournaments.bracket import ensure_rooms
 from backend.tournaments.id_check import IdCheckNotFoundError
 from backend.tournaments.id_check import IdCheckTransportError
 from backend.tournaments.id_check import IdCheckUnsupportedError
@@ -260,3 +265,72 @@ def retrieve_tournament(request, tournament_id: int):
             for registration in registrations
         ],
     }
+
+
+def _tournament_started(tournament: Tournament) -> bool:
+    if tournament.status == Tournament.Status.LIVE:
+        return True
+    if tournament.status != Tournament.Status.OPEN or not tournament.starts_at:
+        return False
+    return tournament.starts_at <= timezone.now()
+
+
+def _match_payloads(request, tournament: Tournament) -> list[dict]:
+    user = _optional_user(request)
+    staff = user is not None and getattr(user, "is_staff", False)
+    my_team_ids: set[int] = set()
+    if user is not None:
+        my_team_ids = set(
+            TournamentTeam.objects.filter(owner=user).values_list("id", flat=True),
+        )
+        my_team_ids |= set(
+            TournamentRegistration.objects.filter(
+                tournament=tournament, user=user,
+            ).values_list("team_id", flat=True),
+        )
+    payloads = []
+    for match in tournament.matches.select_related("team_a", "team_b", "winner"):
+        may_join = staff or (
+            match.team_a_id in my_team_ids or match.team_b_id in my_team_ids
+        )
+        payloads.append(
+            {
+                "id": match.id,
+                "round_index": match.round_index,
+                "position": match.position,
+                "team_a": match.team_a.name if match.team_a else None,
+                "team_b": match.team_b.name if match.team_b else None,
+                "winner": match.winner.name if match.winner else None,
+                "status": match.status,
+                "has_room": bool(match.mlbb_match_id),
+                "draft_url": (
+                    match.draft_url if (may_join and match.draft_url) else None
+                ),
+            },
+        )
+    return payloads
+
+
+@router.get(
+    "/{tournament_id}/matches/",
+    response=list[TournamentMatchSchema],
+    auth=None,
+)
+def list_matches(request, tournament_id: int):
+    tournament = _get_tournament(tournament_id)
+    ensure_bracket(tournament)
+    # Automatic room creation once the tournament has begun; idempotent and
+    # silent on provider errors (rooms stay pending, details in server logs).
+    if _tournament_started(tournament):
+        ensure_rooms(tournament)
+    return _match_payloads(request, tournament)
+
+
+@router.post("/{tournament_id}/matches/ensure/", response=EnsureRoomsSchema)
+def ensure_match_rooms(request, tournament_id: int):
+    if not getattr(request.user, "is_staff", False):
+        raise HttpError(403, "Staff only.")
+    tournament = _get_tournament(tournament_id)
+    ensure_bracket(tournament)
+    created, errors = ensure_rooms(tournament)
+    return {"created": created, "errors": errors}
