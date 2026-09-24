@@ -1,8 +1,8 @@
 """Single-elimination bracket generation and automatic MLBB room creation.
 
-``ensure_bracket`` builds every round's fixtures and seats round 0 from
-registrations (registration order); late registrations fill remaining empty
-seats. ``advance_winners`` propagates staff-set winners into the next round.
+``ensure_bracket`` builds every round's fixtures and randomly seats round 0
+from registrations; late registrations fill remaining empty seats.
+``advance_winners`` propagates staff-set winners into the next round.
 ``ensure_rooms`` creates matchTools lobbies for fixtures with both teams
 known. All three are idempotent and safe to run on every matches fetch.
 """
@@ -10,6 +10,7 @@ known. All three are idempotent and safe to run on every matches fetch.
 from __future__ import annotations
 
 import logging
+import random
 from datetime import timedelta
 
 from django.utils import timezone
@@ -75,7 +76,7 @@ def ensure_bracket(tournament: Tournament) -> list[TournamentMatch]:
 
 
 def seat_first_round(tournament: Tournament) -> None:
-    """Seat registrations (oldest first) into empty round-0 slots."""
+    """Seat registered teams in random order into empty round-0 slots."""
     seated_ids = set(
         tournament.matches.filter(round_index=0)
         .exclude(team_a__isnull=True)
@@ -95,6 +96,7 @@ def seat_first_round(tournament: Tournament) -> None:
     ]
     if not pending_teams:
         return
+    random.shuffle(pending_teams)
     for match in tournament.matches.filter(round_index=0).order_by("position"):
         changed = False
         if match.team_a_id is None and pending_teams:

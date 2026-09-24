@@ -69,7 +69,11 @@ def test_bracket_size_rounds():
     assert round_count(size) == rounds
 
 
-def test_ensure_bracket_creates_all_rounds_and_seats_teams():
+def test_ensure_bracket_creates_all_rounds_and_seats_teams(monkeypatch):
+    monkeypatch.setattr(
+        "backend.tournaments.bracket.random.shuffle",
+        lambda teams: None,
+    )
     tournament = make_tournament(total_slots=8)
     for name in ["A", "B", "C", "D"]:
         make_registration(tournament, f"Team {name}")
