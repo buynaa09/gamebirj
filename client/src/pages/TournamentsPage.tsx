@@ -310,13 +310,23 @@ export function TournamentsPage() {
                 </div>
                 <div className={styles.actions}>
                   {t.status === 'open' ? (
-                    <button
-                      className="btn btn-primary"
-                      type="button"
-                      onClick={() => handleRegister(t)}
-                    >
-                      Бүртгүүлэх
-                    </button>
+                    t.is_registered ? (
+                      <button
+                        className="btn btn-outline"
+                        type="button"
+                        onClick={() => navigate(`/tournaments/${t.id}`)}
+                      >
+                        ✓ Бүртгүүлсэн
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-primary"
+                        type="button"
+                        onClick={() => handleRegister(t)}
+                      >
+                        Бүртгүүлэх
+                      </button>
+                    )
                   ) : t.status === 'live' ? (
                     <button
                       className="btn btn-outline"

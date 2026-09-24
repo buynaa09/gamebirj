@@ -178,15 +178,20 @@ export function TournamentDetailPage({ id }: { id: number }) {
           <p className={styles.dateRange}>{dateRange}</p>
           <span className={`${styles.badge} ${styles[meta.className]}`}>{meta.label}</span>
         </div>
-        {tournament.status === 'open' && (
-          <button
-            type="button"
-            className={`btn btn-primary ${styles.heroCta}`}
-            onClick={handleRegister}
-          >
-            Баг бүртгүүлэх
-          </button>
-        )}
+        {tournament.status === 'open' &&
+          (tournament.is_registered ? (
+            <button type="button" className={`btn btn-outline ${styles.heroCta}`} disabled>
+              ✓ Бүртгүүлсэн
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`btn btn-primary ${styles.heroCta}`}
+              onClick={handleRegister}
+            >
+              Баг бүртгүүлэх
+            </button>
+          ))}
       </header>
 
       <nav className={styles.tabs} aria-label="Тэмцээний хэсгүүд">

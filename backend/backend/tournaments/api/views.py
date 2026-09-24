@@ -24,6 +24,7 @@ from backend.tournaments.id_check import check_game_account
 from backend.tournaments.models import Tournament
 from backend.tournaments.models import TournamentRegistration
 from backend.tournaments.models import TournamentTeam
+from backend.users.clerk_auth import get_user_from_token
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,31 @@ def _get_tournament(tournament_id: int) -> Tournament:
         pk=tournament_id,
         is_active=True,
         game__is_active_tournament=True,
+    )
+
+
+def _optional_user(request):
+    """User for public (auth=None) endpoints: session user if present,
+    otherwise the Clerk JWT from the Authorization header, else None."""
+    user = getattr(request, "user", None)
+    if user is not None and getattr(user, "is_authenticated", False):
+        return user
+    auth = request.headers.get("Authorization", "")
+    scheme, _, token = auth.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return None
+    return get_user_from_token(token.strip())
+
+
+def _registered_tournament_ids(request) -> set[int]:
+    """IDs of tournaments the current user has joined (empty when anonymous)."""
+    user = _optional_user(request)
+    if user is None:
+        return set()
+    return set(
+        TournamentRegistration.objects.filter(user=user).values_list(
+            "tournament_id", flat=True,
+        ),
     )
 
 
@@ -73,6 +99,7 @@ def list_tournaments(request):
         is_active=True,
         game__is_active_tournament=True,
     ).select_related("game")
+    registered = _registered_tournament_ids(request)
     return [
         {
             "id": tournament.id,
@@ -94,6 +121,7 @@ def list_tournaments(request):
             "total_slots": tournament.total_slots,
             "filled_slots": tournament.filled_slots,
             "slot_unit": tournament.slot_unit,
+            "is_registered": tournament.id in registered,
         }
         for tournament in tournaments
     ]
@@ -196,6 +224,7 @@ def retrieve_tournament(request, tournament_id: int):
     registrations = tournament.registrations.select_related("team").order_by(
         "created_at",
     )
+    is_registered = tournament.id in _registered_tournament_ids(request)
     return {
         "id": tournament.id,
         "title": tournament.title,
@@ -214,6 +243,7 @@ def retrieve_tournament(request, tournament_id: int):
         "total_slots": tournament.total_slots,
         "filled_slots": tournament.filled_slots,
         "slot_unit": tournament.slot_unit,
+        "is_registered": is_registered,
         # Leader game IDs stay private; only nicknames are public.
         "registrations": [
             {

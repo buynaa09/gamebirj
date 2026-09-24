@@ -19,6 +19,7 @@ class TournamentSchema(Schema):
     total_slots: int = 0
     filled_slots: int = 0
     slot_unit: str = ""
+    is_registered: bool = False
 
 
 class RegisterTeamSchema(Schema):

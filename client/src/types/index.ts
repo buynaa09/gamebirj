@@ -164,6 +164,7 @@ export interface Tournament {
   total_slots: number;
   filled_slots: number;
   slot_unit: string;
+  is_registered: boolean;
 }
 
 export interface RegisterTeamInput {
