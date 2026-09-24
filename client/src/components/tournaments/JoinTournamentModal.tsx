@@ -85,7 +85,7 @@ export function JoinTournamentModal({ tournament, onClose, onConfirmed }: JoinTo
             onClick={confirm}
             disabled={!agreed}
           >
-            Join
+            Лоббид орох
           </button>
         </div>
       </div>

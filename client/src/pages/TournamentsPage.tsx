@@ -326,7 +326,8 @@ export function TournamentsPage() {
                       type="button"
                       onClick={() => handleJoin(t)}
                     >
-                      Join
+                        Лоббид орох
+
                     </button>
                   ) : t.status === 'open' ? (
                     t.is_registered ? (

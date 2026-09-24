@@ -228,7 +228,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
               className={`btn btn-primary ${styles.heroCta}`}
               onClick={handleJoin}
             >
-              Join
+              Лоббид орох
             </button>
           )
         ) : (
