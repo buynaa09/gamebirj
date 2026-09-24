@@ -5,11 +5,12 @@ import { Seo } from '../components/seo/Seo';
 import { SearchBar } from '../components/marketplace/SearchBar';
 import { FiltersDrawer } from '../components/marketplace/FiltersDrawer';
 import { RegisterTeamModal } from '../components/tournaments/RegisterTeamModal';
+import { JoinTournamentModal } from '../components/tournaments/JoinTournamentModal';
 import { TournamentFilters } from '../components/tournaments/TournamentFilters';
 import filterStyles from '../components/tournaments/TournamentFilters.module.css';
 import type { TournamentFeeFilter } from '../components/tournaments/TournamentFilters';
 import { useTournaments } from '../hooks/useTournaments';
-import { tournamentStarted } from '../utils/tournaments';
+import { hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
 import { useGames } from '../hooks/useGames';
 import { gameIcons } from '../data/games';
 import type { Tournament, TournamentStatus } from '../types';
@@ -84,6 +85,7 @@ export function TournamentsPage() {
   const [fee, setFee] = useState<TournamentFeeFilter>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [registering, setRegistering] = useState<Tournament | null>(null);
+  const [joining, setJoining] = useState<Tournament | null>(null);
 
   const handleRegister = (t: Tournament) => {
     if (!isLoaded) return;
@@ -92,6 +94,14 @@ export function TournamentsPage() {
       return;
     }
     setRegistering(t);
+  };
+
+  const handleJoin = (t: Tournament) => {
+    if (hasAcceptedRules(t.id)) {
+      navigate(`/tournaments/${t.id}`, { state: { tab: 'matches' } });
+      return;
+    }
+    setJoining(t);
   };
 
   const resetFilters = () => {
@@ -314,7 +324,7 @@ export function TournamentsPage() {
                     <button
                       className="btn btn-primary"
                       type="button"
-                      onClick={() => navigate(`/tournaments/${t.id}`)}
+                      onClick={() => handleJoin(t)}
                     >
                       Join
                     </button>
@@ -382,6 +392,17 @@ export function TournamentsPage() {
           tournament={registering}
           onClose={() => setRegistering(null)}
           onRegistered={reload}
+        />
+      )}
+      {joining && (
+        <JoinTournamentModal
+          tournament={joining}
+          onClose={() => setJoining(null)}
+          onConfirmed={() => {
+            const target = joining;
+            setJoining(null);
+            navigate(`/tournaments/${target.id}`, { state: { tab: 'matches' } });
+          }}
         />
       )}
     </main>

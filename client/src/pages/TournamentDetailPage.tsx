@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth, useClerk } from '@clerk/react';
 import { Seo } from '../components/seo/Seo';
 import { RegisterTeamModal } from '../components/tournaments/RegisterTeamModal';
+import { JoinTournamentModal } from '../components/tournaments/JoinTournamentModal';
 import { TournamentBracket } from '../components/tournaments/TournamentBracket';
 import { useTournament } from '../hooks/useTournament';
 import { useTournaments } from '../hooks/useTournaments';
-import { tournamentStarted } from '../utils/tournaments';
+import { hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
 import { useGames } from '../hooks/useGames';
 import { gameIcons } from '../data/games';
 import type { TournamentStatus } from '../types';
@@ -79,8 +80,12 @@ export function TournamentDetailPage({ id }: { id: number }) {
   const { isLoaded, isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
   const apiGames = useGames();
-  const [tab, setTab] = useState<DetailTab>('overview');
+  const locationState = useLocation().state as { tab?: string } | null;
+  const [tab, setTab] = useState<DetailTab>(
+    locationState?.tab === 'matches' ? 'matches' : 'overview',
+  );
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
   const [shared, setShared] = useState(false);
 
   const handleRegister = () => {
@@ -90,6 +95,14 @@ export function TournamentDetailPage({ id }: { id: number }) {
       return;
     }
     setRegisterOpen(true);
+  };
+
+  const handleJoin = () => {
+    if (hasAcceptedRules(id)) {
+      setTab('matches');
+      return;
+    }
+    setJoinOpen(true);
   };
 
   if (loading && !tournament) {
@@ -186,7 +199,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
           <button
             type="button"
             className={`btn btn-primary ${styles.heroCta}`}
-            onClick={() => setTab('matches')}
+            onClick={handleJoin}
           >
             Join
           </button>
@@ -387,6 +400,16 @@ export function TournamentDetailPage({ id }: { id: number }) {
           tournament={tournament}
           onClose={() => setRegisterOpen(false)}
           onRegistered={reload}
+        />
+      )}
+      {joinOpen && (
+        <JoinTournamentModal
+          tournament={tournament}
+          onClose={() => setJoinOpen(false)}
+          onConfirmed={() => {
+            setJoinOpen(false);
+            setTab('matches');
+          }}
         />
       )}
     </main>
