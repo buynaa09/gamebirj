@@ -9,19 +9,26 @@ function roundLabel(matchesInRound: number): string {
   return `Шөвгийн ${matchesInRound * 2}`;
 }
 
-function statusLabel(match: TournamentMatch): { text: string; className: string } {
-  if (match.status === 'finished' || match.winner) return { text: 'Дууссан', className: styles.finished };
-  if (match.has_room) return { text: 'Лобби нээлттэй', className: styles.open };
-  return { text: 'Товлогдсон', className: styles.pending };
+function isFinished(match: TournamentMatch): boolean {
+  return match.status === 'finished' || !!match.winner;
 }
 
-function TeamRow({ name, won }: { name: string | null; won: boolean }) {
+function ScoreRow({
+  name,
+  score,
+  won,
+}: {
+  name: string | null;
+  score: number | null;
+  won: boolean;
+}) {
   return (
     <div className={`${styles.team} ${name ? '' : styles.tbd} ${won ? styles.won : ''}`}>
       <span className={styles.avatar} aria-hidden="true">
         {name ? name.charAt(0).toUpperCase() : '?'}
       </span>
       <span className={styles.name}>{name ?? 'Тодорхойгүй'}</span>
+      <span className={styles.score}>{score ?? '–'}</span>
       {won && (
         <span className={styles.crown} aria-label="Ялагч">
           🏆
@@ -34,21 +41,25 @@ function TeamRow({ name, won }: { name: string | null; won: boolean }) {
 export function TournamentMatches({ tournamentId }: { tournamentId: number }) {
   const { matches, loading, error, reload } = useTournamentMatches(tournamentId);
 
-  const rounds = useMemo(() => {
+  const history = useMemo(() => {
+    const finished = matches.filter(isFinished);
     const map = new Map<number, TournamentMatch[]>();
-    for (const m of matches) {
+    for (const m of finished) {
       const list = map.get(m.round_index) ?? [];
       list.push(m);
       map.set(m.round_index, list);
     }
     return [...map.entries()]
-      .sort(([a], [b]) => a - b)
+      .sort(([a], [b]) => b - a)
       .map(([roundIndex, list]) => ({
         roundIndex,
         matches: list.sort((a, b) => a.position - b.position),
       }));
   }, [matches]);
-  const totalRounds = rounds.length;
+  const totalRounds = useMemo(() => {
+    const max = matches.reduce((acc, m) => Math.max(acc, m.round_index), 0);
+    return max + 1;
+  }, [matches]);
 
   if (loading && matches.length === 0) {
     return <p className={styles.state}>Тоглолтууд ачааллаж байна…</p>;
@@ -63,43 +74,28 @@ export function TournamentMatches({ tournamentId }: { tournamentId: number }) {
       </p>
     );
   }
-  if (rounds.length === 0) {
-    return <p className={styles.state}>Тоглолтын хуваарь удахгүй зарлагдана.</p>;
+  if (history.length === 0) {
+    return <p className={styles.state}>Дууссан тоглолт байхгүй байна.</p>;
   }
 
   return (
     <div className={styles.rounds}>
-      {rounds.map(({ roundIndex, matches: list }) => {
+      {history.map(({ roundIndex, matches: list }) => {
         const matchesInRound = 2 ** (totalRounds - 1 - roundIndex);
         return (
           <section key={roundIndex} aria-label={roundLabel(matchesInRound)}>
             <h3 className={styles.roundTitle}>{roundLabel(matchesInRound)}</h3>
             <ul className={styles.list}>
-              {list.map((m) => {
-                const status = statusLabel(m);
-                return (
-                  <li key={m.id} className={styles.card}>
-                    <div className={styles.cardHead}>
-                      <span className={styles.matchNo}>Тоглолт {m.position + 1}</span>
-                      <span className={`${styles.badge} ${status.className}`}>{status.text}</span>
-                    </div>
-                    <TeamRow name={m.team_a} won={!!m.winner && m.winner === m.team_a} />
-                    <TeamRow name={m.team_b} won={!!m.winner && m.winner === m.team_b} />
-                    {m.draft_url ? (
-                      <a
-                        className={`btn btn-primary ${styles.joinBtn}`}
-                        href={m.draft_url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Join Lobby
-                      </a>
-                    ) : (
-                      !m.has_room && <p className={styles.note}>Лобби хараахан нээгдээгүй байна.</p>
-                    )}
-                  </li>
-                );
-              })}
+              {list.map((m) => (
+                <li key={m.id} className={styles.card}>
+                  <div className={styles.cardHead}>
+                    <span className={styles.matchNo}>Тоглолт {m.position + 1}</span>
+                    <span className={`${styles.badge} ${styles.finished}`}>Дууссан</span>
+                  </div>
+                  <ScoreRow name={m.team_a} score={m.score_a} won={!!m.winner && m.winner === m.team_a} />
+                  <ScoreRow name={m.team_b} score={m.score_b} won={!!m.winner && m.winner === m.team_b} />
+                </li>
+              ))}
             </ul>
           </section>
         );

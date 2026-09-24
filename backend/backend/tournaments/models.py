@@ -173,6 +173,10 @@ class TournamentMatch(models.Model):
     )
     mlbb_match_id = models.CharField(max_length=100, blank=True, default="")
     draft_url = models.CharField(max_length=500, blank=True, default="")
+    # Result (set by staff until result polling lands). A match with a
+    # winner is treated as finished and shows up in match history.
+    score_a = models.PositiveIntegerField(null=True, blank=True)
+    score_b = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(
         max_length=10,
         choices=Status.choices,

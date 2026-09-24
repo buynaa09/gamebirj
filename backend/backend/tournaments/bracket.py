@@ -104,12 +104,18 @@ def seat_first_round(tournament: Tournament) -> None:
 
 
 def advance_winners(tournament: Tournament) -> None:
-    """Push staff-set winners into the next round's empty slots."""
+    """Push staff-set winners into the next round's empty slots.
+
+    Matches with a winner are marked finished so they show up in history.
+    """
     max_round = round_count(tournament.total_slots) - 1
     for match in tournament.matches.exclude(winner__isnull=True).order_by(
         "round_index",
         "position",
     ):
+        if match.status != TournamentMatch.Status.FINISHED:
+            match.status = TournamentMatch.Status.FINISHED
+            match.save(update_fields=["status"])
         if match.round_index >= max_round:
             continue
         try:

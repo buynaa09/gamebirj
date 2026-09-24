@@ -16,6 +16,8 @@ class TournamentMatchInline(admin.TabularInline):
         "team_a",
         "team_b",
         "winner",
+        "score_a",
+        "score_b",
         "status",
         "draft_url",
     ]

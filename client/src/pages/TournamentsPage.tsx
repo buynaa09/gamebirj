@@ -98,7 +98,7 @@ export function TournamentsPage() {
 
   const handleJoin = (t: Tournament) => {
     if (hasAcceptedRules(t.id)) {
-      navigate(`/tournaments/${t.id}`, { state: { tab: 'matches' } });
+      navigate(`/tournaments/${t.id}`);
       return;
     }
     setJoining(t);
@@ -401,7 +401,7 @@ export function TournamentsPage() {
           onConfirmed={() => {
             const target = joining;
             setJoining(null);
-            navigate(`/tournaments/${target.id}`, { state: { tab: 'matches' } });
+            navigate(`/tournaments/${target.id}`);
           }}
         />
       )}

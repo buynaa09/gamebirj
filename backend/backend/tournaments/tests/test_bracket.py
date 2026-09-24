@@ -112,6 +112,23 @@ def test_advance_winners_propagates():
     assert final.team_a == semifinal.team_a
 
 
+def test_winner_marks_match_finished():
+    tournament = make_tournament(total_slots=4)
+    for name in ["A", "B", "C", "D"]:
+        make_registration(tournament, f"Team {name}")
+    ensure_bracket(tournament)
+    semifinal = tournament.matches.get(round_index=0, position=0)
+    semifinal.winner = semifinal.team_a
+    semifinal.score_a = 2
+    semifinal.score_b = 0
+    semifinal.save()
+
+    advance_winners(tournament)
+
+    semifinal.refresh_from_db()
+    assert semifinal.status == TournamentMatch.Status.FINISHED
+
+
 def test_ensure_rooms_creates_lobbies_once(monkeypatch):
     tournament = make_tournament(total_slots=4)
     for name in ["A", "B", "C", "D"]:

@@ -235,7 +235,9 @@ def retrieve_tournament(request, tournament_id: int):
     registrations = tournament.registrations.select_related("team").order_by(
         "created_at",
     )
+    user = _optional_user(request)
     is_registered = tournament.id in _registered_tournament_ids(request)
+    my_draft_url = _my_draft_url(tournament, user)
     return {
         "id": tournament.id,
         "title": tournament.title,
@@ -255,6 +257,7 @@ def retrieve_tournament(request, tournament_id: int):
         "filled_slots": tournament.filled_slots,
         "slot_unit": tournament.slot_unit,
         "is_registered": is_registered,
+        "my_draft_url": my_draft_url,
         # Leader game IDs stay private; only nicknames are public.
         "registrations": [
             {
@@ -267,6 +270,22 @@ def retrieve_tournament(request, tournament_id: int):
     }
 
 
+def _my_draft_url(tournament: Tournament, user) -> str | None:
+    """The viewer's own upcoming lobby link, if any of their matches is open."""
+    my_team_ids = _my_team_ids(tournament, user)
+    if not my_team_ids:
+        return None
+    open_matches = (
+        tournament.matches.filter(winner__isnull=True)
+        .exclude(draft_url="")
+        .order_by("round_index", "position")
+    )
+    for match in open_matches:
+        if match.team_a_id in my_team_ids or match.team_b_id in my_team_ids:
+            return match.draft_url or None
+    return None
+
+
 def _tournament_started(tournament: Tournament) -> bool:
     if tournament.status == Tournament.Status.LIVE:
         return True
@@ -275,19 +294,24 @@ def _tournament_started(tournament: Tournament) -> bool:
     return tournament.starts_at <= timezone.now()
 
 
+def _my_team_ids(tournament: Tournament, user) -> set[int]:
+    if user is None:
+        return set()
+    team_ids = set(
+        TournamentTeam.objects.filter(owner=user).values_list("id", flat=True),
+    )
+    team_ids |= set(
+        TournamentRegistration.objects.filter(
+            tournament=tournament, user=user,
+        ).values_list("team_id", flat=True),
+    )
+    return team_ids
+
+
 def _match_payloads(request, tournament: Tournament) -> list[dict]:
     user = _optional_user(request)
     staff = user is not None and getattr(user, "is_staff", False)
-    my_team_ids: set[int] = set()
-    if user is not None:
-        my_team_ids = set(
-            TournamentTeam.objects.filter(owner=user).values_list("id", flat=True),
-        )
-        my_team_ids |= set(
-            TournamentRegistration.objects.filter(
-                tournament=tournament, user=user,
-            ).values_list("team_id", flat=True),
-        )
+    my_team_ids = _my_team_ids(tournament, user)
     payloads = []
     for match in tournament.matches.select_related("team_a", "team_b", "winner"):
         may_join = staff or (
@@ -301,6 +325,8 @@ def _match_payloads(request, tournament: Tournament) -> list[dict]:
                 "team_a": match.team_a.name if match.team_a else None,
                 "team_b": match.team_b.name if match.team_b else None,
                 "winner": match.winner.name if match.winner else None,
+                "score_a": match.score_a,
+                "score_b": match.score_b,
                 "status": match.status,
                 "has_room": bool(match.mlbb_match_id),
                 "draft_url": (

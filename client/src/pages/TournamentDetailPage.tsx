@@ -100,10 +100,18 @@ export function TournamentDetailPage({ id }: { id: number }) {
 
   const handleJoin = () => {
     if (hasAcceptedRules(id)) {
-      setTab('matches');
+      joinLobby();
       return;
     }
     setJoinOpen(true);
+  };
+
+  const joinLobby = () => {
+    if (tournament?.my_draft_url) {
+      window.open(tournament.my_draft_url, '_blank', 'noopener');
+      return;
+    }
+    setTab('matches');
   };
 
   if (loading && !tournament) {
@@ -409,7 +417,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
           onClose={() => setJoinOpen(false)}
           onConfirmed={() => {
             setJoinOpen(false);
-            setTab('matches');
+            joinLobby();
           }}
         />
       )}
