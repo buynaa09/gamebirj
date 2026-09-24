@@ -45,6 +45,10 @@ class CreateTeamSchema(Schema):
     leader_nickname: str = ""
 
 
+class RenameTeamSchema(Schema):
+    name: str
+
+
 class TournamentTeamSchema(Schema):
     id: int
     game_id: int

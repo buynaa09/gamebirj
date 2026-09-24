@@ -1,0 +1,127 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.modal {
+  width: min(100%, 520px);
+  max-height: min(620px, 90vh);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.head h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.close:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.teams {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+.teamInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 120px;
+}
+
+.teamInfo b {
+  font-size: 13px;
+}
+
+.teamInfo span,
+.muted {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.form input {
+  min-width: 0;
+  flex: 1;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.form input:focus {
+  outline: none;
+  border-color: var(--red);
+}
+
+.saved {
+  color: #3fb950;
+  font-size: 12px;
+}
+
+.error {
+  margin: 14px 0 0;
+  color: var(--red);
+  font-size: 13px;
+}
+
+@media (max-width: 560px) {
+  .team,
+  .form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './api';
+import { apiGet, apiPatch, apiPost } from './api';
 import type {
   CreateTeamInput,
   RegisterTeamInput,
@@ -17,8 +17,13 @@ export function fetchTournament(id: number): Promise<TournamentDetail> {
   return apiGet<TournamentDetail>(`/tournaments/${id}/`);
 }
 
-export function fetchMyTeams(gameId: number): Promise<TournamentTeam[]> {
-  return apiGet<TournamentTeam[]>(`/tournaments/teams/?game=${gameId}`);
+export function fetchMyTeams(gameId?: number): Promise<TournamentTeam[]> {
+  const query = gameId === undefined ? '' : `?game=${gameId}`;
+  return apiGet<TournamentTeam[]>(`/tournaments/teams/${query}`);
+}
+
+export function renameTeam(teamId: number, name: string): Promise<TournamentTeam> {
+  return apiPatch<TournamentTeam>(`/tournaments/teams/${teamId}/`, { name });
 }
 
 export function createTeam(input: CreateTeamInput): Promise<TournamentTeam> {

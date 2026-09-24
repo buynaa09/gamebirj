@@ -16,6 +16,7 @@ from backend.tournaments.api.schema import CheckIdSchema
 from backend.tournaments.api.schema import CreateTeamSchema
 from backend.tournaments.api.schema import EnsureRoomsSchema
 from backend.tournaments.api.schema import RegisterTeamSchema
+from backend.tournaments.api.schema import RenameTeamSchema
 from backend.tournaments.api.schema import RegistrationSchema
 from backend.tournaments.api.schema import TournamentDetailSchema
 from backend.tournaments.api.schema import TournamentMatchSchema
@@ -140,12 +141,25 @@ def list_tournaments(request):
 
 
 @router.get("/teams/", response=list[TournamentTeamSchema])
-def list_my_teams(request, game: int):
-    teams = TournamentTeam.objects.filter(
-        owner=request.user,
-        game_id=game,
-    ).select_related("game")
-    return [_team_payload(team) for team in teams]
+def list_my_teams(request, game: int | None = None):
+    teams = TournamentTeam.objects.filter(owner=request.user)
+    if game is not None:
+        teams = teams.filter(game_id=game)
+    return [_team_payload(team) for team in teams.select_related("game")]
+
+
+@router.patch("/teams/{team_id}/", response=TournamentTeamSchema)
+def rename_team(request, team_id: int, data: RenameTeamSchema):
+    team = get_object_or_404(TournamentTeam, pk=team_id, owner=request.user)
+    name = data.name.strip()
+    if not name:
+        raise HttpError(422, "Team name is required.")
+    try:
+        team.name = name
+        team.save(update_fields=["name"])
+    except IntegrityError as exc:
+        raise HttpError(409, "A team with this name already exists for this game.") from exc
+    return _team_payload(team)
 
 
 @router.post("/teams/", response=TournamentTeamSchema)

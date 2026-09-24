@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useUnreadMessages } from '../../hooks/useUnreadMessages';
+import { ClanManageModal } from '../clan/ClanManageModal';
 import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon, ChatBubbleIcon, GridIcon } from '../icons/Icons';
 import darkLogo from '../../assets/logo/dark.png';
 import lightLogo from '../../assets/logo/light.png';
@@ -19,6 +20,7 @@ function TopBarInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [clanManageOpen, setClanManageOpen] = useState(false);
   const unreadMessages = useUnreadMessages();
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -95,6 +97,7 @@ function TopBarInner() {
 
               <UserButton>
                 <UserButton.MenuItems>
+                  <UserButton.Action label="Clan Manage" labelIcon={<GridIcon size={15} />} onClick={() => setClanManageOpen(true)} />
                   <UserButton.Link label="Хадгалсан" href="/wishlist" labelIcon={<GridIcon size={15} />} />
                 </UserButton.MenuItems>
               </UserButton>
@@ -122,8 +125,13 @@ function TopBarInner() {
       </header>
 
       {mobileMenuOpen && (
-        <MobileMenu currentPath={location.pathname} onNavigate={closeMobileMenu} />
+        <MobileMenu
+          currentPath={location.pathname}
+          onNavigate={closeMobileMenu}
+          onManageClan={() => setClanManageOpen(true)}
+        />
       )}
+      {clanManageOpen && <ClanManageModal onClose={() => setClanManageOpen(false)} />}
     </>
   );
 }
@@ -131,9 +139,11 @@ function TopBarInner() {
 function MobileMenu({
   currentPath,
   onNavigate,
+  onManageClan,
 }: {
   currentPath: string;
   onNavigate: () => void;
+  onManageClan: () => void;
 }) {
   const { user, loading } = useCurrentUser();
   const { signOut } = useClerk();
@@ -190,6 +200,19 @@ function MobileMenu({
       <a href="#" className={`${styles.mobileLink} ${styles.mobileLast}`}>
         Бусад
       </a>
+
+      {!loading && user && (
+        <button
+          type="button"
+          className={styles.mobileLink}
+          onClick={() => {
+            onNavigate();
+            onManageClan();
+          }}
+        >
+          Clan Manage
+        </button>
+      )}
 
       {!loading &&
         (user ? (
