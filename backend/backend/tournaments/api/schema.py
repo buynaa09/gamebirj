@@ -82,6 +82,7 @@ class TournamentDetailSchema(TournamentSchema):
     # The viewer's own upcoming lobby link (an open match of their team).
     my_draft_url: str | None = None
     my_match_status: str | None = None
+    my_camp: int | None = None
 
 
 class TournamentMatchSchema(Schema):

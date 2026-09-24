@@ -255,7 +255,9 @@ def retrieve_tournament(request, tournament_id: int):
     user = _optional_user(request)
     is_registered = tournament.id in _registered_tournament_ids(request)
     my_match = _my_next_match(tournament, user)
-    my_draft_url = _my_draft_url(tournament, user)
+    my_draft_match = _my_draft_match(tournament, user)
+    my_draft_url = my_draft_match.draft_url if my_draft_match else None
+    my_camp = _my_camp(my_draft_match, _my_team_ids(tournament, user))
     return {
         "id": tournament.id,
         "title": tournament.title,
@@ -279,6 +281,7 @@ def retrieve_tournament(request, tournament_id: int):
         "my_match_status": (
             (my_match.mlbb_status or my_match.status) if my_match else None
         ),
+        "my_camp": my_camp,
         # Leader game IDs stay private; only nicknames are public.
         "registrations": [
             {
@@ -307,20 +310,48 @@ def _my_next_match(tournament: Tournament, user):
     )
 
 
-def _my_draft_url(tournament: Tournament, user) -> str | None:
-    """The viewer's own upcoming lobby link, if any of their matches is open."""
+def _my_draft_match(tournament: Tournament, user):
     my_team_ids = _my_team_ids(tournament, user)
     if not my_team_ids:
         return None
-    open_matches = (
-        tournament.matches.filter(winner__isnull=True)
-        .exclude(draft_url="")
-        .order_by("round_index", "position")
+    return next(
+        (
+            match
+            for match in tournament.matches.filter(winner__isnull=True)
+            .exclude(draft_url="")
+            .order_by("round_index", "position")
+            if match.team_a_id in my_team_ids or match.team_b_id in my_team_ids
+        ),
+        None,
     )
-    for match in open_matches:
-        if match.team_a_id in my_team_ids or match.team_b_id in my_team_ids:
-            return match.draft_url or None
-    return None
+
+
+def _my_camp(match, my_team_ids: set[int]) -> int | None:
+    if match is None or not my_team_ids:
+        return None
+    if match.team_a_id in my_team_ids:
+        team = match.team_a
+        fallback_camp = 1
+    elif match.team_b_id in my_team_ids:
+        team = match.team_b
+        fallback_camp = 2
+    else:
+        return None
+    if team is None:
+        return fallback_camp
+    leader_name = (team.leader_nickname or "").strip().lower()
+    if not leader_name:
+        return fallback_camp
+    for player in match.battle_data.get("player_list", []):
+        if not isinstance(player, dict):
+            continue
+        if str(player.get("name") or "").strip().lower() == leader_name:
+            try:
+                camp = int(player.get("camp") or 0)
+            except (TypeError, ValueError):
+                return fallback_camp
+            return camp or fallback_camp
+    return fallback_camp
 
 
 def _tournament_started(tournament: Tournament) -> bool:

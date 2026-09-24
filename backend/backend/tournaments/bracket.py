@@ -250,7 +250,7 @@ def _camp_map(players: object) -> dict[str, int]:
         name = str(player.get("name") or "").strip()
         try:
             camp = int(player.get("camp") or 0)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             continue
         if name and camp > 0 and name not in camps:
             camps[name] = camp

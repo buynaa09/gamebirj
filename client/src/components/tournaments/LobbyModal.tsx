@@ -1,16 +1,28 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
+import camp1Image from '../../assets/tournaments/left.jpeg';
+import camp2Image from '../../assets/tournaments/right.jpeg';
 import styles from './LobbyModal.module.css';
 
 interface LobbyModalProps {
   title: string;
   game: string;
   lobbyUrl: string;
+  camp: number | null;
+  startsAt: string | null;
   onClose: () => void;
 }
 
-export function LobbyModal({ title, game, lobbyUrl, onClose }: LobbyModalProps) {
+function formatCountdown(seconds: number): string {
+  const safeSeconds = Math.max(0, seconds);
+  const minutes = Math.floor(safeSeconds / 60).toString().padStart(2, '0');
+  const remainder = (safeSeconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${remainder}`;
+}
+
+export function LobbyModal({ title, game, lobbyUrl, camp, startsAt, onClose }: LobbyModalProps) {
   const [copied, setCopied] = useState(false);
+  const [remaining, setRemaining] = useState<number | null>(startsAt ? 300 : null);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -24,6 +36,20 @@ export function LobbyModal({ title, game, lobbyUrl, onClose }: LobbyModalProps) 
       document.body.style.overflow = prev;
     };
   }, [onClose]);
+
+  useEffect(() => {
+    if (!startsAt) return;
+    const target = new Date(startsAt).getTime();
+    const now = Date.now();
+    const deadline = Math.min(
+      Number.isNaN(target) || target <= now ? now + 300_000 : target,
+      now + 300_000,
+    );
+    const update = () => setRemaining(Math.ceil((deadline - Date.now()) / 1000));
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [startsAt]);
 
   useEffect(() => {
     if (!copied) return;
@@ -60,8 +86,28 @@ export function LobbyModal({ title, game, lobbyUrl, onClose }: LobbyModalProps) 
           </button>
         </div>
 
-        <div className={styles.qrWrap}>
-          <QRCode value={lobbyUrl} size={180} aria-label="Лобби QR код" />
+        {camp === 1 || camp === 2 ? (
+          <img
+            className={styles.campImage}
+            src={camp === 1 ? camp1Image : camp2Image}
+            alt={camp === 1 ? 'Таны баг camp 1' : 'Таны баг camp 2'}
+          />
+        ) : (
+          <div className={styles.qrWrap}>
+            <QRCode value={lobbyUrl} size={180} aria-label="Лобби QR код" />
+          </div>
+        )}
+        <div className={styles.campNote}>
+          <b>Анхаарах нөхцөл</b>
+          <ul>
+            <li>Энэ зураг дээрх талд танай баг байрлана.</li>
+            <li>Inspector-т хүн орохыг хориглоно. </li>
+            <li>Та match leader бол Inspector-т орсон хүнийг Kick хийнэ.</li>
+          </ul>
+        </div>
+        <div className={styles.countdown}>
+          <b>Тоглолт 5 минут дотор эхлэх ёстой</b>
+          <span>{remaining === null ? 'Цагийг тооцоод байна…' : remaining > 0 ? formatCountdown(remaining) : 'Тоглолт эхлэх цаг өндөрлөгдсөн'}</span>
         </div>
         {/* <p className={styles.url}>{lobbyUrl}</p> */}
 

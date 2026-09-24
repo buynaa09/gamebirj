@@ -223,6 +223,7 @@ export interface TournamentDetail extends Tournament {
   registrations: RegisteredTeam[];
   my_draft_url: string | null;
   my_match_status: string | null;
+  my_camp: number | null;
 }
 
 export interface TournamentMatch {
