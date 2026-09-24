@@ -216,13 +216,21 @@ export function TournamentDetailPage({ id }: { id: number }) {
         {tournament.is_registered &&
         tournament.status !== 'finished' &&
         tournamentStarted(tournament.status, tournament.starts_at) ? (
-          <button
-            type="button"
-            className={`btn btn-primary ${styles.heroCta}`}
-            onClick={handleJoin}
-          >
-            Join
-          </button>
+          tournament.my_match_status === 'pending' || tournament.my_match_status === 'result' ? (
+            <button type="button" className={`btn btn-outline ${styles.heroCta}`} disabled>
+              {tournament.my_match_status === 'result'
+                ? 'Тоглолтын үр дүнг хүлээж байна'
+                : 'Нөгөө тоглолтыг хүлээж байна'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={`btn btn-primary ${styles.heroCta}`}
+              onClick={handleJoin}
+            >
+              Join
+            </button>
+          )
         ) : (
           tournament.status === 'open' &&
           (tournament.is_registered ? (

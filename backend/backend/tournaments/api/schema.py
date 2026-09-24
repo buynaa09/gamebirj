@@ -77,6 +77,7 @@ class TournamentDetailSchema(TournamentSchema):
     registrations: list[RegisteredTeamSchema] = []
     # The viewer's own upcoming lobby link (an open match of their team).
     my_draft_url: str | None = None
+    my_match_status: str | None = None
 
 
 class TournamentMatchSchema(Schema):
@@ -89,6 +90,7 @@ class TournamentMatchSchema(Schema):
     score_a: int | None = None
     score_b: int | None = None
     status: str = ""
+    mlbb_status: str = ""
     has_room: bool = False
     # Draft lobby link — only for the two playing teams (and staff).
     draft_url: str | None = None

@@ -4,6 +4,7 @@ import logging
 
 from django.db import IntegrityError
 from django.db.models import F
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
@@ -237,6 +238,7 @@ def retrieve_tournament(request, tournament_id: int):
     )
     user = _optional_user(request)
     is_registered = tournament.id in _registered_tournament_ids(request)
+    my_match = _my_next_match(tournament, user)
     my_draft_url = _my_draft_url(tournament, user)
     return {
         "id": tournament.id,
@@ -258,6 +260,9 @@ def retrieve_tournament(request, tournament_id: int):
         "slot_unit": tournament.slot_unit,
         "is_registered": is_registered,
         "my_draft_url": my_draft_url,
+        "my_match_status": (
+            (my_match.mlbb_status or my_match.status) if my_match else None
+        ),
         # Leader game IDs stay private; only nicknames are public.
         "registrations": [
             {
@@ -268,6 +273,22 @@ def retrieve_tournament(request, tournament_id: int):
             for registration in registrations
         ],
     }
+
+
+def _my_next_match(tournament: Tournament, user):
+    """The viewer's next unresolved match, if one exists."""
+    my_team_ids = _my_team_ids(tournament, user)
+    if not my_team_ids:
+        return None
+    return (
+        tournament.matches.filter(
+            Q(team_a_id__in=my_team_ids) | Q(team_b_id__in=my_team_ids),
+            winner__isnull=True,
+        )
+        .select_related("team_a", "team_b")
+        .order_by("round_index", "position")
+        .first()
+    )
 
 
 def _my_draft_url(tournament: Tournament, user) -> str | None:
@@ -328,6 +349,7 @@ def _match_payloads(request, tournament: Tournament) -> list[dict]:
                 "score_a": match.score_a,
                 "score_b": match.score_b,
                 "status": match.status,
+                "mlbb_status": match.mlbb_status,
                 "has_room": bool(match.mlbb_match_id),
                 "draft_url": (
                     match.draft_url if (may_join and match.draft_url) else None

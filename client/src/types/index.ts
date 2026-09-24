@@ -207,6 +207,7 @@ export interface RegisteredTeam {
 export interface TournamentDetail extends Tournament {
   registrations: RegisteredTeam[];
   my_draft_url: string | null;
+  my_match_status: string | null;
 }
 
 export interface TournamentMatch {
@@ -219,6 +220,7 @@ export interface TournamentMatch {
   score_a: number | null;
   score_b: number | null;
   status: string;
+  mlbb_status: string;
   has_room: boolean;
   draft_url: string | null;
 }
