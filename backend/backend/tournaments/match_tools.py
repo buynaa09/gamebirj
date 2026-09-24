@@ -60,6 +60,24 @@ class MatchLobby:
     is_closed: bool
 
 
+@dataclass(frozen=True)
+class MatchState:
+    """Full getMatchUrl payload for an existing room.
+
+    ``url`` may be empty once the lobby is joined (``room``), the game has
+    started (``battle``), or it is over (``result``) — only ``create`` state
+    guarantees a deeplink. ``battle`` maps the ``battleData`` object, which
+    carries ``win_camp`` and ``player_list`` (each with ``camp`` and ``name``)
+    once the result is in.
+    """
+
+    url: str
+    name: str
+    status: str
+    is_closed: bool
+    battle: dict
+
+
 def _request(
     method: str,
     path: str,
@@ -138,6 +156,24 @@ def create_lobby(name: str, cookie: str) -> MatchRoom:
 
 def get_lobby_url(match_id: str, cookie: str) -> MatchLobby:
     """Fetch the draft deeplink for a room."""
+    state = get_match_state(match_id, cookie)
+    if not state.url:
+        msg = "matchTools returned no lobby URL"
+        raise MatchToolsTransportError(msg)
+    return MatchLobby(
+        url=state.url,
+        name=state.name,
+        status=state.status,
+        is_closed=state.is_closed,
+    )
+
+
+def get_match_state(match_id: str, cookie: str) -> MatchState:
+    """Fetch the current state of a room (status + result data).
+
+    Unlike :func:`get_lobby_url` this tolerates an empty ``url`` — joined,
+    in-progress, and finished rooms report no deeplink.
+    """
     match_id = match_id.strip()
     if not match_id:
         msg = "Match ID is required"
@@ -148,13 +184,11 @@ def get_lobby_url(match_id: str, cookie: str) -> MatchLobby:
         raise MatchToolsApiError(code, msg)
     query = urllib.parse.urlencode({"_t": int(time.time() * 1000), "matchId": match_id})
     data = _request("GET", f"/matchTools/v1/getMatchUrl?{query}", cookie)
-    url = str(data.get("url") or "").strip()
-    if not url:
-        msg = "matchTools returned no lobby URL"
-        raise MatchToolsTransportError(msg)
-    return MatchLobby(
-        url=url,
+    battle = data.get("battleData")
+    return MatchState(
+        url=str(data.get("url") or "").strip(),
         name=str(data.get("name") or ""),
         status=str(data.get("status") or ""),
         is_closed=bool(data.get("isClosed", False)),
+        battle=battle if isinstance(battle, dict) else {},
     )

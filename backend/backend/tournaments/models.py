@@ -135,12 +135,14 @@ class MLBBMatchConfig(models.Model):
 
 class TournamentMatch(models.Model):
     """One bracket fixture. Rooms (MLBB lobbies) are created automatically
-    once both teams are known; ``winner`` is set by staff until result
-    polling lands."""
+    once both teams are known; results are polled from matchTools every
+    minute (``poll_match_results``), with staff as fallback for ambiguous
+    outcomes."""
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending (teams or room TBD)"
         OPEN = "open", "Room open"
+        LIVE = "live", "Match in progress"
         FINISHED = "finished", "Finished"
 
     tournament = models.ForeignKey(
@@ -173,6 +175,11 @@ class TournamentMatch(models.Model):
     )
     mlbb_match_id = models.CharField(max_length=100, blank=True, default="")
     draft_url = models.CharField(max_length=500, blank=True, default="")
+    # Raw matchTools room state (create/room/battle/result) from polling.
+    mlbb_status = models.CharField(max_length=20, blank=True, default="")
+    last_polled_at = models.DateTimeField(null=True, blank=True)
+    # Audit snapshot of the last battleData payload (win_camp, player_list).
+    battle_data = models.JSONField(default=dict, blank=True)
     # Result (set by staff until result polling lands). A match with a
     # winner is treated as finished and shows up in match history.
     score_a = models.PositiveIntegerField(null=True, blank=True)

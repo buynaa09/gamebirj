@@ -19,9 +19,10 @@ class TournamentMatchInline(admin.TabularInline):
         "score_a",
         "score_b",
         "status",
+        "mlbb_status",
         "draft_url",
     ]
-    readonly_fields = ["draft_url"]
+    readonly_fields = ["mlbb_status", "draft_url"]
     show_change_link = True
 
 
@@ -58,9 +59,17 @@ class TournamentMatchAdmin(admin.ModelAdmin):
         "team_b",
         "winner",
         "status",
+        "mlbb_status",
     ]
-    list_filter = ["tournament", "status", "round_index"]
-    readonly_fields = ["mlbb_match_id", "draft_url", "created_at"]
+    list_filter = ["tournament", "status", "mlbb_status", "round_index"]
+    readonly_fields = [
+        "mlbb_match_id",
+        "mlbb_status",
+        "battle_data",
+        "last_polled_at",
+        "draft_url",
+        "created_at",
+    ]
 
 
 @admin.register(MLBBMatchConfig)

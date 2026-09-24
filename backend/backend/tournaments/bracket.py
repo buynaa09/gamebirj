@@ -10,18 +10,26 @@ known. All three are idempotent and safe to run on every matches fetch.
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
+
+from django.utils import timezone
 
 from backend.tournaments.match_tools import MatchToolsError
 from backend.tournaments.match_tools import create_lobby
 from backend.tournaments.match_tools import get_lobby_url
+from backend.tournaments.match_tools import get_match_state
 from backend.tournaments.models import MLBBMatchConfig
 from backend.tournaments.models import Tournament
 from backend.tournaments.models import TournamentMatch
+from backend.tournaments.models import TournamentTeam
 
 logger = logging.getLogger(__name__)
 
 
 MIN_BRACKET_SIZE = 2
+# Minimum age of last_polled_at before a room is polled again. The cron job
+# runs every minute; this guard also makes ad-hoc runs cheap and idempotent.
+POLL_INTERVAL_SECONDS = 60
 
 
 def bracket_size(total_slots: int) -> int:
@@ -166,3 +174,183 @@ def ensure_rooms(tournament: Tournament) -> tuple[int, list[str]]:
         match.save(update_fields=["mlbb_match_id", "draft_url", "status"])
         created += 1
     return created, errors
+
+
+def _camp_map(players: object) -> dict[str, int]:
+    """Map player name → camp number from a battleData player_list."""
+    camps: dict[str, int] = {}
+    if not isinstance(players, list):
+        return camps
+    for player in players:
+        if not isinstance(player, dict):
+            continue
+        name = str(player.get("name") or "").strip()
+        try:
+            camp = int(player.get("camp") or 0)
+        except TypeError, ValueError:
+            continue
+        if name and camp > 0 and name not in camps:
+            camps[name] = camp
+    return camps
+
+
+def _camp_of(camps: dict[str, int], nickname: str) -> int | None:
+    """Find a team's camp by leader nickname (case-insensitive fallback)."""
+    nickname = (nickname or "").strip()
+    if not nickname:
+        return None
+    if nickname in camps:
+        return camps[nickname]
+    lowered = nickname.lower()
+    for name, camp in camps.items():
+        if name.lower() == lowered:
+            return camp
+    return None
+
+
+def resolve_winner_from_battle(
+    match: TournamentMatch,
+    battle: dict,
+) -> TournamentTeam | None:
+    """Map a ``result`` battleData payload to the winning team.
+
+    ``win_camp`` tells which in-game camp won; each ``player_list`` entry
+    carries ``camp`` and ``name``. A team is linked to a camp through its
+    leader's nickname snapshot. Returns the winner only when exactly one of
+    the two teams sits in the winning camp — anything ambiguous returns
+    ``None`` so staff can decide in admin.
+    """
+    try:
+        win_camp = int(battle.get("win_camp") or 0)
+    except TypeError, ValueError:
+        return None
+    if win_camp <= 0 or match.team_a is None or match.team_b is None:
+        return None
+    camps = _camp_map(battle.get("player_list"))
+    if not camps:
+        return None
+    camp_a = _camp_of(camps, match.team_a.leader_nickname)
+    camp_b = _camp_of(camps, match.team_b.leader_nickname)
+    if camp_a == win_camp and camp_b != win_camp:
+        return match.team_a
+    if camp_b == win_camp and camp_a != win_camp:
+        return match.team_b
+    return None
+
+
+def poll_match_results(tournament: Tournament | None = None) -> dict:
+    """Poll matchTools for open rooms and advance the bracket.
+
+    Updates ``mlbb_status``/``battle_data``/``draft_url``, maps room states
+    (``create``/``room`` → open, ``battle`` → live), auto-sets unambiguous
+    winners on ``result`` (propagating them via ``advance_winners`` and
+    creating next-round rooms), and marks tournaments with a decided final
+    as finished. Safe to run every minute; rooms polled within
+    ``POLL_INTERVAL_SECONDS`` are skipped.
+    """
+    summary: dict = {"polled": 0, "updated": 0, "finished": 0, "rooms": 0, "errors": []}
+    cookie = MLBBMatchConfig.get_cookie()
+    if not cookie:
+        summary["errors"].append("matchTools cookie is not configured")
+        return summary
+    matches = (
+        TournamentMatch.objects.exclude(mlbb_match_id="")
+        .exclude(status=TournamentMatch.Status.FINISHED)
+        .select_related("team_a", "team_b", "tournament")
+        .order_by("tournament_id", "round_index", "position")
+    )
+    if tournament is not None:
+        matches = matches.filter(tournament=tournament)
+    cutoff = timezone.now() - timedelta(seconds=POLL_INTERVAL_SECONDS)
+    touched_tournaments: dict[int, Tournament] = {}
+    for match in matches:
+        if match.last_polled_at is not None and match.last_polled_at >= cutoff:
+            continue
+        _poll_one_match(match, cookie, summary)
+        touched_tournaments[match.tournament_id] = match.tournament
+    for touched in touched_tournaments.values():
+        advance_winners(touched)
+        created, errors = ensure_rooms(touched)
+        summary["rooms"] += created
+        summary["errors"].extend(errors)
+        close_tournament_if_decided(touched)
+    return summary
+
+
+def _poll_one_match(
+    match: TournamentMatch,
+    cookie: str,
+    summary: dict,
+) -> None:
+    """Poll one room and apply its state; records errors into summary."""
+    label = f"{match.tournament.title} R{match.round_index + 1}M{match.position + 1}"
+    now = timezone.now()
+    try:
+        state = get_match_state(match.mlbb_match_id, cookie)
+    except MatchToolsError as exc:
+        logger.warning("Result poll failed for %s: %s", label, exc)
+        summary["errors"].append(f"{label}: {exc}")
+        match.last_polled_at = now
+        match.save(update_fields=["last_polled_at"])
+        return
+    summary["polled"] += 1
+    match.mlbb_status = state.status
+    match.battle_data = state.battle
+    match.last_polled_at = now
+    fields = ["mlbb_status", "battle_data", "last_polled_at"]
+    if state.url and state.url != match.draft_url:
+        match.draft_url = state.url
+        fields.append("draft_url")
+    next_status = {
+        "create": TournamentMatch.Status.OPEN,
+        "room": TournamentMatch.Status.OPEN,
+        "battle": TournamentMatch.Status.LIVE,
+    }.get(state.status)
+    if next_status is not None and match.status != next_status:
+        match.status = next_status
+        fields.append("status")
+        summary["updated"] += 1
+    if state.status == "result" and match.winner_id is None:
+        _apply_result(match, state.battle, label, summary, fields)
+    match.save(update_fields=fields)
+
+
+def _apply_result(
+    match: TournamentMatch,
+    battle: dict,
+    label: str,
+    summary: dict,
+    fields: list[str],
+) -> None:
+    """Auto-finish a ``result`` match when the winner is unambiguous."""
+    winner = resolve_winner_from_battle(match, battle)
+    if winner is None:
+        logger.warning(
+            "Ambiguous result for %s (win_camp=%s) — staff decision needed",
+            label,
+            battle.get("win_camp"),
+        )
+        summary["errors"].append(f"{label}: ambiguous result, staff needed")
+        return
+    match.winner = winner
+    match.status = TournamentMatch.Status.FINISHED
+    fields.extend(["winner", "status"])
+    summary["finished"] += 1
+    logger.info("Auto-finished %s: winner %s", label, winner.name)
+
+
+def close_tournament_if_decided(tournament: Tournament) -> bool:
+    """Mark the tournament finished once the final has a winner."""
+    if tournament.status == Tournament.Status.FINISHED:
+        return False
+    final_round = round_count(tournament.total_slots) - 1
+    try:
+        final = tournament.matches.get(round_index=final_round, position=0)
+    except TournamentMatch.DoesNotExist:
+        return False
+    if final.winner_id is None:
+        return False
+    tournament.status = Tournament.Status.FINISHED
+    tournament.save(update_fields=["status"])
+    logger.info("Tournament finished: %s", tournament.title)
+    return True
