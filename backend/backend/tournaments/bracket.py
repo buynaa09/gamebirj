@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 MIN_BRACKET_SIZE = 2
+FEEDER_COUNT = 2
 # Minimum age of last_polled_at before a room is polled again. The cron job
 # runs every minute; this guard also makes ad-hoc runs cheap and idempotent.
 POLL_INTERVAL_SECONDS = 60
@@ -71,6 +72,9 @@ def ensure_bracket(tournament: Tournament) -> list[TournamentMatch]:
         TournamentMatch.objects.bulk_create(bulk)
 
     seat_first_round(tournament)
+    _apply_automatic_byes(tournament)
+    advance_winners(tournament)
+    _apply_automatic_byes(tournament)
     advance_winners(tournament)
     return list(tournament.matches.select_related("team_a", "team_b", "winner"))
 
@@ -113,12 +117,67 @@ def seat_first_round(tournament: Tournament) -> None:
             break
 
 
+def _tournament_started(tournament: Tournament) -> bool:
+    if tournament.status == Tournament.Status.LIVE:
+        return True
+    return (
+        tournament.status == Tournament.Status.OPEN
+        and tournament.starts_at is not None
+        and tournament.starts_at <= timezone.now()
+    )
+
+
+def _has_teams(match: TournamentMatch) -> bool:
+    return match.team_a_id is not None or match.team_b_id is not None
+
+
+def _apply_automatic_byes(tournament: Tournament) -> bool:
+    """Turn lone teams into direct wins once the tournament has started."""
+    if not _tournament_started(tournament):
+        return False
+    registrations = tournament.registrations.count()
+    changed = False
+    for match in tournament.matches.filter(winner__isnull=True).order_by(
+        "round_index",
+        "position",
+    ):
+        if match.team_a_id and match.team_b_id:
+            continue
+        if not _has_teams(match):
+            continue
+        if match.round_index == 0:
+            if registrations % 2:
+                match.winner = match.team_a or match.team_b
+                match.status = TournamentMatch.Status.FINISHED
+                match.save(update_fields=["winner", "status"])
+                changed = True
+            continue
+        feeder_positions = (match.position * 2, match.position * 2 + 1)
+        feeders = list(
+            tournament.matches.filter(
+                round_index=match.round_index - 1,
+                position__in=feeder_positions,
+            ),
+        )
+        if (
+            len(feeders) == FEEDER_COUNT
+            and any(_has_teams(feeder) for feeder in feeders)
+            and any(not _has_teams(feeder) for feeder in feeders)
+        ):
+            match.winner = match.team_a or match.team_b
+            match.status = TournamentMatch.Status.FINISHED
+            match.save(update_fields=["winner", "status"])
+            changed = True
+    return changed
+
+
 def advance_winners(tournament: Tournament) -> None:
     """Push staff-set winners into the next round's empty slots.
 
     Matches with a winner are marked finished so they show up in history.
     """
     max_round = round_count(tournament.total_slots) - 1
+    _apply_automatic_byes(tournament)
     for match in tournament.matches.exclude(winner__isnull=True).order_by(
         "round_index",
         "position",
@@ -139,6 +198,8 @@ def advance_winners(tournament: Tournament) -> None:
         if getattr(nxt, f"{field}_id") != match.winner_id:
             setattr(nxt, field, match.winner)
             nxt.save(update_fields=[field])
+    if _apply_automatic_byes(tournament):
+        advance_winners(tournament)
 
 
 def ensure_rooms(tournament: Tournament) -> tuple[int, list[str]]:

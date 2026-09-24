@@ -212,3 +212,50 @@ def test_ensure_endpoint_requires_staff(client: Client):
     response = client.post(url)
 
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_seven_teams_get_one_first_round_bye(monkeypatch):
+    monkeypatch.setattr(
+        "backend.tournaments.bracket.random.shuffle",
+        lambda teams: None,
+    )
+    tournament = make_tournament(total_slots=8)
+    for name in ["A", "B", "C", "D", "E", "F", "G"]:
+        make_registration(tournament, f"Team {name}")
+
+    ensure_bracket(tournament)
+
+    byes = [
+        match
+        for match in tournament.matches.filter(round_index=0)
+        if match.winner is not None
+    ]
+    assert len(byes) == 1
+    assert byes[0].team_a.name == "Team G"
+    assert byes[0].status == TournamentMatch.Status.FINISHED
+
+
+def test_six_teams_get_one_second_round_bye(monkeypatch):
+    monkeypatch.setattr(
+        "backend.tournaments.bracket.random.shuffle",
+        lambda teams: None,
+    )
+    tournament = make_tournament(total_slots=8)
+    for name in ["A", "B", "C", "D", "E", "F"]:
+        make_registration(tournament, f"Team {name}")
+
+    ensure_bracket(tournament)
+    first_round = tournament.matches.filter(round_index=0).order_by("position")
+    assert [match.winner_id for match in first_round] == [None] * 4
+
+    for match in first_round[:3]:
+        match.winner = match.team_a
+        match.status = TournamentMatch.Status.FINISHED
+        match.save(update_fields=["winner", "status"])
+
+    advance_winners(tournament)
+    advance_winners(tournament)
+
+    second_round = tournament.matches.filter(round_index=1).order_by("position")
+    assert second_round[1].winner == second_round[1].team_a
+    assert second_round[1].status == TournamentMatch.Status.FINISHED
