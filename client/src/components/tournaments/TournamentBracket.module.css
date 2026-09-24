@@ -1,0 +1,156 @@
+.bracket {
+  --line: #52525b;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  padding: 8px 4px 20px;
+}
+
+.round {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: 216px;
+  padding-right: 28px;
+}
+
+.round:last-child {
+  padding-right: 0;
+}
+
+.roundTitle {
+  height: 28px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.matches {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.match {
+  position: relative;
+  height: 60px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: visible;
+}
+
+/* Outgoing stub to the next round (meets the next column's stub at midpoint). */
+.match::after {
+  content: '';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  width: 14px;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--line);
+}
+
+.round:last-child .match::after {
+  display: none;
+}
+
+/* Incoming stub from the previous round's midpoint. */
+.match.hasIncoming::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 14px;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--line);
+}
+
+/* Vertical bar joining the two feeders of a match. */
+.vline {
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  background: var(--line);
+}
+
+.slot {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.slot + .slot {
+  border-top: 1px solid var(--border);
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--red);
+}
+
+.name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tbd .avatar {
+  color: var(--text-faint);
+}
+
+.tbd .name {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.champion {
+  justify-content: center;
+}
+
+.champion .slot {
+  border-top: none;
+}
+
+.trophy {
+  flex: 0 0 auto;
+  display: flex;
+  color: #eab308;
+}
+
+.tbdName {
+  color: var(--text-faint);
+  font-weight: 500;
+}

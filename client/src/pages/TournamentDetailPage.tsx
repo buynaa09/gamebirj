@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth, useClerk } from '@clerk/react';
 import { Seo } from '../components/seo/Seo';
 import { RegisterTeamModal } from '../components/tournaments/RegisterTeamModal';
+import { TournamentBracket } from '../components/tournaments/TournamentBracket';
 import { useTournament } from '../hooks/useTournament';
 import { useTournaments } from '../hooks/useTournaments';
 import { useGames } from '../hooks/useGames';
@@ -300,16 +301,8 @@ export function TournamentDetailPage({ id }: { id: number }) {
       {tab === 'stages' && (
         <section aria-label="Шатнууд">
           <h2 className={styles.sectionTitle}>Шатнууд</h2>
-          <div className={styles.stageCards}>
-            <div className={styles.stageCard}>
-              <b>{tournament.format || 'Үндсэн шат'}</b>
-              <span>{tournament.total_slots} slot</span>
-              <span>
-                {tournament.filled_slots}/{tournament.total_slots} дүүрсэн · {tournament.team_size} тоглогчтой
-                баг
-              </span>
-            </div>
-          </div>
+        
+          <TournamentBracket teams={tournament.registrations} totalSlots={tournament.total_slots} />
         </section>
       )}
 
