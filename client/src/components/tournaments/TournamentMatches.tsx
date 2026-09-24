@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useTournamentMatches } from '../../hooks/useTournamentMatches';
 import type { TournamentMatch } from '../../types';
 import styles from './TournamentMatches.module.css';
 
@@ -13,48 +12,21 @@ function isFinished(match: TournamentMatch): boolean {
   return match.status === 'finished' || !!match.winner;
 }
 
-function ScoreRow({
-  name,
-  score,
-  won,
+export function TournamentMatches({
+  matches,
+  loading,
+  error,
+  reload,
 }: {
-  name: string | null;
-  score: number | null;
-  won: boolean;
+  matches: TournamentMatch[];
+  loading: boolean;
+  error: string | null;
+  reload: () => void;
 }) {
-  return (
-    <div className={`${styles.team} ${name ? '' : styles.tbd} ${won ? styles.won : ''}`}>
-      <span className={styles.avatar} aria-hidden="true">
-        {name ? name.charAt(0).toUpperCase() : '?'}
-      </span>
-      <span className={styles.name}>{name ?? 'Тодорхойгүй'}</span>
-      <span className={styles.score}>{score ?? '–'}</span>
-      {won && (
-        <span className={styles.crown} aria-label="Ялагч">
-          🏆
-        </span>
-      )}
-    </div>
-  );
-}
-
-export function TournamentMatches({ tournamentId }: { tournamentId: number }) {
-  const { matches, loading, error, reload } = useTournamentMatches(tournamentId);
 
   const history = useMemo(() => {
     const finished = matches.filter(isFinished);
-    const map = new Map<number, TournamentMatch[]>();
-    for (const m of finished) {
-      const list = map.get(m.round_index) ?? [];
-      list.push(m);
-      map.set(m.round_index, list);
-    }
-    return [...map.entries()]
-      .sort(([a], [b]) => b - a)
-      .map(([roundIndex, list]) => ({
-        roundIndex,
-        matches: list.sort((a, b) => a.position - b.position),
-      }));
+    return finished.sort((a, b) => b.round_index - a.round_index || a.position - b.position);
   }, [matches]);
   const totalRounds = useMemo(() => {
     const max = matches.reduce((acc, m) => Math.max(acc, m.round_index), 0);
@@ -79,27 +51,52 @@ export function TournamentMatches({ tournamentId }: { tournamentId: number }) {
   }
 
   return (
-    <div className={styles.rounds}>
-      {history.map(({ roundIndex, matches: list }) => {
-        const matchesInRound = 2 ** (totalRounds - 1 - roundIndex);
+    <ul className={styles.list}>
+      {history.map((m) => {
+        const matchesInRound = 2 ** (totalRounds - 1 - m.round_index);
+        const decided = !!m.winner;
+        const wonA = decided && m.winner === m.team_a;
+        const wonB = decided && m.winner === m.team_b;
         return (
-          <section key={roundIndex} aria-label={roundLabel(matchesInRound)}>
-            <h3 className={styles.roundTitle}>{roundLabel(matchesInRound)}</h3>
-            <ul className={styles.list}>
-              {list.map((m) => (
-                <li key={m.id} className={styles.card}>
-                  <div className={styles.cardHead}>
-                    <span className={styles.matchNo}>Тоглолт {m.position + 1}</span>
-                    <span className={`${styles.badge} ${styles.finished}`}>Дууссан</span>
-                  </div>
-                  <ScoreRow name={m.team_a} score={m.score_a} won={!!m.winner && m.winner === m.team_a} />
-                  <ScoreRow name={m.team_b} score={m.score_b} won={!!m.winner && m.winner === m.team_b} />
-                </li>
-              ))}
-            </ul>
-          </section>
+          <li key={m.id} className={styles.row}>
+            <span className={styles.meta}>
+              {roundLabel(matchesInRound)} · Тоглолт {m.position + 1}
+            </span>
+            <span className={styles.result}>
+              
+              <span className={`${styles.teamName} ${wonA ? styles.won : ''}`}>
+                
+                <span className={styles.truncate}>{m.team_a ?? 'Тодорхойгүй'}</span>
+                 <span className={`${styles.avatar} ${styles.avatarA}`} aria-hidden="true">
+                  {(m.team_a ?? '?').charAt(0).toUpperCase()}
+                </span>
+                {decided && (
+                  <span className={wonA ? styles.win : styles.loss}>
+                    {wonA ? 'WIN' : 'LOSS'}
+                  </span>
+                )}
+               
+              </span>
+              <span className={styles.score}>
+                {m.score_a ?? '–'} : {m.score_b ?? '–'}
+              </span>
+              <span className={`${styles.teamName} ${styles.right} ${wonB ? styles.won : ''}`}>
+    
+                {decided && (
+                  <span className={wonB ? styles.win : styles.loss}>
+                    {wonB ? 'WIN' : 'LOSS'}
+                  </span>
+                )}
+                            <span className={`${styles.avatar} ${styles.avatarB}`} aria-hidden="true">
+                  {(m.team_b ?? '?').charAt(0).toUpperCase()}
+                </span>
+                <span className={styles.truncate}>{m.team_b ?? 'Тодорхойгүй'}</span>
+              </span>
+            </span>
+            <span className={`${styles.badge} ${styles.finished}`}>Дууссан</span>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

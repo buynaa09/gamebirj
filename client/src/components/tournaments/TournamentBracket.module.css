@@ -136,6 +136,15 @@
   font-weight: 500;
 }
 
+.won .avatar {
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.5);
+}
+
+.won .name {
+  font-weight: 800;
+}
+
 .champion {
   justify-content: center;
 }

@@ -8,6 +8,7 @@ import { LobbyModal } from '../components/tournaments/LobbyModal';
 import { TournamentBracket } from '../components/tournaments/TournamentBracket';
 import { TournamentMatches } from '../components/tournaments/TournamentMatches';
 import { useTournament } from '../hooks/useTournament';
+import { useTournamentMatches } from '../hooks/useTournamentMatches';
 import { useTournaments } from '../hooks/useTournaments';
 import { hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
 import { useGames } from '../hooks/useGames';
@@ -90,6 +91,14 @@ export function TournamentDetailPage({ id }: { id: number }) {
   const [joinOpen, setJoinOpen] = useState(false);
   const [lobbyUrl, setLobbyUrl] = useState<string | null>(null);
   const [shared, setShared] = useState(false);
+  // Bracket + history share one matches fetch, loaded on demand per tab.
+  const bracketTabActive = tab === 'stages' || tab === 'matches';
+  const {
+    matches,
+    loading: matchesLoading,
+    error: matchesError,
+    reload: reloadMatches,
+  } = useTournamentMatches(bracketTabActive && tournament ? tournament.id : null);
 
   const handleRegister = () => {
     if (!isLoaded) return;
@@ -339,14 +348,23 @@ export function TournamentDetailPage({ id }: { id: number }) {
         <section aria-label="Шатнууд">
           <h2 className={styles.sectionTitle}>Шатнууд</h2>
         
-          <TournamentBracket teams={tournament.registrations} totalSlots={tournament.total_slots} />
+          <TournamentBracket
+            matches={matches}
+            teams={tournament.registrations}
+            totalSlots={tournament.total_slots}
+          />
         </section>
       )}
 
       {tab === 'matches' && (
         <section aria-label="Тоглолтууд">
           <h2 className={styles.sectionTitle}>Тоглолтууд</h2>
-          <TournamentMatches tournamentId={tournament.id} />
+          <TournamentMatches
+            matches={matches}
+            loading={matchesLoading}
+            error={matchesError}
+            reload={reloadMatches}
+          />
         </section>
       )}
 
