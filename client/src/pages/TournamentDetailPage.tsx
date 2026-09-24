@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth, useClerk } from '@clerk/react';
 import { Seo } from '../components/seo/Seo';
 import { RegisterTeamModal } from '../components/tournaments/RegisterTeamModal';
 import { useTournament } from '../hooks/useTournament';
@@ -73,10 +74,21 @@ function timezoneLabel(): string {
 export function TournamentDetailPage({ id }: { id: number }) {
   const { tournament, loading, error, reload } = useTournament(id);
   const { tournaments } = useTournaments();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { openSignIn } = useClerk();
   const apiGames = useGames();
   const [tab, setTab] = useState<DetailTab>('overview');
   const [registerOpen, setRegisterOpen] = useState(false);
   const [shared, setShared] = useState(false);
+
+  const handleRegister = () => {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
+    setRegisterOpen(true);
+  };
 
   if (loading) {
     return (
@@ -170,7 +182,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
           <button
             type="button"
             className={`btn btn-primary ${styles.heroCta}`}
-            onClick={() => setRegisterOpen(true)}
+            onClick={handleRegister}
           >
             Баг бүртгүүлэх
           </button>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SignIn, useAuth } from '@clerk/react';
 import { checkLeaderId, createTeam, fetchMyTeams, registerTeam } from '../../services/tournaments';
 import type { CheckedAccount } from '../../services/tournaments';
 import type { Tournament, TournamentTeam } from '../../types';
@@ -19,6 +20,7 @@ function authError(message: string): string {
 }
 
 export function RegisterTeamModal({ tournament, onClose, onRegistered }: RegisterTeamModalProps) {
+  const { isLoaded, isSignedIn } = useAuth();
   const verifiable = tournament.id_check_slug !== '';
   const [phase, setPhase] = useState<Phase>('loading');
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
@@ -47,6 +49,9 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
 
   useEffect(() => {
     let cancelled = false;
+    if (!isLoaded || !isSignedIn) return () => {
+      cancelled = true;
+    };
     fetchMyTeams(tournament.game_id).then(
       (result) => {
         if (cancelled) return;
@@ -63,7 +68,7 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
     return () => {
       cancelled = true;
     };
-  }, [tournament.game_id]);
+  }, [tournament.game_id, isLoaded, isSignedIn]);
 
   const checkAccount = async () => {
     const userId = leaderGameId.trim();
@@ -146,6 +151,24 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
         aria-label="Баг бүртгүүлэх"
         onClick={(e) => e.stopPropagation()}
       >
+        {isLoaded && !isSignedIn ? (
+          <>
+            <div className={styles.header}>
+              <div>
+                <p className={styles.kicker}>{tournament.game}</p>
+                <h3 className={styles.title}>Эхлээд нэвтэрнэ үү</h3>
+                <p className={styles.sub}>Тэмцээнд бүртгүүлэхийн тулд нэвтрэх шаардлагатай.</p>
+              </div>
+              <button type="button" className={styles.closeBtn} aria-label="Хаах" onClick={onClose}>
+                ✕
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <SignIn signUpUrl="/signup" />
+            </div>
+          </>
+        ) : (
+          <>
         <div className={styles.header}>
           <div>
             <p className={styles.kicker}>{tournament.game}</p>
@@ -300,6 +323,8 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
                 {submitting ? 'Бүртгэж байна…' : 'Баг нээж бүртгүүлэх'}
               </button>
             </div>
+          </>
+        )}
           </>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth, useClerk } from '@clerk/react';
 import { Seo } from '../components/seo/Seo';
 import { SearchBar } from '../components/marketplace/SearchBar';
 import { FiltersDrawer } from '../components/marketplace/FiltersDrawer';
@@ -72,6 +73,8 @@ function formatStartsAt(startsAt: string | null, status: TournamentStatus): stri
 export function TournamentsPage() {
   const { tournaments, loading, error, reload } = useTournaments();
   const navigate = useNavigate();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { openSignIn } = useClerk();
   const apiGames = useGames();
   const [filter, setFilter] = useState<FilterKey>('all');
   const [selectedGame, setSelectedGame] = useState<string>('all');
@@ -80,6 +83,15 @@ export function TournamentsPage() {
   const [fee, setFee] = useState<TournamentFeeFilter>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [registering, setRegistering] = useState<Tournament | null>(null);
+
+  const handleRegister = (t: Tournament) => {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
+    setRegistering(t);
+  };
 
   const resetFilters = () => {
     setFilter('all');
@@ -293,7 +305,7 @@ export function TournamentsPage() {
                     <button
                       className="btn btn-primary"
                       type="button"
-                      onClick={() => setRegistering(t)}
+                      onClick={() => handleRegister(t)}
                     >
                       Бүртгүүлэх
                     </button>

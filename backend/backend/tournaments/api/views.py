@@ -144,15 +144,15 @@ def check_leader_id(request, data: CheckIdSchema):
     tournament = _get_tournament(data.tournament_id)
     slug = tournament.game.id_check_slug
     if not slug:
-        raise HttpError(400, "ID check is not supported for this game.")
+        raise HttpError(400, "Энэ тоглоомд ID шалгах боломжгүй байна.")
     try:
         account = check_game_account(slug, data.user_id, data.server_id)
     except IdCheckUnsupportedError as exc:
-        raise HttpError(400, "ID check is not supported for this game.") from exc
+        raise HttpError(400, "Энэ тоглоомд ID шалгах боломжгүй байна.") from exc
     except IdCheckNotFoundError as exc:
-        raise HttpError(422, "Game account not found. Check the ID.") from exc
+        raise HttpError(422, "Тоглоомын акаунт олдсонгүй. ID-гаа шалгана уу.") from exc
     except IdCheckTransportError as exc:
-        raise HttpError(502, "ID checker is unreachable. Try again.") from exc
+        raise HttpError(502, "ID шалгагчтай холбогдож чадсангүй. Дахин оролдоно уу.") from exc
     return {"nickname": account.nickname, "region": account.region}
 
 
