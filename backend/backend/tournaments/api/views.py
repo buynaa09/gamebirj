@@ -202,6 +202,8 @@ def register_team(request, tournament_id: int, data: RegisterTeamSchema):
     tournament = _get_tournament(tournament_id)
     if tournament.status != Tournament.Status.OPEN:
         raise HttpError(400, "Registration is closed for this tournament.")
+    if _tournament_started(tournament):
+        raise HttpError(400, "This tournament has already started.")
     team = get_object_or_404(TournamentTeam, pk=data.team_id, owner=request.user)
     if team.game_id != tournament.game_id:
         raise HttpError(400, "This team plays a different game.")

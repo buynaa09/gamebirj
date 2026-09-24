@@ -12,6 +12,11 @@ interface DetailsStepProps {
 
 const TITLE_LIMIT = 100;
 const DESCRIPTION_LIMIT = 2000;
+const SELLER_FEE = 3000;
+
+function formatMnt(value: number): string {
+  return new Intl.NumberFormat('mn-MN').format(Math.max(0, value));
+}
 
 export function DetailsStep({ game, draft, onChange }: DetailsStepProps) {
   const gameName = game?.name ?? null;
@@ -80,6 +85,7 @@ export function DetailsStep({ game, draft, onChange }: DetailsStepProps) {
   };
 
   const wordCount = draft.description.trim() === '' ? 0 : draft.description.trim().split(/\s+/).length;
+  const sellerPayout = Math.max(0, Number(draft.price) - SELLER_FEE);
 
   return (
     <div>
@@ -138,7 +144,17 @@ export function DetailsStep({ game, draft, onChange }: DetailsStepProps) {
       </div>
 
       <div className={styles.priceSide}>
-       
+        <div className={styles.payoutPreview}>
+          <div className={styles.payoutLine}>
+            <span>Системийн хурааж авах</span>
+            <b>− {formatMnt(SELLER_FEE)}₮</b>
+          </div>
+          <div className={styles.payoutTotal}>
+            <span>Таны авах мөнгө</span>
+            <strong>{formatMnt(sellerPayout)}₮</strong>
+          </div>
+        </div>
+
         <button
           type="button"
           role="switch"

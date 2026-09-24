@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
@@ -28,7 +29,7 @@ def make_tournament(title="MLBB Cup", game_name="Mobile Legends", **kwargs):
         "status": Tournament.Status.OPEN,
         "prize_pool": "1,000,000₮",
         "entry_fee": "Үнэгүй",
-        "starts_at": timezone.now(),
+        "starts_at": timezone.now() + timedelta(hours=1),
         "format": "5v5 · Single Elimination",
         "total_slots": 32,
         "filled_slots": 21,
@@ -157,6 +158,24 @@ def test_register_team_rejects_closed_tournament(client: Client):
     user = UserFactory.create()
     client.force_login(user)
     tournament = make_tournament(title="Live Cup", status=Tournament.Status.LIVE)
+    team = make_team(user, tournament.game)
+
+    response = client.post(
+        reverse("api:register_team", kwargs={"tournament_id": tournament.pk}),
+        data={"team_id": team.pk},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_register_team_rejects_started_open_tournament(client: Client):
+    user = UserFactory.create()
+    client.force_login(user)
+    tournament = make_tournament(
+        title="Started Cup",
+        starts_at=timezone.now() - timedelta(minutes=1),
+    )
     team = make_team(user, tournament.game)
 
     response = client.post(

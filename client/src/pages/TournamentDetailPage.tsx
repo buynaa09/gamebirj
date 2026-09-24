@@ -10,7 +10,7 @@ import { TournamentMatches } from '../components/tournaments/TournamentMatches';
 import { useTournament } from '../hooks/useTournament';
 import { useTournamentMatches } from '../hooks/useTournamentMatches';
 import { useTournaments } from '../hooks/useTournaments';
-import { hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
+import { effectiveTournamentStatus, hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
 import { useGames } from '../hooks/useGames';
 import { gameIcons } from '../data/games';
 import type { TournamentStatus } from '../types';
@@ -156,7 +156,8 @@ export function TournamentDetailPage({ id }: { id: number }) {
     );
   }
 
-  const meta = STATUS_META[tournament.status];
+  const status = effectiveTournamentStatus(tournament.status, tournament.starts_at);
+  const meta = STATUS_META[status];
   const pct =
     tournament.total_slots > 0
       ? Math.round((tournament.filled_slots / tournament.total_slots) * 100)
@@ -231,9 +232,9 @@ export function TournamentDetailPage({ id }: { id: number }) {
               Лоббид орох
             </button>
           )
-        ) : (
-          tournament.status === 'open' &&
-          (tournament.is_registered ? (
+        ) : tournament.status === 'open' &&
+          !tournamentStarted(tournament.status, tournament.starts_at) ? (
+          tournament.is_registered ? (
             <button type="button" className={`btn btn-outline ${styles.heroCta}`} disabled>
               ✓ Бүртгүүлсэн
             </button>
@@ -245,7 +246,14 @@ export function TournamentDetailPage({ id }: { id: number }) {
             >
               Баг бүртгүүлэх
             </button>
-          ))
+          )
+        ) : (
+          <Link
+            to={`/tournaments/${tournament.id}`}
+            className={`btn btn-outline ${styles.heroCta}`}
+          >
+            Бүртгэл хаагдсан
+          </Link>
         )}
       </header>
 

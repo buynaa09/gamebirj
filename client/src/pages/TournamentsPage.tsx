@@ -10,7 +10,7 @@ import { TournamentFilters } from '../components/tournaments/TournamentFilters';
 import filterStyles from '../components/tournaments/TournamentFilters.module.css';
 import type { TournamentFeeFilter } from '../components/tournaments/TournamentFilters';
 import { useTournaments } from '../hooks/useTournaments';
-import { hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
+import { effectiveTournamentStatus, hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
 import { useGames } from '../hooks/useGames';
 import { gameIcons } from '../data/games';
 import type { Tournament, TournamentStatus } from '../types';
@@ -134,7 +134,7 @@ export function TournamentsPage() {
   const list = useMemo(() => {
     let result = tournaments.filter(
       (t) =>
-        (filter === 'all' || t.status === filter) &&
+        (filter === 'all' || effectiveTournamentStatus(t.status, t.starts_at) === filter) &&
         (selectedGame === 'all' || t.game === selectedGame) &&
         (fee === 'all' || (fee === 'free' ? t.entry_fee === 'Үнэгүй' : t.entry_fee !== 'Үнэгүй')),
     );
@@ -270,7 +270,8 @@ export function TournamentsPage() {
       ) : (
         <section className={styles.grid}>
           {list.map((t) => {
-            const meta = STATUS_META[t.status];
+            const status = effectiveTournamentStatus(t.status, t.starts_at);
+            const meta = STATUS_META[status];
             const pct =
               t.total_slots > 0 ? Math.round((t.filled_slots / t.total_slots) * 100) : 0;
             return (
@@ -329,7 +330,8 @@ export function TournamentsPage() {
                         Лоббид орох
 
                     </button>
-                  ) : t.status === 'open' ? (
+                  ) : t.status === 'open' &&
+                    !tournamentStarted(t.status, t.starts_at) ? (
                     t.is_registered ? (
                       <button
                         className="btn btn-outline"
@@ -353,7 +355,7 @@ export function TournamentsPage() {
                       type="button"
                       onClick={() => navigate(`/tournaments/${t.id}`)}
                     >
-                      Шууд үзэх
+                      Бүртгэл хаагдсан
                     </button>
                   ) : (
                     <button
@@ -361,7 +363,7 @@ export function TournamentsPage() {
                       type="button"
                       onClick={() => navigate(`/tournaments/${t.id}`)}
                     >
-                      Дүн харах
+                      Бүртгэл хаагдсан
                     </button>
                   )}
                 </div>
