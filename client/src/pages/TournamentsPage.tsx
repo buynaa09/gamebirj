@@ -9,6 +9,7 @@ import { TournamentFilters } from '../components/tournaments/TournamentFilters';
 import filterStyles from '../components/tournaments/TournamentFilters.module.css';
 import type { TournamentFeeFilter } from '../components/tournaments/TournamentFilters';
 import { useTournaments } from '../hooks/useTournaments';
+import { tournamentStarted } from '../utils/tournaments';
 import { useGames } from '../hooks/useGames';
 import { gameIcons } from '../data/games';
 import type { Tournament, TournamentStatus } from '../types';
@@ -309,7 +310,15 @@ export function TournamentsPage() {
                   </span>
                 </div>
                 <div className={styles.actions}>
-                  {t.status === 'open' ? (
+                  {t.is_registered && t.status !== 'finished' && tournamentStarted(t.status, t.starts_at) ? (
+                    <button
+                      className="btn btn-primary"
+                      type="button"
+                      onClick={() => navigate(`/tournaments/${t.id}`)}
+                    >
+                      Join
+                    </button>
+                  ) : t.status === 'open' ? (
                     t.is_registered ? (
                       <button
                         className="btn btn-outline"

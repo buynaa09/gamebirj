@@ -6,6 +6,7 @@ import { RegisterTeamModal } from '../components/tournaments/RegisterTeamModal';
 import { TournamentBracket } from '../components/tournaments/TournamentBracket';
 import { useTournament } from '../hooks/useTournament';
 import { useTournaments } from '../hooks/useTournaments';
+import { tournamentStarted } from '../utils/tournaments';
 import { useGames } from '../hooks/useGames';
 import { gameIcons } from '../data/games';
 import type { TournamentStatus } from '../types';
@@ -179,7 +180,18 @@ export function TournamentDetailPage({ id }: { id: number }) {
           <p className={styles.dateRange}>{dateRange}</p>
           <span className={`${styles.badge} ${styles[meta.className]}`}>{meta.label}</span>
         </div>
-        {tournament.status === 'open' &&
+        {tournament.is_registered &&
+        tournament.status !== 'finished' &&
+        tournamentStarted(tournament.status, tournament.starts_at) ? (
+          <button
+            type="button"
+            className={`btn btn-primary ${styles.heroCta}`}
+            onClick={() => setTab('matches')}
+          >
+            Join
+          </button>
+        ) : (
+          tournament.status === 'open' &&
           (tournament.is_registered ? (
             <button type="button" className={`btn btn-outline ${styles.heroCta}`} disabled>
               ✓ Бүртгүүлсэн
@@ -192,7 +204,8 @@ export function TournamentDetailPage({ id }: { id: number }) {
             >
               Баг бүртгүүлэх
             </button>
-          ))}
+          ))
+        )}
       </header>
 
       <nav className={styles.tabs} aria-label="Тэмцээний хэсгүүд">
