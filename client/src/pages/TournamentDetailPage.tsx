@@ -4,6 +4,7 @@ import { useAuth, useClerk } from '@clerk/react';
 import { Seo } from '../components/seo/Seo';
 import { RegisterTeamModal } from '../components/tournaments/RegisterTeamModal';
 import { JoinTournamentModal } from '../components/tournaments/JoinTournamentModal';
+import { LobbyModal } from '../components/tournaments/LobbyModal';
 import { TournamentBracket } from '../components/tournaments/TournamentBracket';
 import { TournamentMatches } from '../components/tournaments/TournamentMatches';
 import { useTournament } from '../hooks/useTournament';
@@ -87,6 +88,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
   );
   const [registerOpen, setRegisterOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
+  const [lobbyUrl, setLobbyUrl] = useState<string | null>(null);
   const [shared, setShared] = useState(false);
 
   const handleRegister = () => {
@@ -108,7 +110,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
 
   const joinLobby = () => {
     if (tournament?.my_draft_url) {
-      window.open(tournament.my_draft_url, '_blank', 'noopener');
+      setLobbyUrl(tournament.my_draft_url);
       return;
     }
     setTab('matches');
@@ -419,6 +421,14 @@ export function TournamentDetailPage({ id }: { id: number }) {
             setJoinOpen(false);
             joinLobby();
           }}
+        />
+      )}
+      {lobbyUrl && (
+        <LobbyModal
+          title={tournament.title}
+          game={tournament.game}
+          lobbyUrl={lobbyUrl}
+          onClose={() => setLobbyUrl(null)}
         />
       )}
     </main>
