@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import { ClanManageModal } from '../clan/ClanManageModal';
+import { AccountManageModal } from '../clan/AccountManageModal';
 import { MoonIcon, SunIcon, SearchIcon, BellIcon, MenuIcon, ChatBubbleIcon, GridIcon } from '../icons/Icons';
 import darkLogo from '../../assets/logo/dark.png';
 import lightLogo from '../../assets/logo/light.png';
@@ -21,6 +22,7 @@ function TopBarInner() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [clanManageOpen, setClanManageOpen] = useState(false);
+  const [accountManageOpen, setAccountManageOpen] = useState(false);
   const unreadMessages = useUnreadMessages();
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -54,7 +56,7 @@ function TopBarInner() {
           <NavLink to="/tournaments" className={({ isActive }) => (isActive ? styles.active : '')}>
             Тэмцээн
           </NavLink>
-          <a href="#">Бусад ▾</a>
+        
         </nav>
 
         <div className={styles.topActions}>
@@ -98,6 +100,7 @@ function TopBarInner() {
               <UserButton>
                 <UserButton.MenuItems>
                   <UserButton.Action label="Clan Manage" labelIcon={<GridIcon size={15} />} onClick={() => setClanManageOpen(true)} />
+                  <UserButton.Action label="Данс Manage" labelIcon={<GridIcon size={15} />} onClick={() => setAccountManageOpen(true)} />
                   <UserButton.Link label="Хадгалсан" href="/wishlist" labelIcon={<GridIcon size={15} />} />
                 </UserButton.MenuItems>
               </UserButton>
@@ -129,9 +132,11 @@ function TopBarInner() {
           currentPath={location.pathname}
           onNavigate={closeMobileMenu}
           onManageClan={() => setClanManageOpen(true)}
+          onManageAccount={() => setAccountManageOpen(true)}
         />
       )}
       {clanManageOpen && <ClanManageModal onClose={() => setClanManageOpen(false)} />}
+      {accountManageOpen && <AccountManageModal onClose={() => setAccountManageOpen(false)} />}
     </>
   );
 }
@@ -140,10 +145,12 @@ function MobileMenu({
   currentPath,
   onNavigate,
   onManageClan,
+  onManageAccount,
 }: {
   currentPath: string;
   onNavigate: () => void;
   onManageClan: () => void;
+  onManageAccount: () => void;
 }) {
   const { user, loading } = useCurrentUser();
   const { signOut } = useClerk();
@@ -202,16 +209,28 @@ function MobileMenu({
       </a>
 
       {!loading && user && (
-        <button
-          type="button"
-          className={styles.mobileLink}
-          onClick={() => {
-            onNavigate();
-            onManageClan();
-          }}
-        >
-          Clan Manage
-        </button>
+        <>
+          <button
+            type="button"
+            className={styles.mobileLink}
+            onClick={() => {
+              onNavigate();
+              onManageClan();
+            }}
+          >
+            Clan Manage
+          </button>
+          <button
+            type="button"
+            className={styles.mobileLink}
+            onClick={() => {
+              onNavigate();
+              onManageAccount();
+            }}
+          >
+            Данс Manage
+          </button>
+        </>
       )}
 
       {!loading &&

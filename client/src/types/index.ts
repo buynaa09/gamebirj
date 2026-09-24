@@ -8,6 +8,21 @@ export interface User {
   url: string;
 }
 
+export interface Bank {
+  id: number;
+  name: string;
+  description: string;
+  logo: string;
+}
+
+export interface BankAccount {
+  bank_id: number | null;
+  bank_name: string;
+  bank_logo: string;
+  account_holder: string;
+  account_number: string;
+}
+
 export interface PublishDetail {
   listing: number;
   value: string;

@@ -217,9 +217,9 @@ export function RegisterTeamModal({ tournament, onClose, onRegistered }: Registe
             </div>
             {error && <p className={styles.error}>{error}</p>}
             <div className={styles.actions}>
-              <button type="button" className="btn btn-outline" onClick={() => setPhase('create')}>
+              {/* <button type="button" className="btn btn-outline" onClick={() => setPhase('create')}>
                 + Шинэ баг
-              </button>
+              </button> */}
               <button
                 type="button"
                 className="btn btn-primary"

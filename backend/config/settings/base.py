@@ -100,6 +100,7 @@ LOCAL_APPS = [
     "backend.chat",
     "backend.panel",
     "backend.payments",
+    "backend.banks",
     "backend.tournaments",
     # Your stuff: custom apps go here
 ]
