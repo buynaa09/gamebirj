@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import random
+from datetime import datetime
 from datetime import timedelta
 
 from django.utils import timezone
@@ -202,6 +203,19 @@ def advance_winners(tournament: Tournament) -> None:
         advance_winners(tournament)
 
 
+def lobby_deadline(tournament: Tournament) -> datetime:
+    """Deadline for a freshly opened room: five minutes after it becomes
+    available, never earlier than the tournament's scheduled start.
+
+    Anchoring the deadline straight to ``starts_at`` would put it in the past
+    for every round-0 room, because rooms are only created once the
+    tournament has started — the lobby countdown would read "expired" on
+    first render and ``poll_match_results`` would expire the fixture.
+    """
+    base = tournament.starts_at or timezone.now()
+    return max(base, timezone.now()) + timedelta(minutes=5)
+
+
 def ensure_rooms(tournament: Tournament) -> tuple[int, list[str]]:
     """Create lobbies for fixtures with both teams known. Returns (created, errors)."""
     cookie = MLBBMatchConfig.get_cookie()
@@ -210,11 +224,7 @@ def ensure_rooms(tournament: Tournament) -> tuple[int, list[str]]:
     for match in tournament.matches.exclude(mlbb_match_id="").filter(
         lobby_deadline__isnull=True,
     ):
-        match.lobby_deadline = (
-            tournament.starts_at
-            if match.round_index == 0
-            else timezone.now() + timedelta(minutes=5)
-        )
+        match.lobby_deadline = lobby_deadline(tournament)
         match.save(update_fields=["lobby_deadline"])
     created = 0
     errors: list[str] = []
@@ -242,11 +252,7 @@ def ensure_rooms(tournament: Tournament) -> tuple[int, list[str]]:
             continue
         match.mlbb_match_id = room.match_id
         match.draft_url = lobby.url
-        match.lobby_deadline = (
-            tournament.starts_at
-            if match.round_index == 0
-            else timezone.now() + timedelta(minutes=5)
-        )
+        match.lobby_deadline = lobby_deadline(tournament)
         match.status = TournamentMatch.Status.OPEN
         match.save(
             update_fields=["mlbb_match_id", "draft_url", "lobby_deadline", "status"],

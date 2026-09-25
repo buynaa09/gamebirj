@@ -455,6 +455,38 @@ def test_retrieve_tournament_detail(client: Client):
     assert "leader_server_id" not in team
 
 
+def test_retrieve_tournament_seeds_bracket_when_started(client: Client):
+    """A started tournament must expose a fixture even before /matches/ ran.
+
+    Otherwise ``my_match_status`` is null and the SPA renders an enabled
+    "join lobby" button for a match that does not exist yet.
+    """
+    owner = UserFactory.create()
+    opponent = UserFactory.create()
+    tournament = make_tournament(
+        title="Started Cup",
+        starts_at=timezone.now() - timedelta(minutes=1),
+        total_slots=2,
+    )
+    registration_model = tournament.registrations.model
+    for user, name in ((owner, "Team A"), (opponent, "Team B")):
+        team = make_team(user, tournament.game, name=name)
+        registration_model.objects.create(tournament=tournament, user=user, team=team)
+
+    url = reverse("api:retrieve_tournament", kwargs={"tournament_id": tournament.pk})
+    client.force_login(owner)
+    response = client.get(url)
+
+    assert response.status_code == HTTPStatus.OK
+    assert tournament.matches.count() == 1
+    payload = response.json()
+    assert payload["is_registered"] is True
+    # Room creation needs the matchTools cookie; without it the fixture is
+    # still pending and must be reported as such (no lobby to join yet).
+    assert payload["my_match_status"] == "pending"
+    assert payload["my_draft_url"] is None
+
+
 def test_retrieve_tournament_detail_404_for_inactive_game(client: Client):
     tournament = make_tournament(title="Hidden Cup")
     tournament.game.is_active_tournament = False

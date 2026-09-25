@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchTournament } from '../services/tournaments';
 import type { TournamentDetail } from '../types';
 
@@ -6,32 +6,31 @@ export function useTournament(id: number) {
   const [tournament, setTournament] = useState<TournamentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const requestSeq = useRef(0);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchTournament(id)
-      .then((result) => {
-        if (!cancelled) setTournament(result);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load tournament.');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [id, reloadKey]);
-
-  const reload = () => {
+  /** Fetch the tournament and resolve with it (or null on failure/supersede). */
+  const load = useCallback(async (): Promise<TournamentDetail | null> => {
+    const seq = ++requestSeq.current;
     setLoading(true);
     setError(null);
-    setReloadKey((k) => k + 1);
-  };
+    try {
+      const result = await fetchTournament(id);
+      if (seq !== requestSeq.current) return null;
+      setTournament(result);
+      return result;
+    } catch (err: unknown) {
+      if (seq === requestSeq.current) {
+        setError(err instanceof Error ? err.message : 'Failed to load tournament.');
+      }
+      return null;
+    } finally {
+      if (seq === requestSeq.current) setLoading(false);
+    }
+  }, [id]);
 
-  return { tournament, loading, error, reload };
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return { tournament, loading, error, reload: load };
 }

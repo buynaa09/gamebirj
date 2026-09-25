@@ -92,6 +92,8 @@ export function TournamentDetailPage({ id }: { id: number }) {
   const [lobbyUrl, setLobbyUrl] = useState<string | null>(null);
   const [lobbyCamp, setLobbyCamp] = useState<number | null>(null);
   const [lobbyDeadline, setLobbyDeadline] = useState<string | null>(null);
+  const [lobbyNotice, setLobbyNotice] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
   const [shared, setShared] = useState(false);
   // Bracket + history share one matches fetch, loaded on demand per tab.
   const bracketTabActive = tab === 'stages' || tab === 'matches';
@@ -119,14 +121,25 @@ export function TournamentDetailPage({ id }: { id: number }) {
     setJoinOpen(true);
   };
 
-  const joinLobby = () => {
-    if (tournament?.my_draft_url) {
-      setLobbyUrl(tournament.my_draft_url);
-      setLobbyCamp(tournament.my_camp);
-      setLobbyDeadline(tournament.my_lobby_deadline);
-      return;
+  const joinLobby = async () => {
+    if (joining) return;
+    setJoining(true);
+    setLobbyNotice(null);
+    try {
+      // The fixture and its draft URL are created server-side after the page
+      // has loaded, so always re-read the tournament before giving up.
+      const fresh = await reload();
+      const data = fresh ?? tournament;
+      if (data?.my_draft_url) {
+        setLobbyUrl(data.my_draft_url);
+        setLobbyCamp(data.my_camp);
+        setLobbyDeadline(data.my_lobby_deadline);
+        return;
+      }
+      setLobbyNotice('Лобби одоогоор бэлэн болоогүй байна. Түр хүлээгээд дахин оролдоно уу.');
+    } finally {
+      setJoining(false);
     }
-    setTab('matches');
   };
 
   if (loading && !tournament) {
@@ -232,8 +245,9 @@ export function TournamentDetailPage({ id }: { id: number }) {
               type="button"
               className={`btn btn-primary ${styles.heroCta}`}
               onClick={handleJoin}
+              disabled={joining}
             >
-              Лоббид орох
+              {joining ? 'Лобби шалгаж байна…' : 'Лоббид орох'}
             </button>
           )
         ) : tournament.status === 'open' &&
@@ -260,6 +274,12 @@ export function TournamentDetailPage({ id }: { id: number }) {
           </Link>
         )}
       </header>
+
+      {lobbyNotice && (
+        <p className={styles.lobbyNotice} role="alert">
+          {lobbyNotice}
+        </p>
+      )}
 
       <nav className={styles.tabs} aria-label="Тэмцээний хэсгүүд">
         {TABS.map((t) => (

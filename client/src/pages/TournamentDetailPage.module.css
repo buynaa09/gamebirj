@@ -104,6 +104,16 @@
   flex-shrink: 0;
 }
 
+.lobbyNotice {
+  margin: 12px 0 16px;
+  padding: 10px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
 /* Tabs */
 .tabs {
   display: flex;

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
@@ -165,6 +166,41 @@ def test_ensure_rooms_creates_lobbies_once(monkeypatch):
     assert TournamentMatch.objects.filter(status="open").count() == expected_rooms
     # Second run creates nothing (idempotent).
     assert ensure_rooms(tournament) == (0, [])
+
+
+def test_ensure_rooms_deadline_never_lands_in_the_past(monkeypatch):
+    """A round-0 room opened after kick-off must not start out expired."""
+    tournament = make_tournament(
+        total_slots=2,
+        starts_at=timezone.now() - timedelta(hours=1),
+    )
+    make_registration(tournament, "Team A")
+    make_registration(tournament, "Team B")
+    ensure_bracket(tournament)
+    MLBBMatchConfig.objects.create(cookie="test-cookie")
+    monkeypatch.setattr(
+        bracket_mod,
+        "create_lobby",
+        lambda name, cookie: MatchRoom("mid", name, "create"),
+    )
+    monkeypatch.setattr(
+        bracket_mod,
+        "get_lobby_url",
+        lambda match_id, cookie: MatchLobby(
+            url="https://s.mobilelegends.com/x",
+            name="",
+            status="create",
+            is_closed=False,
+        ),
+    )
+
+    created, errors = ensure_rooms(tournament)
+
+    assert created == 1
+    assert errors == []
+    match = tournament.matches.get()
+    assert match.lobby_deadline is not None
+    assert timezone.now() < match.lobby_deadline <= timezone.now() + timedelta(minutes=5)
 
 
 def test_ensure_rooms_without_cookie_reports_error():

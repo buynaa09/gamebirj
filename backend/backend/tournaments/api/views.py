@@ -253,6 +253,10 @@ def retrieve_tournament(request, tournament_id: int):
         "created_at",
     )
     if _tournament_started(tournament):
+        # Seat the bracket first: without it ``_my_next_match`` finds nothing
+        # and the SPA renders an enabled "join lobby" button for a fixture
+        # that does not exist yet.
+        ensure_bracket(tournament)
         ensure_rooms(tournament)
     user = _optional_user(request)
     is_registered = tournament.id in _registered_tournament_ids(request)
