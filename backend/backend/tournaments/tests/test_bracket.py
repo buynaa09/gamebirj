@@ -200,7 +200,8 @@ def test_ensure_rooms_deadline_never_lands_in_the_past(monkeypatch):
     assert errors == []
     match = tournament.matches.get()
     assert match.lobby_deadline is not None
-    assert timezone.now() < match.lobby_deadline <= timezone.now() + timedelta(minutes=5)
+    assert timezone.now() < match.lobby_deadline
+    assert match.lobby_deadline <= timezone.now() + timedelta(minutes=5)
 
 
 def test_ensure_rooms_without_cookie_reports_error():
