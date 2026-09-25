@@ -220,6 +220,10 @@ def ensure_rooms(tournament: Tournament) -> tuple[int, list[str]]:
     """Create lobbies for fixtures with both teams known. Returns (created, errors)."""
     cookie = MLBBMatchConfig.get_cookie()
     if not cookie:
+        logger.warning(
+            "No lobbies created for %s: matchTools cookie is not configured",
+            tournament.pk,
+        )
         return 0, ["matchTools cookie is not configured"]
     for match in tournament.matches.exclude(mlbb_match_id="").filter(
         lobby_deadline__isnull=True,
@@ -358,7 +362,10 @@ def poll_match_results(tournament: Tournament | None = None) -> dict:
             match.lobby_deadline is not None
             and match.lobby_deadline <= timezone.now()
             and match.winner_id is None
-            and match.status != TournamentMatch.Status.FINISHED
+            # A match already under way has passed the "start within five
+            # minutes" bar; expiring it would drop the live result.
+            and match.status
+            not in (TournamentMatch.Status.FINISHED, TournamentMatch.Status.LIVE)
         ):
             match.status = TournamentMatch.Status.EXPIRED
             match.is_expired = True

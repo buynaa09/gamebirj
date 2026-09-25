@@ -238,7 +238,7 @@ export function TournamentDetailPage({ id }: { id: number }) {
             <button type="button" className={`btn btn-outline ${styles.heroCta}`} disabled>
               {tournament.my_match_status === 'result'
                 ? 'Тоглолтын үр дүнг хүлээж байна'
-                : 'Нөгөө тоглолтыг хүлээж байна'}
+                : 'Тоглолт бэлэн болоогүй байна'}
             </button>
           ) : (
             <button

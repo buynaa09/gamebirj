@@ -246,6 +246,22 @@ def register_team(request, tournament_id: int, data: RegisterTeamSchema):
     }
 
 
+def _ensure_rooms(tournament: Tournament) -> None:
+    """Create rooms, surfacing provider failures in the server log.
+
+    The API never reports these errors to clients (a tournament detail must
+    still render without a lobby), so dropping them here would make a
+    missing matchTools cookie or an expired session completely invisible.
+    """
+    _, errors = ensure_rooms(tournament)
+    for error in errors:
+        logger.warning(
+            "Room creation failed for tournament %s: %s",
+            tournament.pk,
+            error,
+        )
+
+
 @router.get("/{tournament_id}/", response=TournamentDetailSchema, auth=None)
 def retrieve_tournament(request, tournament_id: int):
     tournament = _get_tournament(tournament_id)
@@ -257,7 +273,7 @@ def retrieve_tournament(request, tournament_id: int):
         # and the SPA renders an enabled "join lobby" button for a fixture
         # that does not exist yet.
         ensure_bracket(tournament)
-        ensure_rooms(tournament)
+        _ensure_rooms(tournament)
     user = _optional_user(request)
     is_registered = tournament.id in _registered_tournament_ids(request)
     my_match = _my_next_match(tournament, user)
@@ -430,7 +446,7 @@ def list_matches(request, tournament_id: int):
     # Automatic room creation once the tournament has begun; idempotent and
     # silent on provider errors (rooms stay pending, details in server logs).
     if _tournament_started(tournament):
-        ensure_rooms(tournament)
+        _ensure_rooms(tournament)
     return _match_payloads(request, tournament)
 
 
