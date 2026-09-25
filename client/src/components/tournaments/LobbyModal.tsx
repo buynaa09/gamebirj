@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import QRCode from 'react-qr-code';
+import { useEffect, useRef, useState } from 'react';
 import camp1Image from '../../assets/tournaments/left.jpeg';
 import camp2Image from '../../assets/tournaments/right.jpeg';
 import styles from './LobbyModal.module.css';
@@ -23,24 +22,29 @@ function formatCountdown(seconds: number): string {
 export function LobbyModal({ title, game, lobbyUrl, camp, deadline, onClose }: LobbyModalProps) {
   const [copied, setCopied] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(deadline ? 300 : null);
+  const actionRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+    const previous = document.activeElement as HTMLElement | null;
     document.addEventListener('keydown', onKeyDown);
-    const prev = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    actionRef.current?.focus();
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevOverflow;
+      previous?.focus();
     };
   }, [onClose]);
 
   useEffect(() => {
     if (!deadline) return;
     const target = new Date(deadline).getTime();
-    const update = () => setRemaining(Number.isNaN(target) ? null : Math.ceil((target - Date.now()) / 1000));
+    const update = () =>
+      setRemaining(Number.isNaN(target) ? null : Math.ceil((target - Date.now()) / 1000));
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
@@ -61,6 +65,9 @@ export function LobbyModal({ title, game, lobbyUrl, camp, deadline, onClose }: L
     }
   };
 
+  const expired = remaining !== null && remaining <= 0;
+  const campLabel = camp === 1 || camp === 2 ? `Таны багийн тал: Camp ${camp}` : null;
+
   return (
     <div className={styles.overlay} onClick={onClose} role="presentation">
       <div
@@ -70,54 +77,86 @@ export function LobbyModal({ title, game, lobbyUrl, camp, deadline, onClose }: L
         aria-label="Лобби холбоос"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={styles.header}>
-          <div>
-            <p className={styles.kicker}>{game}</p>
-            <h3 className={styles.title}>Лобби нээлттэй</h3>
-            <p className={styles.sub}>{title}</p>
+        <div className={styles.body}>
+          <div className={styles.header}>
+            <div>
+              <p className={styles.kicker}>{game}</p>
+              <h3 className={styles.title}>Лобби нээлттэй</h3>
+              <p className={styles.sub}>{title}</p>
+            </div>
+            <button
+              type="button"
+              className={styles.closeBtn}
+              aria-label="Хаах"
+              onClick={onClose}
+            >
+              ✕
+            </button>
           </div>
-          <button type="button" className={styles.closeBtn} aria-label="Хаах" onClick={onClose}>
-            ✕
-          </button>
-        </div>
 
-        {camp === 1 || camp === 2 ? (
-          <img
-            className={styles.campImage}
-            src={camp === 1 ? camp1Image : camp2Image}
-            alt={camp === 1 ? 'Таны баг camp 1' : 'Таны баг camp 2'}
-          />
-        ) : (
-          <div className={styles.qrWrap}>
-            <QRCode value={lobbyUrl} size={180} aria-label="Лобби QR код" />
+          {campLabel ? (
+            <figure className={styles.figure}>
+              <img
+                className={styles.campImage}
+                src={camp === 1 ? camp1Image : camp2Image}
+                alt={campLabel}
+              />
+              <figcaption className={styles.campChip}>
+                <span className={styles.campChipDot} aria-hidden="true" />
+                {campLabel}
+              </figcaption>
+            </figure>
+          ) : (
+            <div className={styles.linkBlock}>
+              <span className={styles.linkLabel}>Лобби холбоос</span>
+              <a className={styles.linkUrl} href={lobbyUrl} target="_blank" rel="noreferrer">
+                {lobbyUrl}
+              </a>
+            </div>
+          )}
+
+          {deadline && (
+            <div
+              className={`${styles.countdown} ${expired ? styles.countdownExpired : ''}`}
+              role={expired ? 'status' : 'timer'}
+            >
+              <span className={styles.countdownLabel}>
+                {expired ? 'Хугацаа дуссан' : 'Тоглолт эхлэх хугацаа'}
+              </span>
+              <span className={styles.countdownValue}>
+                {remaining === null ? '--:--' : expired ? '00:00' : formatCountdown(remaining)}
+              </span>
+            </div>
+          )}
+          {expired && (
+            <p className={styles.expiredNote}>
+              Зохион байгуулагч руу хандаж шинэчилүүлнэ үү.
+            </p>
+          )}
+
+          <div className={styles.campNote}>
+            <b>Анхаарах нөхцөл</b>
+            <ul>
+              <li>Зурган дээрх талд таны баг байрлана.</li>
+              <li>Тоглолт 5 минут дотор эхлэх ёстой.</li>
+              <li>Inspector-т хүн орохыг хориглоно.</li>
+              <li>Match leader бол Inspector-т орсон хүнийг Kick хийнэ.</li>
+            </ul>
           </div>
-        )}
-        <div className={styles.campNote}>
-          <b>Анхаарах нөхцөл</b>
-          <ul>
-            <li>Энэ зураг дээрх талд танай баг байрлана.</li>
-             <li>Тоглолт 5 минут дотор эхлэх ёстой</li>
-            <li>Inspector-т хүн орохыг хориглоно. </li>
-            <li>Та match leader бол Inspector-т орсон хүнийг Kick хийнэ.</li>
-          </ul>
         </div>
-        <div className={styles.countdown}>
-         
-          <span>{remaining === null ? 'Цагийг тооцоолж байна…' : remaining > 0 ? formatCountdown(remaining) : 'Тоглолт эхлэх цаг дуссан'}</span>
-        </div>
-        {/* <p className={styles.url}>{lobbyUrl}</p> */}
 
         <div className={styles.actions}>
           <a
+            ref={actionRef}
             className="btn btn-primary"
             href={lobbyUrl}
             target="_blank"
             rel="noreferrer"
           >
-            Лобби орох
+            Лобби руу орох
           </a>
           <button type="button" className="btn btn-outline" onClick={copyLink}>
-            {copied ? '✓ Хуулагдлаа' : 'Link хуулах'}
+            {copied ? '✓ Хуулагдлаа' : 'Холбоос хуулах'}
           </button>
         </div>
       </div>
