@@ -2,11 +2,23 @@ import { useEffect, useState } from 'react';
 import { fetchTournamentMatches } from '../services/tournaments';
 import type { TournamentMatch } from '../types';
 
+// matchTools room states advance once a minute (cron poll) — refresh on the
+// same rhythm so live matches show up without a manual page reload.
+const REFRESH_MS = 30_000;
+
 export function useTournamentMatches(tournamentId: number | null) {
   const [matches, setMatches] = useState<TournamentMatch[]>([]);
   const [loading, setLoading] = useState(tournamentId !== null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (tournamentId === null) {
+      return;
+    }
+    const timer = window.setInterval(() => setReloadKey((k) => k + 1), REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [tournamentId]);
 
   useEffect(() => {
     if (tournamentId === null) {

@@ -165,6 +165,11 @@
   color: var(--red);
 }
 
+.live {
+  background: rgba(46, 160, 67, 0.15);
+  color: #3fb950;
+}
+
 @media (max-width: 560px) {
   .meta {
     min-width: 0;
