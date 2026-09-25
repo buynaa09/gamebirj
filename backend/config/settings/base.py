@@ -231,13 +231,25 @@ FIXTURE_DIRS = (str(APPS_DIR / "fixtures"),)
 # remain for the Django admin and staff API docs)
 # ------------------------------------------------------------------------------
 CORS_ALLOW_CREDENTIALS = True
+# 5174: Vite bumps the port when 5173 is taken (a second dev server); keeping it
+# here avoids CORS failures on the duplicate instance. Production overrides this.
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:5173", "http://127.0.0.1:5173"],
+    default=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ],
 )
 CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS",
-    default=["http://localhost:5173", "http://127.0.0.1:5173"],
+    default=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ],
 )
 # SECURITY
 # ------------------------------------------------------------------------------

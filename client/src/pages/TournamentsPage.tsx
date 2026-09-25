@@ -1,16 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth, useClerk } from '@clerk/react';
 import { Seo } from '../components/seo/Seo';
 import { SearchBar } from '../components/marketplace/SearchBar';
 import { FiltersDrawer } from '../components/marketplace/FiltersDrawer';
-import { RegisterTeamModal } from '../components/tournaments/RegisterTeamModal';
-import { JoinTournamentModal } from '../components/tournaments/JoinTournamentModal';
 import { TournamentFilters } from '../components/tournaments/TournamentFilters';
 import filterStyles from '../components/tournaments/TournamentFilters.module.css';
 import type { TournamentFeeFilter } from '../components/tournaments/TournamentFilters';
 import { useTournaments } from '../hooks/useTournaments';
-import { effectiveTournamentStatus, hasAcceptedRules, tournamentStarted } from '../utils/tournaments';
+import { effectiveTournamentStatus } from '../utils/tournaments';
 import { useGames } from '../hooks/useGames';
 import { gameIcons } from '../data/games';
 import type { Tournament, TournamentStatus } from '../types';
@@ -26,7 +23,7 @@ type FilterKey = 'all' | TournamentStatus;
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'Бүгд' },
-  { key: 'open', label: 'Бүртгэл нээлттэй' },
+  { key: 'open', label: 'Нээлттэй' },
   { key: 'live', label: 'Явагдаж буй' },
   { key: 'finished', label: 'Дууссан' },
 ];
@@ -69,40 +66,20 @@ function formatStartsAt(startsAt: string | null, status: TournamentStatus): stri
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   }).format(date);
 }
 
 export function TournamentsPage() {
   const { tournaments, loading, error, reload } = useTournaments();
   const navigate = useNavigate();
-  const { isLoaded, isSignedIn } = useAuth();
-  const { openSignIn } = useClerk();
   const apiGames = useGames();
   const [filter, setFilter] = useState<FilterKey>('all');
   const [selectedGame, setSelectedGame] = useState<string>('all');
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<TournamentSort>('newest');
+  const [sort] = useState<TournamentSort>('newest');
   const [fee, setFee] = useState<TournamentFeeFilter>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [registering, setRegistering] = useState<Tournament | null>(null);
-  const [joining, setJoining] = useState<Tournament | null>(null);
-
-  const handleRegister = (t: Tournament) => {
-    if (!isLoaded) return;
-    if (!isSignedIn) {
-      openSignIn();
-      return;
-    }
-    setRegistering(t);
-  };
-
-  const handleJoin = (t: Tournament) => {
-    if (hasAcceptedRules(t.id)) {
-      navigate(`/tournaments/${t.id}`);
-      return;
-    }
-    setJoining(t);
-  };
 
   const resetFilters = () => {
     setFilter('all');
@@ -171,15 +148,9 @@ export function TournamentsPage() {
       <header className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>GameBirj тэмцээнүүд</p>
-          <h1 className={styles.title}>Тэмцээн</h1>
           <p className={styles.subtitle}>
             Шагналын сантай тэмцээнд багаараа оролцож, ур чадвараа сориорой.
-            Бүртгэл, хуваарь, дүн — бүгд нэг дор.
           </p>
-        </div>
-        <div className={styles.heroCard}>
-          <span className={styles.heroPrize}>{tournaments.length} тэмцээн</span>
-          <span className={styles.heroNote}>Одоогоор идэвхтэй бүртгэлтэй</span>
         </div>
       </header>
 
@@ -188,44 +159,46 @@ export function TournamentsPage() {
         <section className={styles.main}>
           <SearchBar query={query} onQueryChange={setQuery} onOpenFilters={() => setFiltersOpen(true)} />
 
-          <div className={styles.pillRow} role="tablist" aria-label="Тоглоолоор шүүх">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={selectedGame === 'all'}
-          className={`${styles.pill} ${selectedGame === 'all' ? styles.pillActive : ''}`}
-          onClick={() => setSelectedGame('all')}
-        >
-          Бүх тоглоом
-          <span className={styles.n}>{tournaments.length}</span>
-        </button>
-        {games.map((g) => (
-          <button
-            key={g.name}
-            type="button"
-            role="tab"
-            aria-selected={selectedGame === g.name}
-            className={`${styles.pill} ${selectedGame === g.name ? styles.pillActive : ''}`}
-            onClick={() => setSelectedGame(selectedGame === g.name ? 'all' : g.name)}
-          >
-            {g.image ? (
-              <img
-                src={g.image}
-                alt=""
-                className={styles.gameIcon}
-                loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            ) : (
-              gameIcons[g.name] && <span>{gameIcons[g.name]}</span>
-            )}
-            {g.name}
-            <span className={styles.n}>{g.count}</span>
-          </button>
-        ))}
-      </div>
+          {games.length > 1 && (
+            <div className={styles.pillRow} role="tablist" aria-label="Тоглоолоор шүүх">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={selectedGame === 'all'}
+                className={`${styles.pill} ${selectedGame === 'all' ? styles.pillActive : ''}`}
+                onClick={() => setSelectedGame('all')}
+              >
+                Бүх тоглоом
+                <span className={styles.n}>{tournaments.length}</span>
+              </button>
+              {games.map((g) => (
+                <button
+                  key={g.name}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedGame === g.name}
+                  className={`${styles.pill} ${selectedGame === g.name ? styles.pillActive : ''}`}
+                  onClick={() => setSelectedGame(selectedGame === g.name ? 'all' : g.name)}
+                >
+                  {g.image ? (
+                    <img
+                      src={g.image}
+                      alt=""
+                      className={styles.gameIcon}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    gameIcons[g.name] && <span>{gameIcons[g.name]}</span>
+                  )}
+                  {g.name}
+                  <span className={styles.n}>{g.count}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
       <div className={styles.tabs} role="tablist" aria-label="Тэмцээний шүүлтүүр">
         {FILTERS.map((f) => (
@@ -241,20 +214,7 @@ export function TournamentsPage() {
         ))}
       </div>
 
-      <div className={styles.resultsRow}>
-        <span>
-          Нийт <b>{tournaments.length}</b> тэмцээнээс <b>{list.length}</b>-г харуулж байна
-        </span>
-        <select
-          className={styles.sortSelect}
-          aria-label="Тэмцээнүүдийг эрэмбэлэх"
-          value={sort}
-          onChange={(e) => setSort(e.target.value as TournamentSort)}
-        >
-          <option value="newest">Шинэ нь эхэндээ</option>
-          <option value="oldest">Хуучин нь эхэндээ</option>
-        </select>
-      </div>
+
 
       {loading && tournaments.length === 0 ? (
         <p className={styles.empty}>Тэмцээнүүд ачааллаж байна…</p>
@@ -272,8 +232,6 @@ export function TournamentsPage() {
           {list.map((t) => {
             const status = effectiveTournamentStatus(t.status, t.starts_at);
             const meta = STATUS_META[status];
-            const pct =
-              t.total_slots > 0 ? Math.round((t.filled_slots / t.total_slots) * 100) : 0;
             return (
               <article
                 key={t.id}
@@ -291,7 +249,6 @@ export function TournamentsPage() {
                 <h2 className={styles.cardTitle}>
                   <Link to={`/tournaments/${t.id}`}>{t.title}</Link>
                 </h2>
-                <p className={styles.format}>{t.format}</p>
                 <dl className={styles.meta}>
                   <div>
                     <dt>Шагналын сан</dt>
@@ -312,61 +269,6 @@ export function TournamentsPage() {
                     </dd>
                   </div>
                 </dl>
-                <div className={styles.progress}>
-                  <div className={styles.progressBar}>
-                    <span style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className={styles.progressLabel}>
-                    {t.filled_slots}/{t.total_slots} дүүрсэн
-                  </span>
-                </div>
-                <div className={styles.actions}>
-                  {t.is_registered && t.status !== 'finished' && tournamentStarted(t.status, t.starts_at) ? (
-                    <button
-                      className="btn btn-primary"
-                      type="button"
-                      onClick={() => handleJoin(t)}
-                    >
-                        Лоббид орох
-
-                    </button>
-                  ) : t.status === 'open' &&
-                    !tournamentStarted(t.status, t.starts_at) ? (
-                    t.is_registered ? (
-                      <button
-                        className="btn btn-outline"
-                        type="button"
-                        onClick={() => navigate(`/tournaments/${t.id}`)}
-                      >
-                        ✓ Бүртгүүлсэн
-                      </button>
-                    ) : (
-                      <button
-                        className="btn btn-primary"
-                        type="button"
-                        onClick={() => handleRegister(t)}
-                      >
-                        Бүртгүүлэх
-                      </button>
-                    )
-                  ) : t.status === 'live' ? (
-                    <button
-                      className="btn btn-outline"
-                      type="button"
-                      onClick={() => navigate(`/tournaments/${t.id}`)}
-                    >
-                      Бүртгэл хаагдсан
-                    </button>
-                  ) : (
-                    <button
-                      className="btn btn-outline"
-                      type="button"
-                      onClick={() => navigate(`/tournaments/${t.id}`)}
-                    >
-                      Бүртгэл хаагдсан
-                    </button>
-                  )}
-                </div>
               </article>
             );
           })}
@@ -389,24 +291,6 @@ export function TournamentsPage() {
             className={filterStyles.filtersVisible}
           />
         </FiltersDrawer>
-      )}
-      {registering && (
-        <RegisterTeamModal
-          tournament={registering}
-          onClose={() => setRegistering(null)}
-          onRegistered={reload}
-        />
-      )}
-      {joining && (
-        <JoinTournamentModal
-          tournament={joining}
-          onClose={() => setJoining(null)}
-          onConfirmed={() => {
-            const target = joining;
-            setJoining(null);
-            navigate(`/tournaments/${target.id}`);
-          }}
-        />
       )}
     </main>
   );
