@@ -20,7 +20,7 @@
   justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .eyebrow {
@@ -47,153 +47,40 @@
   line-height: 1.6;
 }
 
-.heroCard {
+.section {
+  margin-bottom: 32px;
+}
+
+.sectionHead {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px 20px;
-  min-width: 220px;
-}
-
-.heroPrize {
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.heroNote {
-  font-size: 13px;
-  color: var(--text-dim);
-}
-
-.body {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 26px;
-}
-
-@media (min-width: 960px) {
-  .body {
-    grid-template-columns: 250px 1fr;
-  }
-}
-
-.main {
-  min-width: 0;
-}
-
-.pillRow {
-  display: flex;
+  align-items: center;
   gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 6px;
   margin-bottom: 14px;
-  scrollbar-width: none;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
 }
 
-.pillRow::-webkit-scrollbar {
-  display: none;
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: 0;
 }
 
-.pill {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 7px;
+.sectionLive {
+  color: var(--red);
+}
+
+.sectionCount {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-faint);
+  background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-dim);
-  background: var(--panel);
-  cursor: pointer;
-  white-space: nowrap;
-  font-family: inherit;
-  transition: 0.15s;
-}
-
-.pill:hover {
-  color: var(--text);
-}
-
-.pillActive {
-  background: var(--red);
-  color: #fff;
-  border-color: var(--red);
-}
-
-.pill .n {
-  opacity: 0.75;
-  font-weight: 600;
-  margin-left: 2px;
-}
-
-.gameIcon {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: var(--panel-2);
-  flex-shrink: 0;
-}
-
-.tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 4px 0 20px;
-}
-
-.tab {
-  padding: 9px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-dim);
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: 0.15s;
-}
-
-.tab:hover {
-  background: var(--panel-2);
-  color: var(--text);
-}
-
-.tabActive {
-  background: var(--red);
-  border-color: var(--red);
-  color: #fff;
-}
-
-.resultsRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  font-size: 13.5px;
-  color: var(--text-dim);
-}
-
-.resultsRow b {
-  color: var(--text);
-}
-
-.sortSelect {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 9px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
+  padding: 2px 9px;
 }
 
 .grid {
@@ -233,29 +120,6 @@
   letter-spacing: 0.5px;
 }
 
-.badge {
-  font-size: 12px;
-  font-weight: 800;
-  padding: 5px 11px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.open {
-  background: rgba(46, 160, 67, 0.15);
-  color: #3fb950;
-}
-
-.live {
-  background: rgba(229, 52, 74, 0.14);
-  color: var(--red);
-}
-
-.finished {
-  background: var(--panel-2);
-  color: var(--text-faint);
-}
-
 .cardTitle {
   font-size: 16px;
   font-weight: 800;
@@ -274,7 +138,6 @@
   margin: 4px 0 0;
   padding: 14px 0;
   border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
 }
 
 .meta div {
@@ -330,7 +193,7 @@
     font-size: 24px;
   }
 
-  .heroCard {
-    width: 100%;
+  .grid {
+    grid-template-columns: 1fr;
   }
 }
