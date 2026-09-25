@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import camp1Image from '../../assets/tournaments/left.jpeg';
-import camp2Image from '../../assets/tournaments/right.jpeg';
+import camp1Image from '../../assets/tournaments/right.jpeg';
+import camp2Image from '../../assets/tournaments/left.jpeg';
 import styles from './LobbyModal.module.css';
 
 interface LobbyModalProps {
