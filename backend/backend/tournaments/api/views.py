@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from django.db import IntegrityError
+from django.db import transaction
 from django.db.models import F
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -246,14 +247,38 @@ def register_team(request, tournament_id: int, data: RegisterTeamSchema):
     }
 
 
+def _seed_bracket(tournament: Tournament) -> None:
+    """Build the bracket if it is missing, never failing the read.
+
+    Seeding runs inside ``ATOMIC_REQUESTS``; the savepoint keeps a failure
+    (a concurrent request winning the bulk-create race, a row vanishing
+    mid-save) from poisoning the transaction that still has to render the
+    response.
+    """
+    try:
+        with transaction.atomic():
+            ensure_bracket(tournament)
+    except Exception:  # a read must survive bracket bugs
+        logger.exception(
+            "Bracket seeding failed for tournament %s", tournament.pk,
+        )
+
+
 def _ensure_rooms(tournament: Tournament) -> None:
     """Create rooms, surfacing provider failures in the server log.
 
     The API never reports these errors to clients (a tournament detail must
     still render without a lobby), so dropping them here would make a
     missing matchTools cookie or an expired session completely invisible.
+    Only :class:`MatchToolsError` is handled inside ``ensure_rooms`` — any
+    other provider/network/SSL failure must also degrade to a log line.
     """
-    _, errors = ensure_rooms(tournament)
+    try:
+        with transaction.atomic():
+            _, errors = ensure_rooms(tournament)
+    except Exception:  # lobby creation must not 500 a GET
+        logger.exception("Room creation crashed for tournament %s", tournament.pk)
+        return
     for error in errors:
         logger.warning(
             "Room creation failed for tournament %s: %s",
@@ -272,7 +297,7 @@ def retrieve_tournament(request, tournament_id: int):
         # Seat the bracket first: without it ``_my_next_match`` finds nothing
         # and the SPA renders an enabled "join lobby" button for a fixture
         # that does not exist yet.
-        ensure_bracket(tournament)
+        _seed_bracket(tournament)
         _ensure_rooms(tournament)
     user = _optional_user(request)
     is_registered = tournament.id in _registered_tournament_ids(request)
@@ -354,6 +379,29 @@ def _my_draft_match(tournament: Tournament, user):
     )
 
 
+def _camp_of_leader(battle_data: object, leader_name: str) -> int | None:
+    """Camp number of ``leader_name`` inside a matchTools battleData payload.
+
+    matchTools can store an explicit JSON ``null`` for ``player_list`` — the
+    ``dict.get`` default only covers a missing key — so the shape is
+    validated before iterating.
+    """
+    players = battle_data.get("player_list") if isinstance(battle_data, dict) else None
+    if not isinstance(players, list):
+        return None
+    for player in players:
+        if not isinstance(player, dict):
+            continue
+        if str(player.get("name") or "").strip().lower() != leader_name:
+            continue
+        try:
+            camp = int(player.get("camp") or 0)
+        except (TypeError, ValueError):
+            return None
+        return camp or None
+    return None
+
+
 def _my_camp(match, my_team_ids: set[int]) -> int | None:
     if match is None or not my_team_ids:
         return None
@@ -370,16 +418,7 @@ def _my_camp(match, my_team_ids: set[int]) -> int | None:
     leader_name = (team.leader_nickname or "").strip().lower()
     if not leader_name:
         return fallback_camp
-    for player in match.battle_data.get("player_list", []):
-        if not isinstance(player, dict):
-            continue
-        if str(player.get("name") or "").strip().lower() == leader_name:
-            try:
-                camp = int(player.get("camp") or 0)
-            except (TypeError, ValueError):
-                return fallback_camp
-            return camp or fallback_camp
-    return fallback_camp
+    return _camp_of_leader(match.battle_data, leader_name) or fallback_camp
 
 
 def _tournament_started(tournament: Tournament) -> bool:
@@ -442,7 +481,7 @@ def _match_payloads(request, tournament: Tournament) -> list[dict]:
 )
 def list_matches(request, tournament_id: int):
     tournament = _get_tournament(tournament_id)
-    ensure_bracket(tournament)
+    _seed_bracket(tournament)
     # Automatic room creation once the tournament has begun; idempotent and
     # silent on provider errors (rooms stay pending, details in server logs).
     if _tournament_started(tournament):

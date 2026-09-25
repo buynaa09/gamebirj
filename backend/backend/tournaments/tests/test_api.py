@@ -496,3 +496,80 @@ def test_retrieve_tournament_detail_404_for_inactive_game(client: Client):
     response = client.get(url)
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_retrieve_tournament_survives_bracket_seeding_failure(
+    client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """A lost bracket race must not turn the detail GET into a 500."""
+    tournament = make_tournament(
+        title="Racy Cup",
+        starts_at=timezone.now() - timedelta(minutes=1),
+        total_slots=2,
+    )
+
+    def boom(_tournament):
+        msg = "concurrent bracket insert lost"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(tournament_views, "ensure_bracket", boom)
+
+    url = reverse("api:retrieve_tournament", kwargs={"tournament_id": tournament.pk})
+    response = client.get(url)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["title"] == "Racy Cup"
+
+
+def test_retrieve_tournament_survives_room_creation_crash(
+    client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """A matchTools crash (non-MatchToolsError) must degrade to a log line."""
+    tournament = make_tournament(
+        title="Lobby Cup",
+        starts_at=timezone.now() - timedelta(minutes=1),
+        total_slots=2,
+    )
+
+    def boom(_tournament):
+        msg = "matchTools TLS failure"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(tournament_views, "ensure_rooms", boom)
+
+    url = reverse("api:retrieve_tournament", kwargs={"tournament_id": tournament.pk})
+    response = client.get(url)
+
+    assert response.status_code == HTTPStatus.OK
+
+
+def test_retrieve_tournament_tolerates_null_player_list(client: Client):
+    """matchTools can store an explicit JSON null for ``player_list``."""
+    owner = UserFactory.create()
+    opponent = UserFactory.create()
+    tournament = make_tournament(
+        title="Null Players Cup",
+        starts_at=timezone.now() - timedelta(minutes=1),
+        total_slots=2,
+    )
+    registration_model = tournament.registrations.model
+    team = make_team(owner, tournament.game, leader_nickname="NightWolf")
+    registration_model.objects.create(tournament=tournament, user=owner, team=team)
+    # A lone team would be auto-advanced as a bye; keep the fixture open.
+    other = make_team(opponent, tournament.game, name="Rival Wolves")
+    registration_model.objects.create(tournament=tournament, user=opponent, team=other)
+
+    tournament_views.ensure_bracket(tournament)
+    match = tournament.matches.get()
+    match.draft_url = "https://draft.test/room"
+    match.battle_data = {"player_list": None}
+    match.save(update_fields=["draft_url", "battle_data"])
+
+    client.force_login(owner)
+    url = reverse("api:retrieve_tournament", kwargs={"tournament_id": tournament.pk})
+    response = client.get(url)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["my_camp"] in (1, 2)

@@ -82,7 +82,14 @@ def test_ensure_bracket_creates_all_rounds_and_seats_teams(monkeypatch):
     matches = ensure_bracket(tournament)
 
     assert len(matches) == 4 + 2 + 1
-    first = [m for m in matches if m.round_index == 0]
+    # An 8-slot bracket has four first-round fixtures; only two are seated
+    # with the four registered teams, the rest stay empty (they resolve as
+    # byes once winners advance).
+    first = [
+        m
+        for m in matches
+        if m.round_index == 0 and m.team_a_id is not None and m.team_b_id is not None
+    ]
     assert [m.team_a.name for m in first] == ["Team A", "Team C"]
     assert [m.team_b.name for m in first] == ["Team B", "Team D"]
     # Idempotent.

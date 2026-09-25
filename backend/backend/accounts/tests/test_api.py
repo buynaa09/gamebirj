@@ -44,7 +44,9 @@ def test_create_account_happy_path(client: Client):
     user = UserFactory.create()
     client.force_login(user)
     game = _mlbb()
-    server = Listing.objects.get(game=game, title="Server")
+    # Seeded "Server" listing is game-agnostic (game=None), which the view
+    # explicitly accepts alongside per-game listings.
+    server = Listing.objects.get(game__isnull=True, title="Server")
 
     response = client.post(
         reverse("api:create_account"),

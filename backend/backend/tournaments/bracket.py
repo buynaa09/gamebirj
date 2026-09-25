@@ -70,7 +70,9 @@ def ensure_bracket(tournament: Tournament) -> list[TournamentMatch]:
             for round_index in range(round_count(tournament.total_slots))
             for position in range(matches >> round_index)
         ]
-        TournamentMatch.objects.bulk_create(bulk)
+        # ignore_conflicts: two concurrent detail requests can both see an
+        # empty bracket and race the insert (unique round/position).
+        TournamentMatch.objects.bulk_create(bulk, ignore_conflicts=True)
 
     seat_first_round(tournament)
     _apply_automatic_byes(tournament)

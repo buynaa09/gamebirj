@@ -23,6 +23,8 @@ from typing import Any
 
 import jwt
 from django.conf import settings
+from django.db import IntegrityError
+from django.db import transaction
 from django.utils.text import slugify
 from ninja.security import HttpBearer
 
@@ -106,7 +108,11 @@ def _https_get_json(
     if parsed.scheme != "https" or not parsed.hostname:
         msg = f"Refusing non-HTTPS Clerk URL: {url}"
         raise ClerkAuthError(msg)
-    context = ssl.create_default_context()
+    try:
+        context = ssl.create_default_context()
+    except OSError as exc:
+        msg = f"Could not load TLS trust store: {exc}"
+        raise ClerkAuthError(msg) from exc
     conn = _IPv4HTTPSConnection(
         parsed.hostname,
         parsed.port or 443,
@@ -143,9 +149,15 @@ def _fetch_jwks(jwks_url: str) -> dict[str, Any]:
     payload = _https_get_json(jwks_url, timeout=JWKS_TIMEOUT)
     keys: dict[str, Any] = {}
     for jwk in payload.get("keys", []) if isinstance(payload, dict) else []:
+        if not isinstance(jwk, dict):
+            continue
         kid = jwk.get("kid")
-        if kid:
+        if not kid:
+            continue
+        try:
             keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
+        except Exception:  # noqa: BLE001 — unusable key material, skip it
+            logger.warning("Skipping unusable Clerk JWK %s", kid)
     with _jwks_lock:
         _jwks_cache["keys"] = keys
         _jwks_cache["fetched_at"] = time.monotonic()
@@ -255,6 +267,52 @@ def _unique_username(base: str) -> str:
     return username
 
 
+def _adopt_clerk_user(existing: User, sub: str, name: str) -> User:
+    """Attach ``sub`` to a pre-Clerk account with the same verified email."""
+    try:
+        # Savepoint: another worker may be adopting/creating the same
+        # identity concurrently (clerk_id is unique).
+        with transaction.atomic():
+            existing.clerk_id = sub
+            if not existing.name and name:
+                existing.name = name[:255]
+            existing.save(update_fields=["clerk_id", "name"])
+    except IntegrityError:
+        raced = User.objects.filter(clerk_id=sub).first()
+        if raced is not None:
+            return raced
+        raise
+    return existing
+
+
+def _provision_clerk_user(sub: str, email: str, name: str, username: str) -> User:
+    """Create the local user, retrying when a concurrent request wins.
+
+    The SPA fires the list and detail requests with the same fresh JWT, so
+    two workers can provision this user at once: one wins the unique
+    username/clerk_id columns, the other must adopt the winner, not 500.
+    """
+    for _attempt in range(3):
+        user = User(
+            username=_unique_username(username),
+            email=email,
+            name=name[:255],
+            clerk_id=sub,
+        )
+        user.set_unusable_password()
+        try:
+            with transaction.atomic():
+                user.save()
+        except IntegrityError:
+            existing = User.objects.filter(clerk_id=sub).first()
+            if existing is not None:
+                return existing
+            continue
+        return user
+    msg = "Concurrent Clerk user provisioning kept conflicting"
+    raise ClerkAuthError(msg)
+
+
 def get_or_create_clerk_user(claims: dict[str, Any]) -> User:
     """Map verified token claims to a local user (creating if needed)."""
     sub = str(claims.get("sub") or "")
@@ -278,23 +336,11 @@ def get_or_create_clerk_user(claims: dict[str, Any]) -> User:
             clerk_id__isnull=True,
         ).first()
         if existing is not None:
-            existing.clerk_id = sub
-            if not existing.name and profile["name"]:
-                existing.name = profile["name"][:255]
-            existing.save(update_fields=["clerk_id", "name"])
-            return existing
+            return _adopt_clerk_user(existing, sub, profile["name"])
     username = profile["username"] or (
         email.split("@")[0] if "@" in email else f"user-{sub[:8]}"
     )
-    user = User(
-        username=_unique_username(username),
-        email=email,
-        name=profile["name"][:255],
-        clerk_id=sub,
-    )
-    user.set_unusable_password()
-    user.save()
-    return user
+    return _provision_clerk_user(sub, email, profile["name"], username)
 
 
 def get_user_from_token(token: str | None) -> User | None:
@@ -305,6 +351,9 @@ def get_user_from_token(token: str | None) -> User | None:
         return get_or_create_clerk_user(verify_clerk_token(token))
     except ClerkAuthError as exc:
         logger.warning("Clerk authentication failed: %s", exc)
+        return None
+    except Exception:  # auth degrades to anonymous, never 500
+        logger.exception("Clerk authentication crashed")
         return None
 
 
